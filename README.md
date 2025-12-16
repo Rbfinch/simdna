@@ -28,6 +28,9 @@
 - [Testing](#testing)
   - [Unit Tests](#unit-tests)
   - [Fuzz Testing](#fuzz-testing)
+- [Contributing](#contributing)
+- [Changelog](#changelog)
+- [Citation](#citation)
 - [License](#license)
 
 ## Features
@@ -250,6 +253,18 @@ Run fuzz tests with:
 cargo +nightly fuzz run <target> -- -max_total_time=60
 ```
 
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on bug reports and feature requests.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a history of changes to this project.
+
+## Citation
+
+If you use simdna in your research, please cite it using the metadata in [CITATION.cff](CITATION.cff). GitHub can also generate citation information directly from the repository page.
+
 ## License
 
-MIT
+This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.
