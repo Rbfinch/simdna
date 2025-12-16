@@ -1,6 +1,29 @@
-# simdna
+![](./artefacts/simdna.svg)
 
-High-performance DNA/RNA sequence encoding and decoding using SIMD instructions with automatic fallback to scalar implementations.
+*High-performance DNA/RNA sequence encoding and decoding using SIMD instructions with automatic fallback to scalar implementations.*
+
+[![Crates.io](https://img.shields.io/crates/v/simdna.svg)](https://crates.io/crates/simdna)
+[![Docs.rs](https://docs.rs/simdna/badge.svg)](https://docs.rs/simdna)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [Features](#features)
+- [Installation](#installation)
+- [IUPAC Nucleotide Codes](#iupac-nucleotide-codes)
+  - [Standard Nucleotides](#standard-nucleotides)
+  - [Two-Base Ambiguity Codes](#two-base-ambiguity-codes)
+  - [Three-Base Ambiguity Codes](#three-base-ambiguity-codes)
+  - [Wildcards and Gaps](#wildcards-and-gaps)
+- [Usage](#usage)
+- [Input Handling](#input-handling)
+- [Platform Support](#platform-support)
+- [Performance](#performance)
+- [Testing](#testing)
+  - [Unit Tests](#unit-tests)
+  - [Fuzz Testing](#fuzz-testing)
+- [License](#license)
 
 ## Features
 
@@ -10,6 +33,21 @@ High-performance DNA/RNA sequence encoding and decoding using SIMD instructions 
 - **Thread-safe** pure functions with no global state
 - **2:1 compression** ratio compared to ASCII representation
 - **RNA support** via U (Uracil) mapping to T
+
+## Installation
+
+Add simdna to your `Cargo.toml`:
+
+```toml
+[dependencies]
+simdna = "1.0"
+```
+
+Or install via cargo:
+
+```bash
+cargo add simdna
+```
 
 ## IUPAC Nucleotide Codes
 
@@ -95,6 +133,49 @@ assert_eq!(decoded_rna, b"ACGT"); // U decodes as T
 - SIMD processes 16 nucleotides per iteration
 - 2:1 compression ratio (4 bits per nucleotide vs 8 bits ASCII)
 - Expected speedup: 4-8x over scalar code on modern CPUs
+
+![DNA Encoding/Decoding Throughput](./artefacts/throughput_plot.png)
+
+<sub>Benchmarks obtained on a Mac Studio with 32GB RAM and Apple M1 Max chip running macOS Tahoe 26.1 using the Criterion.rs statistics-driven micro-benchmarking library.</sub>
+
+## Testing
+
+simdna employs a comprehensive testing strategy to ensure correctness and robustness:
+
+### Unit Tests
+
+Run the standard test suite with:
+
+```bash
+cargo test
+```
+
+The unit tests cover:
+
+- Encoding and decoding of all IUPAC nucleotide codes
+- Case insensitivity handling
+- Invalid character handling
+- Odd and even length sequences
+- Empty input edge cases
+- SIMD and scalar implementation equivalence
+
+### Fuzz Testing
+
+simdna uses [`cargo-fuzz`](https://github.com/rust-fuzz/cargo-fuzz) for property-based fuzz testing to discover edge cases and potential bugs. The following fuzz targets are available:
+
+| Target | Description |
+|--------|-------------|
+| `roundtrip` | Verifies encode→decode produces consistent output |
+| `valid_iupac` | Tests encoding of valid IUPAC sequences |
+| `decode_robust` | Tests decoder resilience to arbitrary byte sequences |
+| `boundaries` | Tests sequence length boundary conditions |
+| `simd_scalar_equivalence` | Verifies SIMD and scalar implementations produce identical results |
+
+Run fuzz tests with:
+
+```bash
+cargo +nightly fuzz run <target> -- -max_total_time=60
+```
 
 ## License
 

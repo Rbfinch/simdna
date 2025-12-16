@@ -1,6 +1,6 @@
 [package]
 name = "simdna"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 authors = ["Nicholas D. Crosbie"]
 description = "High-performance SIMD-accelerated DNA sequence encoding supporting all IUPAC nucleotide codes"
