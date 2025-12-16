@@ -8,7 +8,8 @@ use simdna::dna_simd_encoder::{decode_dna, encode_dna};
 // ============================================================================
 
 /// Encode DNA sequence to 4-bit representation (scalar)
-/// Each nucleotide uses 4 bits: A=0000, C=0001, G=0010, T=0011
+/// Each nucleotide/IUPAC code uses 4 bits:
+/// A=0, C=1, G=2, T=3, R=4, Y=5, S=6, W=7, K=8, M=9, B=A, D=B, H=C, V=D, N=E, -=F
 /// 2 nucleotides packed per byte
 pub fn encode_dna_4bit_scalar(sequence: &[u8]) -> Vec<u8> {
     let padded_len = (sequence.len() + 1) & !1; // Pad to multiple of 2
@@ -52,23 +53,33 @@ pub fn decode_dna_4bit_scalar(encoded: &[u8], length: usize) -> Vec<u8> {
 #[inline]
 fn char_to_4bit(c: u8) -> u8 {
     match c {
-        b'A' | b'a' => 0,
-        b'C' | b'c' => 1,
-        b'G' | b'g' => 2,
-        b'T' | b't' => 3,
-        _ => 0, // Default to A for invalid characters
+        b'A' | b'a' => 0x0,
+        b'C' | b'c' => 0x1,
+        b'G' | b'g' => 0x2,
+        b'T' | b't' | b'U' | b'u' => 0x3,
+        b'R' | b'r' => 0x4,
+        b'Y' | b'y' => 0x5,
+        b'S' | b's' => 0x6,
+        b'W' | b'w' => 0x7,
+        b'K' | b'k' => 0x8,
+        b'M' | b'm' => 0x9,
+        b'B' | b'b' => 0xA,
+        b'D' | b'd' => 0xB,
+        b'H' | b'h' => 0xC,
+        b'V' | b'v' => 0xD,
+        b'N' | b'n' => 0xE,
+        b'-' | b'.' => 0xF,
+        _ => 0xF, // Default to gap for invalid characters
     }
 }
 
 #[inline]
 fn four_bit_to_char(bits: u8) -> u8 {
-    match bits & 0x03 {
-        0 => b'A',
-        1 => b'C',
-        2 => b'G',
-        3 => b'T',
-        _ => b'A',
-    }
+    const DECODE_TABLE: [u8; 16] = [
+        b'A', b'C', b'G', b'T', b'R', b'Y', b'S', b'W', b'K', b'M', b'B', b'D', b'H', b'V', b'N',
+        b'-',
+    ];
+    DECODE_TABLE[(bits & 0x0F) as usize]
 }
 
 // ============================================================================
@@ -163,13 +174,13 @@ fn generate_dna_sequence(len: usize) -> Vec<u8> {
 fn bench_encode(c: &mut Criterion) {
     let mut group = c.benchmark_group("encode");
 
-    // Test various sequence lengths
-    for size in [64, 256, 1024, 4096, 16384, 65536, 262144] {
+    // Test various sequence lengths (both even and odd to test scalar fallback)
+    for size in [63, 64, 255, 256, 1023, 1024, 4095, 4096, 9999, 10000] {
         let sequence = generate_dna_sequence(size);
 
         group.throughput(Throughput::Bytes(size as u64));
 
-        group.bench_with_input(BenchmarkId::new("simd_2bit", size), &sequence, |b, seq| {
+        group.bench_with_input(BenchmarkId::new("simd_4bit", size), &sequence, |b, seq| {
             b.iter(|| encode_dna(black_box(seq)));
         });
 
@@ -196,7 +207,8 @@ fn bench_encode(c: &mut Criterion) {
 fn bench_decode(c: &mut Criterion) {
     let mut group = c.benchmark_group("decode");
 
-    for size in [64, 256, 1024, 4096, 16384, 65536, 262144] {
+    // Test various sequence lengths (both even and odd to test scalar fallback)
+    for size in [63, 64, 255, 256, 1023, 1024, 4095, 4096, 9999, 10000] {
         let sequence = generate_dna_sequence(size);
 
         // Pre-encode for decode benchmarks
@@ -207,7 +219,7 @@ fn bench_decode(c: &mut Criterion) {
         group.throughput(Throughput::Bytes(size as u64));
 
         group.bench_with_input(
-            BenchmarkId::new("simd_2bit", size),
+            BenchmarkId::new("simd_4bit", size),
             &(&encoded_simd, size),
             |b, (encoded, len)| {
                 b.iter(|| decode_dna(black_box(encoded), black_box(*len)));
@@ -237,12 +249,13 @@ fn bench_decode(c: &mut Criterion) {
 fn bench_roundtrip(c: &mut Criterion) {
     let mut group = c.benchmark_group("roundtrip");
 
-    for size in [64, 256, 1024, 4096, 16384, 65536] {
+    // Test various sequence lengths (both even and odd to test scalar fallback)
+    for size in [63, 64, 255, 256, 1023, 1024, 4095, 4096, 9999, 10000] {
         let sequence = generate_dna_sequence(size);
 
         group.throughput(Throughput::Bytes(size as u64));
 
-        group.bench_with_input(BenchmarkId::new("simd_2bit", size), &sequence, |b, seq| {
+        group.bench_with_input(BenchmarkId::new("simd_4bit", size), &sequence, |b, seq| {
             b.iter(|| {
                 let encoded = encode_dna(black_box(seq));
                 decode_dna(black_box(&encoded), seq.len())

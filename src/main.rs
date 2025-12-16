@@ -3,17 +3,17 @@ mod dna_simd_encoder;
 use dna_simd_encoder::{decode_dna, encode_dna};
 
 fn main() {
-    // Test sequence: a portion of human mitochondrial DNA
-    let test_sequences = vec![
+    // Test sequences including IUPAC ambiguity codes
+    let test_sequences: [Vec<u8>; 6] = [
         b"ACGTACGTACGTACGT".to_vec(), // 16 nucleotides (perfect for SIMD)
         b"GATCGATCGATCGATC".to_vec(),
-        b"AAAAAAAAAAAAAAAA".to_vec(),
-        b"TTTTTTTTTTTTTTTT".to_vec(),
+        b"ACGTRYSWKMBDHVN-".to_vec(), // All 16 IUPAC codes
+        b"NNNNNNNNNNNNNNNN".to_vec(), // All N's (common in sequencing)
         b"ACGTACGTACGTACGTACGTACGTACGTACGT".to_vec(), // 32 nucleotides
-        b"ATGCGATACGTAGCTAGCTAGCTAGCTACGATCGTAGCTAGCTA".to_vec(), // 44 nucleotides
+        b"ATGCNNNNRYSWACGT".to_vec(), // Mixed with ambiguity codes
     ];
 
-    println!("DNA 2-bit Encoding Test (SIMD Implementation)\n");
+    println!("DNA 4-bit Encoding Test (SIMD Implementation)\n");
     println!("Architecture: {}", std::env::consts::ARCH);
 
     #[cfg(target_arch = "x86_64")]
@@ -71,6 +71,9 @@ fn main() {
     // Performance note
     println!("\nPerformance Notes:");
     println!("- SIMD processes 16 nucleotides per iteration");
-    println!("- 4:1 compression ratio (2 bits per nucleotide vs 8 bits ASCII)");
-    println!("- Expected speedup: 8-16x over scalar code on modern CPUs");
+    println!("- 2:1 compression ratio (4 bits per nucleotide vs 8 bits ASCII)");
+    println!(
+        "- Supports all 16 IUPAC nucleotide codes (A, C, G, T, R, Y, S, W, K, M, B, D, H, V, N, -)"
+    );
+    println!("- Expected speedup: 4-8x over scalar code on modern CPUs");
 }
