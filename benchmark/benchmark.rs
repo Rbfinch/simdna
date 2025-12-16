@@ -1,0 +1,279 @@
+use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
+
+// Import SIMD-accelerated functions from the main crate
+use simdna::dna_simd_encoder::{decode_dna, encode_dna};
+
+// ============================================================================
+// Scalar 4-bit Encoding Implementation (for comparison)
+// ============================================================================
+
+/// Encode DNA sequence to 4-bit representation (scalar)
+/// Each nucleotide uses 4 bits: A=0000, C=0001, G=0010, T=0011
+/// 2 nucleotides packed per byte
+pub fn encode_dna_4bit_scalar(sequence: &[u8]) -> Vec<u8> {
+    let padded_len = (sequence.len() + 1) & !1; // Pad to multiple of 2
+    let mut output = vec![0u8; padded_len / 2];
+
+    for (i, chunk) in sequence.chunks(2).enumerate() {
+        let high = char_to_4bit(chunk[0]);
+        let low = if chunk.len() > 1 {
+            char_to_4bit(chunk[1])
+        } else {
+            0 // Pad with A
+        };
+        output[i] = (high << 4) | low;
+    }
+
+    output
+}
+
+/// Decode 4-bit DNA representation back to ASCII (scalar)
+pub fn decode_dna_4bit_scalar(encoded: &[u8], length: usize) -> Vec<u8> {
+    let mut output = vec![0u8; length];
+    let mut out_idx = 0;
+
+    for &byte in encoded {
+        if out_idx >= length {
+            break;
+        }
+        output[out_idx] = four_bit_to_char((byte >> 4) & 0x0F);
+        out_idx += 1;
+
+        if out_idx >= length {
+            break;
+        }
+        output[out_idx] = four_bit_to_char(byte & 0x0F);
+        out_idx += 1;
+    }
+
+    output
+}
+
+#[inline]
+fn char_to_4bit(c: u8) -> u8 {
+    match c {
+        b'A' | b'a' => 0,
+        b'C' | b'c' => 1,
+        b'G' | b'g' => 2,
+        b'T' | b't' => 3,
+        _ => 0, // Default to A for invalid characters
+    }
+}
+
+#[inline]
+fn four_bit_to_char(bits: u8) -> u8 {
+    match bits & 0x03 {
+        0 => b'A',
+        1 => b'C',
+        2 => b'G',
+        3 => b'T',
+        _ => b'A',
+    }
+}
+
+// ============================================================================
+// Scalar 2-bit Encoding Implementation (for comparison)
+// ============================================================================
+
+/// Encode DNA sequence to 2-bit representation (pure scalar, no SIMD)
+/// Each nucleotide: A=00, C=01, G=10, T=11
+/// 4 nucleotides packed per byte
+pub fn encode_dna_2bit_scalar(sequence: &[u8]) -> Vec<u8> {
+    let padded_len = (sequence.len() + 3) & !3; // Pad to multiple of 4
+    let mut padded = sequence.to_vec();
+    padded.resize(padded_len, b'A');
+
+    let mut output = vec![0u8; padded_len / 4];
+
+    for (i, chunk) in padded.chunks_exact(4).enumerate() {
+        let packed = (char_to_2bit(chunk[0]) << 6)
+            | (char_to_2bit(chunk[1]) << 4)
+            | (char_to_2bit(chunk[2]) << 2)
+            | char_to_2bit(chunk[3]);
+        output[i] = packed;
+    }
+
+    output
+}
+
+/// Decode 2-bit DNA representation back to ASCII (pure scalar, no SIMD)
+pub fn decode_dna_2bit_scalar(encoded: &[u8], length: usize) -> Vec<u8> {
+    let mut output = vec![0u8; length];
+    let mut out_idx = 0;
+
+    for &byte in encoded {
+        if out_idx >= length {
+            break;
+        }
+        output[out_idx] = two_bit_to_char((byte >> 6) & 0x3);
+        out_idx += 1;
+
+        if out_idx >= length {
+            break;
+        }
+        output[out_idx] = two_bit_to_char((byte >> 4) & 0x3);
+        out_idx += 1;
+
+        if out_idx >= length {
+            break;
+        }
+        output[out_idx] = two_bit_to_char((byte >> 2) & 0x3);
+        out_idx += 1;
+
+        if out_idx >= length {
+            break;
+        }
+        output[out_idx] = two_bit_to_char(byte & 0x3);
+        out_idx += 1;
+    }
+
+    output
+}
+
+#[inline]
+fn char_to_2bit(c: u8) -> u8 {
+    match c {
+        b'A' | b'a' => 0,
+        b'C' | b'c' => 1,
+        b'G' | b'g' => 2,
+        b'T' | b't' => 3,
+        _ => 0,
+    }
+}
+
+#[inline]
+fn two_bit_to_char(bits: u8) -> u8 {
+    match bits & 0x3 {
+        0 => b'A',
+        1 => b'C',
+        2 => b'G',
+        3 => b'T',
+        _ => unreachable!(),
+    }
+}
+
+// ============================================================================
+// Benchmarks
+// ============================================================================
+
+fn generate_dna_sequence(len: usize) -> Vec<u8> {
+    (0..len).map(|i| b"ACGT"[i % 4]).collect()
+}
+
+fn bench_encode(c: &mut Criterion) {
+    let mut group = c.benchmark_group("encode");
+
+    // Test various sequence lengths
+    for size in [64, 256, 1024, 4096, 16384, 65536, 262144] {
+        let sequence = generate_dna_sequence(size);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        group.bench_with_input(BenchmarkId::new("simd_2bit", size), &sequence, |b, seq| {
+            b.iter(|| encode_dna(black_box(seq)));
+        });
+
+        group.bench_with_input(
+            BenchmarkId::new("scalar_2bit", size),
+            &sequence,
+            |b, seq| {
+                b.iter(|| encode_dna_2bit_scalar(black_box(seq)));
+            },
+        );
+
+        group.bench_with_input(
+            BenchmarkId::new("scalar_4bit", size),
+            &sequence,
+            |b, seq| {
+                b.iter(|| encode_dna_4bit_scalar(black_box(seq)));
+            },
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_decode(c: &mut Criterion) {
+    let mut group = c.benchmark_group("decode");
+
+    for size in [64, 256, 1024, 4096, 16384, 65536, 262144] {
+        let sequence = generate_dna_sequence(size);
+
+        // Pre-encode for decode benchmarks
+        let encoded_simd = encode_dna(&sequence);
+        let encoded_scalar_2bit = encode_dna_2bit_scalar(&sequence);
+        let encoded_scalar_4bit = encode_dna_4bit_scalar(&sequence);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        group.bench_with_input(
+            BenchmarkId::new("simd_2bit", size),
+            &(&encoded_simd, size),
+            |b, (encoded, len)| {
+                b.iter(|| decode_dna(black_box(encoded), black_box(*len)));
+            },
+        );
+
+        group.bench_with_input(
+            BenchmarkId::new("scalar_2bit", size),
+            &(&encoded_scalar_2bit, size),
+            |b, (encoded, len)| {
+                b.iter(|| decode_dna_2bit_scalar(black_box(encoded), black_box(*len)));
+            },
+        );
+
+        group.bench_with_input(
+            BenchmarkId::new("scalar_4bit", size),
+            &(&encoded_scalar_4bit, size),
+            |b, (encoded, len)| {
+                b.iter(|| decode_dna_4bit_scalar(black_box(encoded), black_box(*len)));
+            },
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_roundtrip(c: &mut Criterion) {
+    let mut group = c.benchmark_group("roundtrip");
+
+    for size in [64, 256, 1024, 4096, 16384, 65536] {
+        let sequence = generate_dna_sequence(size);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        group.bench_with_input(BenchmarkId::new("simd_2bit", size), &sequence, |b, seq| {
+            b.iter(|| {
+                let encoded = encode_dna(black_box(seq));
+                decode_dna(black_box(&encoded), seq.len())
+            });
+        });
+
+        group.bench_with_input(
+            BenchmarkId::new("scalar_2bit", size),
+            &sequence,
+            |b, seq| {
+                b.iter(|| {
+                    let encoded = encode_dna_2bit_scalar(black_box(seq));
+                    decode_dna_2bit_scalar(black_box(&encoded), seq.len())
+                });
+            },
+        );
+
+        group.bench_with_input(
+            BenchmarkId::new("scalar_4bit", size),
+            &sequence,
+            |b, seq| {
+                b.iter(|| {
+                    let encoded = encode_dna_4bit_scalar(black_box(seq));
+                    decode_dna_4bit_scalar(black_box(&encoded), seq.len())
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
+criterion_group!(benches, bench_encode, bench_decode, bench_roundtrip);
+criterion_main!(benches);
