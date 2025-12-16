@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) 2025-present Nicholas D. Crosbie
+# SPDX-License-Identifier: MIT
+
 """
 Plot benchmark results from CSV file.
 
@@ -68,16 +71,20 @@ def plot_benchmarks(results: dict, output_file: str = "benchmark_plot.png"):
         "scalar_4bit": {"color": "#f39c12", "marker": "D", "label": "Scalar 4-bit"},
     }
 
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    # Responsive sizing: wider aspect ratio works well on both mobile and desktop
+    fig, axes = plt.subplots(3, 1, figsize=(10, 14))
     fig.suptitle(
-        "DNA Encoding/Decoding Benchmark Results", fontsize=14, fontweight="bold"
+        "DNA Encoding/Decoding Benchmark Results",
+        fontsize=18,
+        fontweight="bold",
+        y=0.98,
     )
 
     for ax, operation in zip(axes, operations):
         op_data = results.get(operation, {})
 
         if not op_data:
-            ax.set_title(f"{operation.capitalize()} (no data)")
+            ax.set_title(f"{operation.capitalize()} (no data)", fontsize=14)
             continue
 
         for method, style in method_styles.items():
@@ -96,7 +103,7 @@ def plot_benchmarks(results: dict, output_file: str = "benchmark_plot.png"):
             yerr_low = [medians[i] - lows[i] for i in range(len(medians))]
             yerr_high = [highs[i] - medians[i] for i in range(len(medians))]
 
-            # Plot with error bars
+            # Plot with error bars - larger markers and thicker lines for visibility
             ax.errorbar(
                 seq_lengths,
                 medians,
@@ -104,25 +111,27 @@ def plot_benchmarks(results: dict, output_file: str = "benchmark_plot.png"):
                 fmt=style["marker"] + "-",
                 color=style["color"],
                 label=style["label"],
-                capsize=3,
-                capthick=1,
-                markersize=6,
-                linewidth=1.5,
-                alpha=0.8,
+                capsize=4,
+                capthick=1.5,
+                markersize=8,
+                linewidth=2,
+                alpha=0.85,
             )
 
-        ax.set_xlabel("Sequence Length (bases)", fontsize=11)
-        ax.set_ylabel("Time (ns)", fontsize=11)
-        ax.set_title(f"{operation.capitalize()}", fontsize=12, fontweight="bold")
+        ax.set_xlabel("Sequence Length (bases)", fontsize=13)
+        ax.set_ylabel("Time (ns)", fontsize=13)
+        ax.set_title(f"{operation.capitalize()}", fontsize=15, fontweight="bold")
         ax.set_xscale("log", base=10)
         ax.set_yscale("log")
+        ax.tick_params(axis="both", which="major", labelsize=11)
+        ax.tick_params(axis="both", which="minor", labelsize=9)
         ax.grid(True, which="major", axis="y", alpha=0.5, linestyle="-", linewidth=0.8)
         ax.grid(True, which="minor", axis="y", alpha=0.2, linestyle="--", linewidth=0.5)
         ax.grid(True, which="major", axis="x", alpha=0.3, linestyle="--", linewidth=0.5)
-        ax.legend(loc="upper left", fontsize=9)
+        ax.legend(loc="upper left", fontsize=11, framealpha=0.9)
 
-    plt.tight_layout()
-    plt.savefig(output_file, dpi=150, bbox_inches="tight")
+    plt.tight_layout(rect=[0, 0, 1, 0.97])
+    plt.savefig(output_file, dpi=200, bbox_inches="tight", facecolor="white")
     print(f"Plot saved to {output_file}")
 
     # Also show the plot
@@ -143,14 +152,20 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
         "scalar_4bit": {"color": "#f39c12", "marker": "D", "label": "Scalar 4-bit"},
     }
 
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-    fig.suptitle("DNA Encoding/Decoding Throughput", fontsize=14, fontweight="bold")
+    # Responsive sizing: wider aspect ratio works well on both mobile and desktop
+    fig, axes = plt.subplots(3, 1, figsize=(10, 14))
+    fig.suptitle(
+        "DNA Encoding/Decoding Throughput", fontsize=18, fontweight="bold", y=0.98
+    )
 
     for ax, operation in zip(axes, operations):
         op_data = results.get(operation, {})
 
         if not op_data:
-            ax.set_title(f"{titles.get(operation, operation.capitalize())} (no data)")
+            ax.set_title(
+                f"{titles.get(operation, operation.capitalize())} (no data)",
+                fontsize=14,
+            )
             continue
 
         for method, style in method_styles.items():
@@ -176,6 +191,7 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
                 throughput_high[i] - throughputs[i] for i in range(len(throughputs))
             ]
 
+            # Larger markers and thicker lines for visibility
             ax.errorbar(
                 seq_lengths,
                 throughputs,
@@ -183,18 +199,18 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
                 fmt=style["marker"] + "-",
                 color=style["color"],
                 label=style["label"],
-                capsize=3,
-                capthick=1,
-                markersize=6,
-                linewidth=1.5,
-                alpha=0.8,
+                capsize=4,
+                capthick=1.5,
+                markersize=8,
+                linewidth=2,
+                alpha=0.85,
             )
 
-        ax.set_xlabel("Sequence Length (bases)", fontsize=11)
-        ax.set_ylabel("Throughput (bases/s)", fontsize=11)
+        ax.set_xlabel("Sequence Length (bases)", fontsize=13)
+        ax.set_ylabel("Throughput (bases/s)", fontsize=13)
         ax.set_title(
             f"{titles.get(operation, operation.capitalize())} Throughput",
-            fontsize=12,
+            fontsize=15,
             fontweight="bold",
         )
         ax.set_xscale("log", base=10)
@@ -206,18 +222,19 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
         )
         ax.yaxis.set_major_formatter(FuncFormatter(format_throughput))
         ax.yaxis.set_minor_formatter(FuncFormatter(format_throughput))
-        ax.tick_params(axis="y", which="minor", labelsize=8)
+        ax.tick_params(axis="both", which="major", labelsize=11)
+        ax.tick_params(axis="both", which="minor", labelsize=9)
         ax.grid(True, which="major", axis="y", alpha=0.5, linestyle="-", linewidth=0.8)
         ax.grid(True, which="minor", axis="y", alpha=0.2, linestyle="--", linewidth=0.5)
         ax.grid(True, which="major", axis="x", alpha=0.3, linestyle="--", linewidth=0.5)
-        ax.legend(loc="lower right", fontsize=9)
+        ax.legend(loc="lower right", fontsize=11, framealpha=0.9)
 
         # Set Y-axis maximum for roundtrip to match encode scale
         if operation == "roundtrip":
             ax.set_ylim(top=2.0e9)
 
-    plt.tight_layout()
-    plt.savefig(output_file, dpi=150, bbox_inches="tight")
+    plt.tight_layout(rect=[0, 0, 1, 0.97])
+    plt.savefig(output_file, dpi=200, bbox_inches="tight", facecolor="white")
     print(f"Throughput plot saved to {output_file}")
     plt.show()
 
@@ -256,7 +273,7 @@ def main():
     # Find the CSV file in artefacts folder
     script_dir = Path(__file__).parent
     artefacts_dir = script_dir.parent / "artefacts"
-    csv_file = artefacts_dir / "benchmark_data.csv"
+    csv_file = artefacts_dir / "benchmark_data_optimised.csv"
 
     if not csv_file.exists():
         print(f"Error: CSV file not found at {csv_file}")

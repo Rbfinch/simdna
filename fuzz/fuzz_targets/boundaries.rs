@@ -1,3 +1,6 @@
+// Copyright (c) 2025-present Nicholas D. Crosbie
+// SPDX-License-Identifier: MIT
+
 //! SIMD boundary condition fuzzing.
 //!
 //! Tests edge cases around SIMD width boundaries (16, 32, 64 bytes) where
@@ -67,7 +70,8 @@ fuzz_target!(|data: &[u8]| {
         for (i, (&input, &output)) in data.iter().zip(decoded.iter()).enumerate() {
             let expected = normalize_char(input);
             assert_eq!(
-                output, expected,
+                output,
+                expected,
                 "Round-trip failed at fuzzer length {}, position {}",
                 data.len(),
                 i

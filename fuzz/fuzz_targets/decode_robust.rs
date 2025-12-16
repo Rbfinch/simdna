@@ -1,3 +1,6 @@
+// Copyright (c) 2025-present Nicholas D. Crosbie
+// SPDX-License-Identifier: MIT
+
 //! Decode robustness fuzzing.
 //!
 //! Tests that the decoder handles arbitrary (potentially malformed) input

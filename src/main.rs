@@ -1,3 +1,6 @@
+// Copyright (c) 2025-present Nicholas D. Crosbie
+// SPDX-License-Identifier: MIT
+
 mod dna_simd_encoder;
 
 use dna_simd_encoder::{

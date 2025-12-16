@@ -1,3 +1,6 @@
+// Copyright (c) 2025-present Nicholas D. Crosbie
+// SPDX-License-Identifier: MIT
+
 //! # DNA 4-bit Encoding Library
 //!
 //! High-performance DNA sequence encoding and decoding using SIMD instructions

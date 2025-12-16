@@ -1,3 +1,6 @@
+// Copyright (c) 2025-present Nicholas D. Crosbie
+// SPDX-License-Identifier: MIT
+
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 

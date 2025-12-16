@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) 2025-present Nicholas D. Crosbie
+# SPDX-License-Identifier: MIT
+
 """
 Convert benchmark output text to CSV format.
 

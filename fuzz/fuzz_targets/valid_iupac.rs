@@ -1,3 +1,6 @@
+// Copyright (c) 2025-present Nicholas D. Crosbie
+// SPDX-License-Identifier: MIT
+
 //! Valid IUPAC input fuzzing.
 //!
 //! Generates sequences containing only valid IUPAC nucleotide codes and

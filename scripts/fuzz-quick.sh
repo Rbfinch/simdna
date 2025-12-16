@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright (c) 2025-present Nicholas D. Crosbie
+# SPDX-License-Identifier: MIT
+
 # Quick fuzzing script for local development
 # Runs each fuzz target for 60 seconds (5 minutes total)
 

@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright (c) 2025-present Nicholas D. Crosbie
+# SPDX-License-Identifier: MIT
+
 # Nightly fuzzing script for thorough testing
 # Runs each fuzz target for 10 minutes (50 minutes total)
 

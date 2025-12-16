@@ -1,3 +1,6 @@
+// Copyright (c) 2025-present Nicholas D. Crosbie
+// SPDX-License-Identifier: MIT
+
 //! SIMD vs Scalar equivalence fuzzing.
 //!
 //! Ensures that the SIMD and scalar implementations produce identical results

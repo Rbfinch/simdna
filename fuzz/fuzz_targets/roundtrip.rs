@@ -1,3 +1,6 @@
+// Copyright (c) 2025-present Nicholas D. Crosbie
+// SPDX-License-Identifier: MIT
+
 //! Round-trip fuzzing: encode -> decode should produce the original sequence.
 //!
 //! This is the most important fuzz target as it verifies the fundamental
