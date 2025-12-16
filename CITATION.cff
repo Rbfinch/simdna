@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+title: simdna
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - family-names: Crosbie
+    given-names: Nicholas D.
+repository-code: https://github.com/Rbfinch/simdna
+url: https://github.com/Rbfinch/simdna
+abstract: >-
+  High-performance SIMD-accelerated DNA/RNA sequence encoding
+  and decoding supporting all IUPAC nucleotide codes. Features
+  4-bit encoding with automatic fallback to scalar implementations
+  on unsupported platforms.
+keywords:
+  - dna
+  - rna
+  - simd
+  - bioinformatics
+  - encoding
+  - iupac
+  - nucleotide
+license: MIT
+version: 1.0.0
+date-released: 2024-12-17
