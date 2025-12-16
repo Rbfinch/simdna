@@ -5,7 +5,9 @@
 //!
 //! ## Encoding Scheme
 //!
-//! DNA nucleotides and IUPAC ambiguity codes are encoded using 4 bits each:
+//! DNA/RNA nucleotides and IUPAC ambiguity codes are encoded using 4 bits each:
+//!
+//! ### Standard Nucleotides
 //!
 //! | Code | Meaning              | Binary |
 //! |------|----------------------|--------|
@@ -13,18 +15,35 @@
 //! | C    | Cytosine             | 0x1    |
 //! | G    | Guanine              | 0x2    |
 //! | T    | Thymine              | 0x3    |
+//! | U    | Uracil (RNA → T)     | 0x3    |
+//!
+//! ### Two-Base Ambiguity Codes
+//!
+//! | Code | Meaning              | Binary |
+//! |------|----------------------|--------|
 //! | R    | A or G (purine)      | 0x4    |
 //! | Y    | C or T (pyrimidine)  | 0x5    |
 //! | S    | G or C (strong)      | 0x6    |
 //! | W    | A or T (weak)        | 0x7    |
 //! | K    | G or T (keto)        | 0x8    |
 //! | M    | A or C (amino)       | 0x9    |
+//!
+//! ### Three-Base Ambiguity Codes
+//!
+//! | Code | Meaning              | Binary |
+//! |------|----------------------|--------|
 //! | B    | C, G, or T (not A)   | 0xA    |
 //! | D    | A, G, or T (not C)   | 0xB    |
 //! | H    | A, C, or T (not G)   | 0xC    |
 //! | V    | A, C, or G (not T)   | 0xD    |
+//!
+//! ### Wildcards and Gaps
+//!
+//! | Code | Meaning              | Binary |
+//! |------|----------------------|--------|
 //! | N    | Any base             | 0xE    |
-//! | -    | Gap / Unknown        | 0xF    |
+//! | -    | Gap / deletion       | 0xF    |
+//! | .    | Gap (alternative)    | 0xF    |
 //!
 //! This allows 2 nucleotides to be packed into a single byte, achieving a 2:1
 //! compression ratio compared to ASCII representation while faithfully preserving
@@ -73,8 +92,15 @@
 //!
 //! ## Invalid Characters
 //!
-//! Characters not in the IUPAC nucleotide alphabet are encoded as gap/unknown
-//! (`0xF`) and decode back to `-`.
+//! Characters not in the IUPAC nucleotide alphabet (including X, digits,
+//! whitespace, and other symbols) are encoded as gap/unknown (`0xF`) and
+//! decode back to `-`.
+//!
+//! ## RNA Support
+//!
+//! RNA sequences using U (Uracil) are fully supported. Uracil is encoded
+//! identically to Thymine (0x3) and decodes back to T, enabling seamless
+//! processing of both DNA and RNA sequences.
 //!
 //! ## Performance Considerations
 //!
@@ -141,11 +167,11 @@ pub mod encoding {
 /// | A     | 0x0      | K     | 0x8      |
 /// | C     | 0x1      | M     | 0x9      |
 /// | G     | 0x2      | B     | 0xA      |
-/// | T     | 0x3      | D     | 0xB      |
+/// | T, U  | 0x3      | D     | 0xB      |
 /// | R     | 0x4      | H     | 0xC      |
 /// | Y     | 0x5      | V     | 0xD      |
 /// | S     | 0x6      | N     | 0xE      |
-/// | W     | 0x7      | -/.   | 0xF      |
+/// | W     | 0x7      | -, .  | 0xF      |
 ///
 /// # Arguments
 ///

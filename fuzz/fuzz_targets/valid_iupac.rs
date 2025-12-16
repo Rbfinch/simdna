@@ -8,9 +8,11 @@
 use libfuzzer_sys::fuzz_target;
 use simdna::dna_simd_encoder::{decode_dna_prefer_simd, encode_dna_prefer_simd};
 
-/// Valid IUPAC nucleotide codes (uppercase and lowercase)
-const VALID_BASES_UPPER: &[u8] = b"ACGTRYSWKMBDHVN-";
-const VALID_BASES_LOWER: &[u8] = b"acgtryswkmbdhvn.";
+/// Valid IUPAC nucleotide codes (uppercase) including U for RNA
+/// Standard codes: A, C, G, T, U (RNA), R, Y, S, W, K, M, B, D, H, V, N, -
+const VALID_BASES_UPPER: &[u8] = b"ACGTURYSWKMBDHVN-";
+/// Valid IUPAC nucleotide codes (lowercase) including u for RNA
+const VALID_BASES_LOWER: &[u8] = b"acgturyswkmbdhvn.";
 
 fuzz_target!(|data: &[u8]| {
     // Skip empty input
