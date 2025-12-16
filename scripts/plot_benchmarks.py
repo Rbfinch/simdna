@@ -253,9 +253,10 @@ def print_summary(results: dict):
 
 
 def main():
-    # Find the CSV file
+    # Find the CSV file in artefacts folder
     script_dir = Path(__file__).parent
-    csv_file = script_dir / "benchmark_data.csv"
+    artefacts_dir = script_dir.parent / "artefacts"
+    csv_file = artefacts_dir / "benchmark_data.csv"
 
     if not csv_file.exists():
         print(f"Error: CSV file not found at {csv_file}")
@@ -272,9 +273,9 @@ def main():
     # Print summary
     print_summary(results)
 
-    # Create plots
-    plot_benchmarks(results, str(script_dir / "benchmark_plot.png"))
-    plot_throughput(results, str(script_dir / "throughput_plot.png"))
+    # Create plots in artefacts folder
+    plot_benchmarks(results, str(artefacts_dir / "benchmark_plot.png"))
+    plot_throughput(results, str(artefacts_dir / "throughput_plot.png"))
 
     return 0
 

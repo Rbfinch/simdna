@@ -99,9 +99,10 @@ def write_csv(results: list[dict], output_file: Path):
 
 def main():
     script_dir = Path(__file__).parent
+    artefacts_dir = script_dir.parent / "artefacts"
 
-    input_file = script_dir / "benchmark_output.txt"
-    output_file = script_dir / "benchmark_data.csv"
+    input_file = artefacts_dir / "benchmark_output.txt"
+    output_file = artefacts_dir / "benchmark_data.csv"
 
     if len(sys.argv) > 1:
         input_file = Path(sys.argv[1])
