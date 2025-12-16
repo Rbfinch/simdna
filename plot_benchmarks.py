@@ -212,6 +212,10 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
         ax.grid(True, which="major", axis="x", alpha=0.3, linestyle="--", linewidth=0.5)
         ax.legend(loc="lower right", fontsize=9)
 
+        # Set Y-axis maximum for roundtrip to match encode scale
+        if operation == "roundtrip":
+            ax.set_ylim(top=2.0e9)
+
     plt.tight_layout()
     plt.savefig(output_file, dpi=150, bbox_inches="tight")
     print(f"Throughput plot saved to {output_file}")
