@@ -1,6 +1,8 @@
 mod dna_simd_encoder;
 
-use dna_simd_encoder::{decode_dna, encode_dna};
+use dna_simd_encoder::{
+    decode_dna_prefer_simd as decode_dna, encode_dna_prefer_simd as encode_dna,
+};
 
 fn main() {
     // Test sequences including IUPAC ambiguity codes

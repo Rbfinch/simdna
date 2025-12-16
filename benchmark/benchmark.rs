@@ -2,7 +2,7 @@ use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_m
 use std::hint::black_box;
 
 // Import SIMD-accelerated functions from the main crate
-use simdna::dna_simd_encoder::{decode_dna, encode_dna};
+use simdna::dna_simd_encoder::{decode_dna_prefer_simd, encode_dna_prefer_simd};
 
 /// Package version from Cargo.toml
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -213,7 +213,7 @@ fn bench_encode(c: &mut Criterion) {
         group.throughput(Throughput::Bytes(size as u64));
 
         group.bench_with_input(BenchmarkId::new("simd_4bit", size), &sequence, |b, seq| {
-            b.iter(|| encode_dna(black_box(seq)));
+            b.iter(|| encode_dna_prefer_simd(black_box(seq)));
         });
 
         group.bench_with_input(
@@ -251,7 +251,7 @@ fn bench_decode(c: &mut Criterion) {
         let sequence = generate_dna_sequence(size);
 
         // Pre-encode for decode benchmarks
-        let encoded_simd = encode_dna(&sequence);
+        let encoded_simd = encode_dna_prefer_simd(&sequence);
         let encoded_scalar_2bit = encode_dna_2bit_scalar(&sequence);
         let encoded_scalar_4bit = encode_dna_4bit_scalar(&sequence);
 
@@ -261,7 +261,7 @@ fn bench_decode(c: &mut Criterion) {
             BenchmarkId::new("simd_4bit", size),
             &(&encoded_simd, size),
             |b, (encoded, len)| {
-                b.iter(|| decode_dna(black_box(encoded), black_box(*len)));
+                b.iter(|| decode_dna_prefer_simd(black_box(encoded), black_box(*len)));
             },
         );
 
@@ -303,8 +303,8 @@ fn bench_roundtrip(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("simd_4bit", size), &sequence, |b, seq| {
             b.iter(|| {
-                let encoded = encode_dna(black_box(seq));
-                decode_dna(black_box(&encoded), seq.len())
+                let encoded = encode_dna_prefer_simd(black_box(seq));
+                decode_dna_prefer_simd(black_box(&encoded), seq.len())
             });
         });
 

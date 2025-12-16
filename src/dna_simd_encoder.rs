@@ -51,17 +51,17 @@
 //! ## Example Usage
 //!
 //! ```rust
-//! use simdna::dna_simd_encoder::{encode_dna, decode_dna};
+//! use simdna::dna_simd_encoder::{encode_dna_prefer_simd, decode_dna_prefer_simd};
 //!
 //! // Encode a DNA sequence with IUPAC codes
 //! let sequence = b"ACGTNRYSWKMBDHV-";
-//! let encoded = encode_dna(sequence);
+//! let encoded = encode_dna_prefer_simd(sequence);
 //!
 //! // The encoded data is 2x smaller (2 nucleotides per byte)
 //! assert_eq!(encoded.len(), sequence.len() / 2);
 //!
 //! // Decode back to the original sequence
-//! let decoded = decode_dna(&encoded, sequence.len());
+//! let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
 //! assert_eq!(decoded, sequence);
 //! ```
 //!
@@ -179,9 +179,9 @@ pub mod encoding {
 ///
 /// Basic encoding:
 /// ```rust
-/// use simdna::dna_simd_encoder::encode_dna;
+/// use simdna::dna_simd_encoder::encode_dna_prefer_simd;
 ///
-/// let encoded = encode_dna(b"ACGT");
+/// let encoded = encode_dna_prefer_simd(b"ACGT");
 /// // A=0x0, C=0x1, G=0x2, T=0x3
 /// // Packed: (A<<4|C), (G<<4|T) = 0x01, 0x23
 /// assert_eq!(encoded, vec![0x01, 0x23]);
@@ -189,23 +189,23 @@ pub mod encoding {
 ///
 /// IUPAC ambiguity codes are preserved:
 /// ```rust
-/// use simdna::dna_simd_encoder::{encode_dna, decode_dna};
+/// use simdna::dna_simd_encoder::{encode_dna_prefer_simd, decode_dna_prefer_simd};
 ///
 /// let sequence = b"ACNGT";
-/// let encoded = encode_dna(sequence);
-/// let decoded = decode_dna(&encoded, sequence.len());
+/// let encoded = encode_dna_prefer_simd(sequence);
+/// let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
 /// assert_eq!(decoded, b"ACNGT");
 /// ```
 ///
 /// Compression ratio:
 /// ```rust
-/// use simdna::dna_simd_encoder::encode_dna;
+/// use simdna::dna_simd_encoder::encode_dna_prefer_simd;
 ///
 /// let sequence = b"ACGTACGTACGTACGT"; // 16 bytes
-/// let encoded = encode_dna(sequence);
+/// let encoded = encode_dna_prefer_simd(sequence);
 /// assert_eq!(encoded.len(), 8); // 8 bytes (2:1 compression)
 /// ```
-pub fn encode_dna(sequence: &[u8]) -> Vec<u8> {
+pub fn encode_dna_prefer_simd(sequence: &[u8]) -> Vec<u8> {
     // Normalize to uppercase for consistent encoding
     let normalized: Vec<u8> = sequence.iter().map(|&c| c.to_ascii_uppercase()).collect();
 
@@ -309,24 +309,24 @@ fn encode_with_simd_if_available(padded: &[u8], output: &mut [u8]) -> bool {
 ///
 /// Basic decoding:
 /// ```rust
-/// use simdna::dna_simd_encoder::{encode_dna, decode_dna};
+/// use simdna::dna_simd_encoder::{encode_dna_prefer_simd, decode_dna_prefer_simd};
 ///
 /// let original = b"ACGTRYSWKMBDHVN-";
-/// let encoded = encode_dna(original);
-/// let decoded = decode_dna(&encoded, original.len());
+/// let encoded = encode_dna_prefer_simd(original);
+/// let decoded = decode_dna_prefer_simd(&encoded, original.len());
 /// assert_eq!(decoded, original);
 /// ```
 ///
 /// Partial decoding:
 /// ```rust
-/// use simdna::dna_simd_encoder::{encode_dna, decode_dna};
+/// use simdna::dna_simd_encoder::{encode_dna_prefer_simd, decode_dna_prefer_simd};
 ///
 /// let original = b"ACGTACGT";
-/// let encoded = encode_dna(original);
-/// let first_four = decode_dna(&encoded, 4);
+/// let encoded = encode_dna_prefer_simd(original);
+/// let first_four = decode_dna_prefer_simd(&encoded, 4);
 /// assert_eq!(first_four, b"ACGT");
 /// ```
-pub fn decode_dna(encoded: &[u8], length: usize) -> Vec<u8> {
+pub fn decode_dna_prefer_simd(encoded: &[u8], length: usize) -> Vec<u8> {
     let mut output = vec![0u8; length];
 
     // Try SIMD implementations first, fall back to scalar
@@ -650,7 +650,7 @@ unsafe fn decode_arm_neon(encoded: &[u8], output: &mut [u8], length: usize) {
 /// # Panics
 ///
 /// Panics if `output` is too small to hold the encoded result.
-fn encode_scalar(sequence: &[u8], output: &mut [u8]) {
+pub fn encode_scalar(sequence: &[u8], output: &mut [u8]) {
     for (i, chunk) in sequence.chunks_exact(2).enumerate() {
         let packed = (char_to_4bit(chunk[0]) << 4) | char_to_4bit(chunk[1]);
         output[i] = packed;
@@ -675,7 +675,7 @@ fn encode_scalar(sequence: &[u8], output: &mut [u8]) {
 ///
 /// Stops decoding when `length` nucleotides have been written, handling
 /// cases where the original sequence length was not a multiple of 2.
-fn decode_scalar(encoded: &[u8], output: &mut [u8], length: usize) {
+pub fn decode_scalar(encoded: &[u8], output: &mut [u8], length: usize) {
     let mut out_idx = 0;
     for &byte in encoded {
         if out_idx >= length {
@@ -895,8 +895,8 @@ mod tests {
     #[test]
     fn test_encode_decode_roundtrip_standard_bases() {
         let sequence = b"ACGT";
-        let encoded = encode_dna(sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, sequence);
     }
 
@@ -904,8 +904,8 @@ mod tests {
     #[test]
     fn test_encode_decode_roundtrip_all_iupac() {
         let sequence = b"ACGTRYSWKMBDHVN-";
-        let encoded = encode_dna(sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, sequence);
     }
 
@@ -913,9 +913,9 @@ mod tests {
     #[test]
     fn test_encode_decode_roundtrip_16_nucleotides() {
         let sequence = b"ACGTACGTACGTACGT";
-        let encoded = encode_dna(sequence);
+        let encoded = encode_dna_prefer_simd(sequence);
         assert_eq!(encoded.len(), 8); // 16 / 2 = 8
-        let decoded = decode_dna(&encoded, sequence.len());
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, sequence);
     }
 
@@ -923,9 +923,9 @@ mod tests {
     #[test]
     fn test_encode_decode_roundtrip_32_nucleotides() {
         let sequence = b"ACGTACGTACGTACGTACGTACGTACGTACGT";
-        let encoded = encode_dna(sequence);
+        let encoded = encode_dna_prefer_simd(sequence);
         assert_eq!(encoded.len(), 16);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, sequence);
     }
 
@@ -934,8 +934,8 @@ mod tests {
     fn test_encode_decode_roundtrip_non_aligned() {
         for len in [1, 2, 3, 5, 7, 11, 15, 16, 17, 19, 23, 31, 32, 33, 48, 50] {
             let sequence: Vec<u8> = (0..len).map(|i| b"ACGT"[i % 4]).collect();
-            let encoded = encode_dna(&sequence);
-            let decoded = decode_dna(&encoded, sequence.len());
+            let encoded = encode_dna_prefer_simd(&sequence);
+            let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
             assert_eq!(decoded, sequence, "Failed for length {}", len);
         }
     }
@@ -944,7 +944,7 @@ mod tests {
     #[test]
     fn test_encode_compression_ratio() {
         let sequence = b"ACGTACGTACGTACGT"; // 16 bytes
-        let encoded = encode_dna(sequence);
+        let encoded = encode_dna_prefer_simd(sequence);
         assert_eq!(encoded.len(), 8); // 2:1 compression
     }
 
@@ -952,7 +952,7 @@ mod tests {
     #[test]
     fn test_encode_empty_sequence() {
         let sequence = b"";
-        let encoded = encode_dna(sequence);
+        let encoded = encode_dna_prefer_simd(sequence);
         assert!(encoded.is_empty());
     }
 
@@ -961,8 +961,8 @@ mod tests {
     fn test_encode_single_nucleotide() {
         for &base in b"ACGTRYSWKMBDHVN-".iter() {
             let sequence = [base];
-            let encoded = encode_dna(&sequence);
-            let decoded = decode_dna(&encoded, 1);
+            let encoded = encode_dna_prefer_simd(&sequence);
+            let decoded = decode_dna_prefer_simd(&encoded, 1);
             assert_eq!(decoded[0], base, "Failed for base {}", base as char);
         }
     }
@@ -972,13 +972,13 @@ mod tests {
     fn test_encode_specific_values() {
         // AC should encode to 0x01 (A=0x0 in high nibble, C=0x1 in low nibble)
         let sequence = b"AC";
-        let encoded = encode_dna(sequence);
+        let encoded = encode_dna_prefer_simd(sequence);
         assert_eq!(encoded.len(), 1);
         assert_eq!(encoded[0], 0x01);
 
         // GT should encode to 0x23
         let sequence = b"GT";
-        let encoded = encode_dna(sequence);
+        let encoded = encode_dna_prefer_simd(sequence);
         assert_eq!(encoded[0], 0x23);
     }
 
@@ -990,8 +990,8 @@ mod tests {
     #[test]
     fn test_iupac_codes_preserved() {
         let codes = b"ACGTRYSWKMBDHVN-";
-        let encoded = encode_dna(codes);
-        let decoded = decode_dna(&encoded, codes.len());
+        let encoded = encode_dna_prefer_simd(codes);
+        let decoded = decode_dna_prefer_simd(&encoded, codes.len());
         assert_eq!(decoded, codes);
     }
 
@@ -1000,8 +1000,8 @@ mod tests {
     fn test_iupac_in_long_sequence() {
         // Mix of standard and IUPAC codes
         let sequence = b"ACGTNNNNACGTRYSWACGTKMBDHVNACGT";
-        let encoded = encode_dna(sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, sequence);
     }
 
@@ -1009,8 +1009,8 @@ mod tests {
     #[test]
     fn test_iupac_n_at_simd_boundary() {
         let sequence = b"NNNNNNNNNNNNNNNN"; // 16 N's
-        let encoded = encode_dna(sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, sequence);
     }
 
@@ -1018,8 +1018,8 @@ mod tests {
     #[test]
     fn test_iupac_lowercase() {
         let sequence = b"acgtryswkmbdhvn";
-        let encoded = encode_dna(sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         // Decoded should be uppercase
         assert_eq!(decoded, b"ACGTRYSWKMBDHVN");
     }
@@ -1031,27 +1031,27 @@ mod tests {
         // Format: (high_nibble << 4) | low_nibble
 
         // RY should encode to 0x45 (R=0x4, Y=0x5)
-        let encoded = encode_dna(b"RY");
+        let encoded = encode_dna_prefer_simd(b"RY");
         assert_eq!(encoded[0], 0x45, "RY should encode to 0x45");
 
         // SW should encode to 0x67 (S=0x6, W=0x7)
-        let encoded = encode_dna(b"SW");
+        let encoded = encode_dna_prefer_simd(b"SW");
         assert_eq!(encoded[0], 0x67, "SW should encode to 0x67");
 
         // KM should encode to 0x89 (K=0x8, M=0x9)
-        let encoded = encode_dna(b"KM");
+        let encoded = encode_dna_prefer_simd(b"KM");
         assert_eq!(encoded[0], 0x89, "KM should encode to 0x89");
 
         // BD should encode to 0xAB (B=0xA, D=0xB)
-        let encoded = encode_dna(b"BD");
+        let encoded = encode_dna_prefer_simd(b"BD");
         assert_eq!(encoded[0], 0xAB, "BD should encode to 0xAB");
 
         // HV should encode to 0xCD (H=0xC, V=0xD)
-        let encoded = encode_dna(b"HV");
+        let encoded = encode_dna_prefer_simd(b"HV");
         assert_eq!(encoded[0], 0xCD, "HV should encode to 0xCD");
 
         // N- should encode to 0xEF (N=0xE, -=0xF)
-        let encoded = encode_dna(b"N-");
+        let encoded = encode_dna_prefer_simd(b"N-");
         assert_eq!(encoded[0], 0xEF, "N- should encode to 0xEF");
     }
 
@@ -1077,7 +1077,7 @@ mod tests {
             // Put code in second position (low nibble)
             // A encodes to 0x0, so expected_byte is just the low nibble value
             let sequence = [b'A', code];
-            let encoded = encode_dna(&sequence);
+            let encoded = encode_dna_prefer_simd(&sequence);
             let expected_byte = expected_nibble; // A (0x0) in high nibble
             assert_eq!(
                 encoded[0], expected_byte,
@@ -1109,7 +1109,7 @@ mod tests {
             // Put code in first position (high nibble)
             // A encodes to 0x0, so expected_byte is just the shifted nibble
             let sequence = [code, b'A'];
-            let encoded = encode_dna(&sequence);
+            let encoded = encode_dna_prefer_simd(&sequence);
             let expected_byte = expected_nibble << 4; // A (0x0) in low nibble
             assert_eq!(
                 encoded[0], expected_byte,
@@ -1158,8 +1158,8 @@ mod tests {
         sequence[16] = b'Y';
         sequence[17] = b'S';
 
-        let encoded = encode_dna(&sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(&sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, sequence);
     }
 
@@ -1170,9 +1170,9 @@ mod tests {
         let pattern = b"ACGTRYSWKMBDHVN-";
         let sequence: Vec<u8> = pattern.iter().cycle().take(64).copied().collect();
 
-        let encoded = encode_dna(&sequence);
+        let encoded = encode_dna_prefer_simd(&sequence);
         assert_eq!(encoded.len(), 32); // 64 / 2 = 32
-        let decoded = decode_dna(&encoded, sequence.len());
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, sequence);
     }
 
@@ -1184,20 +1184,20 @@ mod tests {
         for &code in iupac_codes {
             // Single character
             let single = [code];
-            let encoded = encode_dna(&single);
-            let decoded = decode_dna(&encoded, 1);
+            let encoded = encode_dna_prefer_simd(&single);
+            let decoded = decode_dna_prefer_simd(&encoded, 1);
             assert_eq!(decoded[0], code, "Single {} failed roundtrip", code as char);
 
             // Paired with itself
             let paired = [code, code];
-            let encoded = encode_dna(&paired);
-            let decoded = decode_dna(&encoded, 2);
+            let encoded = encode_dna_prefer_simd(&paired);
+            let decoded = decode_dna_prefer_simd(&encoded, 2);
             assert_eq!(decoded, paired, "Paired {} failed roundtrip", code as char);
 
             // 16 of the same code (SIMD path)
             let sixteen: Vec<u8> = vec![code; 16];
-            let encoded = encode_dna(&sixteen);
-            let decoded = decode_dna(&encoded, 16);
+            let encoded = encode_dna_prefer_simd(&sixteen);
+            let decoded = decode_dna_prefer_simd(&encoded, 16);
             assert_eq!(decoded, sixteen, "16x {} failed roundtrip", code as char);
         }
     }
@@ -1206,8 +1206,8 @@ mod tests {
     #[test]
     fn test_iupac_interspersed_with_bases() {
         let sequence = b"ANCTGNRTYCSWAGKT";
-        let encoded = encode_dna(sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, sequence);
     }
 
@@ -1215,8 +1215,8 @@ mod tests {
     #[test]
     fn test_iupac_dot_as_gap() {
         let sequence = b"AC.GT";
-        let encoded = encode_dna(sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         // Dot should decode as dash (gap)
         assert_eq!(decoded, b"AC-GT");
     }
@@ -1229,8 +1229,8 @@ mod tests {
     #[test]
     fn test_all_lowercase_encoding() {
         let sequence = b"acgtacgtacgtacgt";
-        let encoded = encode_dna(sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, b"ACGTACGTACGTACGT");
     }
 
@@ -1238,8 +1238,8 @@ mod tests {
     #[test]
     fn test_mixed_case_encoding() {
         let sequence = b"AcGtAcGtAcGtAcGt";
-        let encoded = encode_dna(sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, b"ACGTACGTACGTACGT");
     }
 
@@ -1250,13 +1250,13 @@ mod tests {
         let lower = b"acgtryswkmbdhvn";
         let mixed = b"AcGtRySw";
 
-        let enc_upper = encode_dna(upper);
-        let enc_lower = encode_dna(lower);
+        let enc_upper = encode_dna_prefer_simd(upper);
+        let enc_lower = encode_dna_prefer_simd(lower);
 
         assert_eq!(enc_upper, enc_lower);
 
-        let enc_mixed = encode_dna(mixed);
-        let enc_upper_part = encode_dna(b"ACGTRYSW");
+        let enc_mixed = encode_dna_prefer_simd(mixed);
+        let enc_upper_part = encode_dna_prefer_simd(b"ACGTRYSW");
         assert_eq!(enc_mixed, enc_upper_part);
     }
 
@@ -1268,8 +1268,8 @@ mod tests {
     #[test]
     fn test_invalid_characters_become_gaps() {
         let sequence = b"ACXZGT";
-        let encoded = encode_dna(sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         // X and Z are invalid, should become '-'
         assert_eq!(decoded, b"AC--GT");
     }
@@ -1278,8 +1278,8 @@ mod tests {
     #[test]
     fn test_whitespace_becomes_gaps() {
         let sequence = b"AC GT";
-        let encoded = encode_dna(sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, b"AC-GT");
     }
 
@@ -1287,8 +1287,8 @@ mod tests {
     #[test]
     fn test_numbers_become_gaps() {
         let sequence = b"A1C2G3T4";
-        let encoded = encode_dna(sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, b"A-C-G-T-");
     }
 
@@ -1300,8 +1300,8 @@ mod tests {
     #[test]
     fn test_large_sequence() {
         let sequence: Vec<u8> = (0..1000).map(|i| b"ACGTRYSWKMBDHVN-"[i % 16]).collect();
-        let encoded = encode_dna(&sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(&sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, sequence);
     }
 
@@ -1310,8 +1310,8 @@ mod tests {
     fn test_very_large_sequence_with_remainder() {
         let len = 10_007; // Prime number
         let sequence: Vec<u8> = (0..len).map(|i| b"ACGTN"[i % 5]).collect();
-        let encoded = encode_dna(&sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(&sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, sequence);
     }
 
@@ -1319,8 +1319,8 @@ mod tests {
     #[test]
     fn test_decode_partial_length() {
         let sequence = b"ACGTACGT";
-        let encoded = encode_dna(sequence);
-        let decoded = decode_dna(&encoded, 5);
+        let encoded = encode_dna_prefer_simd(sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, 5);
         assert_eq!(decoded, b"ACGTA");
     }
 
@@ -1329,8 +1329,8 @@ mod tests {
     fn test_lengths_1_to_100() {
         for len in 1..=100 {
             let sequence: Vec<u8> = (0..len).map(|i| b"ACGTN"[i % 5]).collect();
-            let encoded = encode_dna(&sequence);
-            let decoded = decode_dna(&encoded, sequence.len());
+            let encoded = encode_dna_prefer_simd(&sequence);
+            let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
             assert_eq!(decoded, sequence, "Failed for length {}", len);
         }
     }
@@ -1367,19 +1367,19 @@ mod tests {
         // Format: high nibble = first nucleotide, low nibble = second
 
         // 0x01 = AC, 0x23 = GT
-        let decoded = decode_dna(&[0x01, 0x23], 4);
+        let decoded = decode_dna_prefer_simd(&[0x01, 0x23], 4);
         assert_eq!(decoded, b"ACGT");
 
         // 0x45 = RY, 0x67 = SW
-        let decoded = decode_dna(&[0x45, 0x67], 4);
+        let decoded = decode_dna_prefer_simd(&[0x45, 0x67], 4);
         assert_eq!(decoded, b"RYSW");
 
         // 0x89 = KM, 0xAB = BD
-        let decoded = decode_dna(&[0x89, 0xAB], 4);
+        let decoded = decode_dna_prefer_simd(&[0x89, 0xAB], 4);
         assert_eq!(decoded, b"KMBD");
 
         // 0xCD = HV, 0xEF = N-
-        let decoded = decode_dna(&[0xCD, 0xEF], 4);
+        let decoded = decode_dna_prefer_simd(&[0xCD, 0xEF], 4);
         assert_eq!(decoded, b"HVN-");
     }
 
@@ -1394,7 +1394,7 @@ mod tests {
         for (value, &expected_char) in expected.iter().enumerate() {
             // Test in high nibble position
             let encoded_high = [(value as u8) << 4];
-            let decoded = decode_dna(&encoded_high, 1);
+            let decoded = decode_dna_prefer_simd(&encoded_high, 1);
             assert_eq!(
                 decoded[0], expected_char,
                 "Value 0x{:X} in high nibble should decode to '{}'",
@@ -1403,7 +1403,7 @@ mod tests {
 
             // Test in low nibble position
             let encoded_low = [value as u8];
-            let decoded = decode_dna(&encoded_low, 2);
+            let decoded = decode_dna_prefer_simd(&encoded_low, 2);
             assert_eq!(
                 decoded[1], expected_char,
                 "Value 0x{:X} in low nibble should decode to '{}'",
@@ -1416,25 +1416,25 @@ mod tests {
     #[test]
     fn test_decode_truncated_length() {
         let sequence = b"ACGTRYSWKMBDHVN-";
-        let encoded = encode_dna(sequence);
+        let encoded = encode_dna_prefer_simd(sequence);
 
         // Decode only first 8 characters
-        let decoded = decode_dna(&encoded, 8);
+        let decoded = decode_dna_prefer_simd(&encoded, 8);
         assert_eq!(decoded, b"ACGTRYSW");
 
         // Decode only first 1 character
-        let decoded = decode_dna(&encoded, 1);
+        let decoded = decode_dna_prefer_simd(&encoded, 1);
         assert_eq!(decoded, b"A");
 
         // Decode only first 3 characters (odd)
-        let decoded = decode_dna(&encoded, 3);
+        let decoded = decode_dna_prefer_simd(&encoded, 3);
         assert_eq!(decoded, b"ACG");
     }
 
     /// Tests decoding empty input.
     #[test]
     fn test_decode_empty() {
-        let decoded = decode_dna(&[], 0);
+        let decoded = decode_dna_prefer_simd(&[], 0);
         assert!(decoded.is_empty());
     }
 
@@ -1442,7 +1442,7 @@ mod tests {
     #[test]
     fn test_decode_zero_length() {
         let encoded = [0x01, 0x23];
-        let decoded = decode_dna(&encoded, 0);
+        let decoded = decode_dna_prefer_simd(&encoded, 0);
         assert!(decoded.is_empty());
     }
 
@@ -1458,7 +1458,7 @@ mod tests {
             })
             .collect();
 
-        let decoded = decode_dna(&encoded, 32);
+        let decoded = decode_dna_prefer_simd(&encoded, 32);
         assert_eq!(decoded.len(), 32);
 
         // Verify each decoded character
@@ -1477,7 +1477,7 @@ mod tests {
     #[test]
     fn test_decode_exactly_16_nucleotides() {
         let encoded = [0x01u8, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF];
-        let decoded = decode_dna(&encoded, 16);
+        let decoded = decode_dna_prefer_simd(&encoded, 16);
         assert_eq!(decoded, b"ACGTRYSWKMBDHVN-");
     }
 
@@ -1487,10 +1487,10 @@ mod tests {
         // 20 nucleotides = 10 encoded bytes
         // SIMD handles first 16, scalar handles remaining 4
         let sequence = b"ACGTRYSWKMBDHVN-ACGT";
-        let encoded = encode_dna(sequence);
+        let encoded = encode_dna_prefer_simd(sequence);
         assert_eq!(encoded.len(), 10);
 
-        let decoded = decode_dna(&encoded, 20);
+        let decoded = decode_dna_prefer_simd(&encoded, 20);
         assert_eq!(decoded, sequence);
     }
 
@@ -1500,10 +1500,10 @@ mod tests {
         // 64 nucleotides = 32 encoded bytes = 4 SIMD blocks
         let pattern = b"ACGTRYSWKMBDHVN-";
         let sequence: Vec<u8> = pattern.iter().cycle().take(64).copied().collect();
-        let encoded = encode_dna(&sequence);
+        let encoded = encode_dna_prefer_simd(&sequence);
         assert_eq!(encoded.len(), 32);
 
-        let decoded = decode_dna(&encoded, 64);
+        let decoded = decode_dna_prefer_simd(&encoded, 64);
         assert_eq!(decoded, sequence);
     }
 
@@ -1520,7 +1520,7 @@ mod tests {
             0xEE,   // NN
         ];
 
-        let decoded = decode_dna(&iupac_only, 12);
+        let decoded = decode_dna_prefer_simd(&iupac_only, 12);
         assert_eq!(decoded, b"RYSWKMBDHVNN");
     }
 
@@ -1529,7 +1529,7 @@ mod tests {
     fn test_decode_gaps() {
         // All gaps (0xF)
         let all_gaps = [0xFFu8, 0xFF, 0xFF, 0xFF];
-        let decoded = decode_dna(&all_gaps, 8);
+        let decoded = decode_dna_prefer_simd(&all_gaps, 8);
         assert_eq!(decoded, b"--------");
     }
 
@@ -1539,8 +1539,8 @@ mod tests {
         // Test sizes that use scalar path (< 16 nucleotides)
         for size in [2, 4, 6, 8, 10, 12, 14] {
             let sequence: Vec<u8> = (0..size).map(|i| b"ACGTN"[i % 5]).collect();
-            let encoded = encode_dna(&sequence);
-            let decoded = decode_dna(&encoded, size);
+            let encoded = encode_dna_prefer_simd(&sequence);
+            let decoded = decode_dna_prefer_simd(&encoded, size);
             assert_eq!(decoded, sequence, "Failed for size {}", size);
         }
     }
@@ -1550,8 +1550,8 @@ mod tests {
     fn test_decode_always_uppercase() {
         // Decode should always produce uppercase regardless of original encoding
         let sequence = b"acgtryswkmbdhvn";
-        let encoded = encode_dna(sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
 
         for &c in &decoded {
             assert!(
@@ -1571,8 +1571,8 @@ mod tests {
     #[test]
     fn test_simd_boundary_15_nucleotides() {
         let sequence: Vec<u8> = (0..15).map(|i| b"ACGTN"[i % 5]).collect();
-        let encoded = encode_dna(&sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(&sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, sequence);
     }
 
@@ -1580,8 +1580,8 @@ mod tests {
     #[test]
     fn test_simd_boundary_17_nucleotides() {
         let sequence: Vec<u8> = (0..17).map(|i| b"ACGTN"[i % 5]).collect();
-        let encoded = encode_dna(&sequence);
-        let decoded = decode_dna(&encoded, sequence.len());
+        let encoded = encode_dna_prefer_simd(&sequence);
+        let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
         assert_eq!(decoded, sequence);
     }
 
@@ -1590,8 +1590,8 @@ mod tests {
     fn test_simd_boundary_exact_multiples() {
         for len in [16, 32, 48, 64, 128, 256] {
             let sequence: Vec<u8> = (0..len).map(|i| b"ACGTN"[i % 5]).collect();
-            let encoded = encode_dna(&sequence);
-            let decoded = decode_dna(&encoded, sequence.len());
+            let encoded = encode_dna_prefer_simd(&sequence);
+            let decoded = decode_dna_prefer_simd(&encoded, sequence.len());
             assert_eq!(decoded, sequence, "Failed for length {}", len);
         }
     }
@@ -1616,8 +1616,8 @@ mod tests {
             .into_iter()
             .map(|seq| {
                 thread::spawn(move || {
-                    let encoded = encode_dna(&seq);
-                    let decoded = decode_dna(&encoded, seq.len());
+                    let encoded = encode_dna_prefer_simd(&seq);
+                    let decoded = decode_dna_prefer_simd(&encoded, seq.len());
                     assert_eq!(decoded, seq);
                 })
             })
@@ -1637,7 +1637,7 @@ mod tests {
             .map(|i| {
                 let len = 100 + i * 10;
                 let seq: Vec<u8> = (0..len).map(|j| b"ACGTN"[j % 5]).collect();
-                let encoded = encode_dna(&seq);
+                let encoded = encode_dna_prefer_simd(&seq);
                 (encoded, len)
             })
             .collect();
@@ -1646,7 +1646,7 @@ mod tests {
             .into_iter()
             .map(|(encoded, len)| {
                 thread::spawn(move || {
-                    let decoded = decode_dna(&encoded, len);
+                    let decoded = decode_dna_prefer_simd(&encoded, len);
                     for &nucleotide in &decoded {
                         assert!(
                             b"ACGTN".contains(&nucleotide),
@@ -1676,8 +1676,8 @@ mod tests {
             .map(|_| {
                 let seq = Arc::clone(&sequence);
                 thread::spawn(move || {
-                    let encoded = encode_dna(&seq);
-                    let decoded = decode_dna(&encoded, seq.len());
+                    let encoded = encode_dna_prefer_simd(&seq);
+                    let decoded = decode_dna_prefer_simd(&encoded, seq.len());
                     assert_eq!(decoded.as_slice(), seq.as_slice());
                 })
             })
@@ -1701,8 +1701,8 @@ mod tests {
                 (0..10).map(move |_| {
                     thread::spawn(move || {
                         let seq: Vec<u8> = (0..len).map(|j| b"ACGTN"[j % 5]).collect();
-                        let encoded = encode_dna(&seq);
-                        let decoded = decode_dna(&encoded, seq.len());
+                        let encoded = encode_dna_prefer_simd(&seq);
+                        let decoded = decode_dna_prefer_simd(&encoded, seq.len());
                         assert_eq!(decoded, seq, "Failed for length {}", len);
                     })
                 })
