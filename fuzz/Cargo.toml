@@ -1,0 +1,54 @@
+[package]
+name = "simdna-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.simdna]
+path = ".."
+
+# Round-trip fuzzing: encode -> decode should produce original
+[[bin]]
+name = "roundtrip"
+path = "fuzz_targets/roundtrip.rs"
+test = false
+doc = false
+bench = false
+
+# SIMD vs Scalar equivalence testing
+[[bin]]
+name = "simd_scalar_equivalence"
+path = "fuzz_targets/simd_scalar_equivalence.rs"
+test = false
+doc = false
+bench = false
+
+# Valid IUPAC input fuzzing
+[[bin]]
+name = "valid_iupac"
+path = "fuzz_targets/valid_iupac.rs"
+test = false
+doc = false
+bench = false
+
+# Decoder robustness with arbitrary input
+[[bin]]
+name = "decode_robust"
+path = "fuzz_targets/decode_robust.rs"
+test = false
+doc = false
+bench = false
+
+# SIMD boundary condition testing
+[[bin]]
+name = "boundaries"
+path = "fuzz_targets/boundaries.rs"
+test = false
+doc = false
+bench = false
