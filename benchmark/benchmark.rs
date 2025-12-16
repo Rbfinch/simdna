@@ -174,8 +174,15 @@ fn generate_dna_sequence(len: usize) -> Vec<u8> {
 fn bench_encode(c: &mut Criterion) {
     let mut group = c.benchmark_group("encode");
 
-    // Test various sequence lengths (both even and odd to test scalar fallback)
-    for size in [63, 64, 255, 256, 1023, 1024, 4095, 4096, 9999, 10000] {
+    // Test various sequence lengths to measure SIMD/scalar fallback interaction:
+    // - 15/16/17: around SIMD block boundary (16 nucleotides per SIMD iteration)
+    // - 32/33: two full SIMD blocks vs two + 1 scalar
+    // - Powers of 2 and adjacent values to test alignment effects
+    // - Larger sizes up to 10000 for throughput measurement
+    for size in [
+        15, 16, 17, 32, 33, 63, 64, 127, 128, 255, 256, 512, 1023, 1024, 2048, 4095, 4096, 8192,
+        9999, 10000,
+    ] {
         let sequence = generate_dna_sequence(size);
 
         group.throughput(Throughput::Bytes(size as u64));
@@ -207,8 +214,15 @@ fn bench_encode(c: &mut Criterion) {
 fn bench_decode(c: &mut Criterion) {
     let mut group = c.benchmark_group("decode");
 
-    // Test various sequence lengths (both even and odd to test scalar fallback)
-    for size in [63, 64, 255, 256, 1023, 1024, 4095, 4096, 9999, 10000] {
+    // Test various sequence lengths to measure SIMD/scalar fallback interaction:
+    // - 15/16/17: around SIMD block boundary (16 nucleotides per SIMD iteration)
+    // - 32/33: two full SIMD blocks vs two + 1 scalar
+    // - Powers of 2 and adjacent values to test alignment effects
+    // - Larger sizes up to 10000 for throughput measurement
+    for size in [
+        15, 16, 17, 32, 33, 63, 64, 127, 128, 255, 256, 512, 1023, 1024, 2048, 4095, 4096, 8192,
+        9999, 10000,
+    ] {
         let sequence = generate_dna_sequence(size);
 
         // Pre-encode for decode benchmarks
@@ -249,8 +263,15 @@ fn bench_decode(c: &mut Criterion) {
 fn bench_roundtrip(c: &mut Criterion) {
     let mut group = c.benchmark_group("roundtrip");
 
-    // Test various sequence lengths (both even and odd to test scalar fallback)
-    for size in [63, 64, 255, 256, 1023, 1024, 4095, 4096, 9999, 10000] {
+    // Test various sequence lengths to measure SIMD/scalar fallback interaction:
+    // - 15/16/17: around SIMD block boundary (16 nucleotides per SIMD iteration)
+    // - 32/33: two full SIMD blocks vs two + 1 scalar
+    // - Powers of 2 and adjacent values to test alignment effects
+    // - Larger sizes up to 10000 for throughput measurement
+    for size in [
+        15, 16, 17, 32, 33, 63, 64, 127, 128, 255, 256, 512, 1023, 1024, 2048, 4095, 4096, 8192,
+        9999, 10000,
+    ] {
         let sequence = generate_dna_sequence(size);
 
         group.throughput(Throughput::Bytes(size as u64));

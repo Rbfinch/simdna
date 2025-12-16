@@ -718,7 +718,7 @@ fn decode_scalar(encoded: &[u8], output: &mut [u8], length: usize) {
 ///
 /// 4-bit encoding (0-15)
 #[inline]
-fn char_to_4bit(c: u8) -> u8 {
+pub fn char_to_4bit(c: u8) -> u8 {
     match c {
         b'A' | b'a' => encoding::A,
         b'C' | b'c' => encoding::C,
@@ -763,7 +763,7 @@ fn char_to_4bit(c: u8) -> u8 {
 ///
 /// ASCII byte for the nucleotide character
 #[inline]
-fn fourbit_to_char(bits: u8) -> u8 {
+pub fn fourbit_to_char(bits: u8) -> u8 {
     const DECODE_TABLE: [u8; 16] = [
         b'A', b'C', b'G', b'T', b'R', b'Y', b'S', b'W', b'K', b'M', b'B', b'D', b'H', b'V', b'N',
         b'-',
