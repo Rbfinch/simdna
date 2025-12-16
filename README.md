@@ -18,6 +18,11 @@
   - [Wildcards and Gaps](#wildcards-and-gaps)
 - [Usage](#usage)
 - [Input Handling](#input-handling)
+- [Integration](#integration)
+  - [Working with seq\_io](#working-with-seq_io)
+  - [Working with noodles](#working-with-noodles)
+  - [Working with rust-bio](#working-with-rust-bio)
+  - [Zero-Copy Integration](#zero-copy-integration)
 - [Platform Support](#platform-support)
 - [Performance](#performance)
 - [Testing](#testing)
@@ -119,6 +124,74 @@ assert_eq!(decoded_rna, b"ACGT"); // U decodes as T
 - **Case insensitive**: Both `"ACGT"` and `"acgt"` encode identically
 - **Invalid characters**: Non-IUPAC characters (X, digits, etc.) encode as gap (0xF)
 - **Decoding**: Always produces uppercase nucleotides
+
+## Integration
+
+**simdna** focuses exclusively on high-performance encoding/decoding, making it composable with any FASTA/FASTQ parser or custom format. This keeps the library lightweight and lets you choose the tools that fit your workflow.
+
+### Working with seq_io
+
+[seq_io](https://crates.io/crates/seq_io) is a fast FASTA/FASTQ parser. simdna works directly with its borrowed sequence data:
+
+```rust
+use seq_io::fasta::Reader;
+use simdna::dna_simd_encoder::encode_dna_prefer_simd;
+
+let mut reader = Reader::from_path("genome.fasta")?;
+while let Some(record) = reader.next() {
+    let record = record?;
+    // seq_io provides &[u8] directly - no allocation needed
+    let encoded = encode_dna_prefer_simd(record.seq());
+    // ... use encoded data
+}
+```
+
+### Working with noodles
+
+[noodles](https://crates.io/crates/noodles) is a comprehensive bioinformatics I/O library:
+
+```rust
+use noodles::fasta;
+use simdna::dna_simd_encoder::encode_dna_prefer_simd;
+
+let mut reader = fasta::io::reader::Builder::default().build_from_path("genome.fasta")?;
+for result in reader.records() {
+    let record = result?;
+    let encoded = encode_dna_prefer_simd(record.sequence().as_ref());
+    // ... use encoded data
+}
+```
+
+### Working with rust-bio
+
+[rust-bio](https://crates.io/crates/bio) provides algorithms and data structures for bioinformatics:
+
+```rust
+use bio::io::fasta;
+use simdna::dna_simd_encoder::encode_dna_prefer_simd;
+
+let reader = fasta::Reader::from_file("genome.fasta")?;
+for result in reader.records() {
+    let record = result?;
+    let encoded = encode_dna_prefer_simd(record.seq());
+    // ... use encoded data
+}
+```
+
+### Zero-Copy Integration
+
+simdna accepts `&[u8]` slices, enabling zero-copy integration with parsers. Avoid unnecessary allocations:
+
+```rust
+// ✓ Good: Work directly with borrowed data
+let encoded = encode_dna_prefer_simd(record.seq());
+
+// ✗ Avoid: Unnecessary allocation
+let owned: Vec<u8> = record.seq().to_vec();
+let encoded = encode_dna_prefer_simd(&owned);
+```
+
+Most FASTA/FASTQ parsers provide sequence data as `&[u8]` or types that implement `AsRef<[u8]>`, which work directly with simdna's API.
 
 ## Platform Support
 

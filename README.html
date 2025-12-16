@@ -98,6 +98,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ul></li>
 <li><a href="#usage">Usage</a></li>
 <li><a href="#input-handling">Input Handling</a></li>
+<li><a href="#integration">Integration</a>
+<ul>
+<li><a href="#working-with-seq_io">Working with seq_io</a></li>
+<li><a href="#working-with-noodles">Working with noodles</a></li>
+<li><a href="#working-with-rust-bio">Working with rust-bio</a></li>
+<li><a href="#zero-copy-integration">Zero-Copy Integration</a></li>
+</ul></li>
 <li><a href="#platform-support">Platform Support</a></li>
 <li><a href="#performance">Performance</a></li>
 <li><a href="#testing">Testing</a>
@@ -306,6 +313,61 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><strong>Decoding</strong>: Always produces uppercase nucleotides</li>
 </ul>
 </section>
+<section id="integration" class="level2">
+<h2 class="anchored" data-anchor-id="integration">Integration</h2>
+<p><strong>simdna</strong> focuses exclusively on high-performance encoding/decoding, making it composable with any FASTA/FASTQ parser or custom format. This keeps the library lightweight and lets you choose the tools that fit your workflow.</p>
+<section id="working-with-seq_io" class="level3">
+<h3 class="anchored" data-anchor-id="working-with-seq_io">Working with seq_io</h3>
+<p><a href="https://crates.io/crates/seq_io">seq_io</a> is a fast FASTA/FASTQ parser. simdna works directly with its borrowed sequence data:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">seq_io::fasta::</span>Reader<span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">simdna::dna_simd_encoder::</span>encode_dna_prefer_simd<span class="op">;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> reader <span class="op">=</span> <span class="pp">Reader::</span>from_path(<span class="st">"genome.fasta"</span>)<span class="op">?;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="kw">let</span> <span class="cn">Some</span>(record) <span class="op">=</span> reader<span class="op">.</span>next() <span class="op">{</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> record <span class="op">=</span> record<span class="op">?;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// seq_io provides &amp;[u8] directly - no allocation needed</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(record<span class="op">.</span>seq())<span class="op">;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ... use encoded data</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="working-with-noodles" class="level3">
+<h3 class="anchored" data-anchor-id="working-with-noodles">Working with noodles</h3>
+<p><a href="https://crates.io/crates/noodles">noodles</a> is a comprehensive bioinformatics I/O library:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">noodles::</span>fasta<span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">simdna::dna_simd_encoder::</span>encode_dna_prefer_simd<span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> reader <span class="op">=</span> <span class="pp">fasta::io::reader::Builder::</span><span class="kw">default</span>()<span class="op">.</span>build_from_path(<span class="st">"genome.fasta"</span>)<span class="op">?;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> result <span class="kw">in</span> reader<span class="op">.</span>records() <span class="op">{</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> record <span class="op">=</span> result<span class="op">?;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(record<span class="op">.</span>sequence()<span class="op">.</span>as_ref())<span class="op">;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ... use encoded data</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="working-with-rust-bio" class="level3">
+<h3 class="anchored" data-anchor-id="working-with-rust-bio">Working with rust-bio</h3>
+<p><a href="https://crates.io/crates/bio">rust-bio</a> provides algorithms and data structures for bioinformatics:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">bio::io::</span>fasta<span class="op">;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">simdna::dna_simd_encoder::</span>encode_dna_prefer_simd<span class="op">;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> reader <span class="op">=</span> <span class="pp">fasta::Reader::</span>from_file(<span class="st">"genome.fasta"</span>)<span class="op">?;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> result <span class="kw">in</span> reader<span class="op">.</span>records() <span class="op">{</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> record <span class="op">=</span> result<span class="op">?;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(record<span class="op">.</span>seq())<span class="op">;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ... use encoded data</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="zero-copy-integration" class="level3">
+<h3 class="anchored" data-anchor-id="zero-copy-integration">Zero-Copy Integration</h3>
+<p>simdna accepts <code>&amp;[u8]</code> slices, enabling zero-copy integration with parsers. Avoid unnecessary allocations:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">// ✓ Good: Work directly with borrowed data</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(record<span class="op">.</span>seq())<span class="op">;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">// ✗ Avoid: Unnecessary allocation</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> owned<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">u8</span><span class="op">&gt;</span> <span class="op">=</span> record<span class="op">.</span>seq()<span class="op">.</span>to_vec()<span class="op">;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(<span class="op">&amp;</span>owned)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Most FASTA/FASTQ parsers provide sequence data as <code>&amp;[u8]</code> or types that implement <code>AsRef&lt;[u8]&gt;</code>, which work directly with simdna’s API.</p>
+</section>
+</section>
 <section id="platform-support" class="level2">
 <h2 class="anchored" data-anchor-id="platform-support">Platform Support</h2>
 <table class="caption-top table">
@@ -356,7 +418,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="unit-tests" class="level3">
 <h3 class="anchored" data-anchor-id="unit-tests">Unit Tests</h3>
 <p>Run the standard test suite with:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">cargo</span> test</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">cargo</span> test</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The unit tests cover:</p>
 <ul>
 <li>Encoding and decoding of all IUPAC nucleotide codes</li>
@@ -405,7 +467,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p>Run fuzz tests with:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">cargo</span> +nightly fuzz run <span class="op">&lt;</span>target<span class="op">&gt;</span> -- <span class="at">-max_total_time</span><span class="op">=</span>60</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">cargo</span> +nightly fuzz run <span class="op">&lt;</span>target<span class="op">&gt;</span> -- <span class="at">-max_total_time</span><span class="op">=</span>60</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 </section>
 <section id="license" class="level2">
