@@ -1,7 +1,31 @@
-use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
+use std::hint::black_box;
 
 // Import SIMD-accelerated functions from the main crate
 use simdna::dna_simd_encoder::{decode_dna, encode_dna};
+
+/// Package version from Cargo.toml
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// Print benchmark header with version and timestamp
+fn print_benchmark_header() {
+    use std::sync::Once;
+    static ONCE: Once = Once::new();
+    ONCE.call_once(|| {
+        let now = chrono::Utc::now();
+        eprintln!("\n╔════════════════════════════════════════════════════════════╗");
+        eprintln!(
+            "║ simdna benchmark v{}                                     ║",
+            VERSION
+        );
+        eprintln!(
+            "║ Run date: {}                              ║",
+            now.format("%Y-%m-%d %H:%M:%S UTC")
+        );
+        eprintln!("║ Platform: {:<49} ║", std::env::consts::ARCH);
+        eprintln!("╚════════════════════════════════════════════════════════════╝\n");
+    });
+}
 
 // ============================================================================
 // Scalar 4-bit Encoding Implementation (for comparison)
@@ -172,6 +196,7 @@ fn generate_dna_sequence(len: usize) -> Vec<u8> {
 }
 
 fn bench_encode(c: &mut Criterion) {
+    print_benchmark_header();
     let mut group = c.benchmark_group("encode");
 
     // Test various sequence lengths to measure SIMD/scalar fallback interaction:

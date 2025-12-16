@@ -2,13 +2,42 @@
 name = "simdna"
 version = "0.1.0"
 edition = "2024"
+authors = ["Nicholas D. Crosbie"]
+description = "High-performance SIMD-accelerated DNA sequence encoding supporting all IUPAC nucleotide codes"
+license = "MIT"
+repository = "https://github.com/Rbfinch/simdna"
+keywords = ["dna", "simd", "bioinformatics", "encoding", "iupac"]
+categories = ["science", "encoding", "algorithms"]
+readme = "README.md"
+
+[lib]
+name = "simdna"
+path = "src/lib.rs"
+
+[[bin]]
+name = "simdna"
+path = "src/main.rs"
 
 [dependencies]
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.8.1", features = ["html_reports"] }
+chrono = "0.4"
 
 [[bench]]
 name = "benchmark"
 harness = false
 path = "benchmark/benchmark.rs"
+
+# Optimized release profile for maximum performance
+[profile.release]
+lto = true        # Link-time optimization for smaller and faster binaries
+codegen-units = 1 # Single codegen unit for better optimization
+opt-level = 3     # Maximum optimization level
+strip = true      # Strip symbols for smaller binaries
+
+# Optimized profile for benchmarks
+[profile.bench]
+lto = true
+codegen-units = 1
+opt-level = 3
