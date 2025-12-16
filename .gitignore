@@ -1,107 +1,51 @@
+# OS files
 .DS_Store
-.Rhistory
-.vscode
-.cargo
+Thumbs.db
 
-# Project directories
-data/
-test/
-
-# Ignore build and directories
-build/
-bin/
-
-# Ignore object files
-*.o
-*.obj
-
-# Ignore compiled dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Ignore compiled static libraries
-*.a
-*.lib
-
-# Ignore executable files
-*.exe
-*.out
-*.app
-
-# Ignore precompiled headers
-*.gch
-*.pch
-
-# Ignore dependency files
-*.d
-
-Makefile/
-target/
-build/
-
-config.toml
-Cargo.lock
-
-# History files
-.Rhistory
-.Rapp.history
-
-# Session Data files
-.RData
-.RDataTmp
-
-# User-specific files
-.Ruserdata
-
-# Example code in package build process
-*-Ex.R
-
-# Output files from R CMD build
-/*.tar.gz
-
-# Output files from R CMD check
-/*.Rcheck/
-
-# RStudio files
-.Rproj.user/
-
-# produced vignettes
-vignettes/*.html
-vignettes/*.pdf
-
-# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
-.httr-oauth
-
-# knitr and R markdown default cache directories
-*_cache/
-/cache/
-
-# Temporary files created by R markdown
-*.utf8.md
-*.knit.md
-
-# R Environment Variables
-.Renviron
-
-# pkgdown site
-# docs/
-
-# translation temp files
-po/*~
-
-# RStudio Connect folder
-rsconnect/
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # Rust build artifacts
-target/
+/target/
+**/*.rs.bk
+Cargo.lock
 
-# Data files
-*.csv
-*.tsv
+# Generated documentation (users generate locally or view on docs.rs)
+# /target/doc/ is already covered by /target/
+
+# Quarto/Pandoc generated files
+README.html
+README_files/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+
+# Data files (keep benchmark results in artefacts/)
+*.fq
+*.fastq
+*.fasta
+*.fa
 *.gz
 *.zst
 *.xz
-*.fq
+# Allow CSV files in artefacts/ for benchmark data
+!artefacts/*.csv
 
-# Other project specific ignores and allows
+# Test data
+/data/
+/test/
+
+# Fuzz artifacts (crashes are uploaded to CI, corpus is cached)
+fuzz/artifacts/
+# Note: fuzz/corpus/ is kept for seeding future fuzz runs
+
+# Temporary files
+*.tmp
+*.temp
+*.log
