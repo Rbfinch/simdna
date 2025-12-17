@@ -1,5 +1,5 @@
-<p align="center">
-  <img src="./artefacts/simdna.svg" alt="SimDNA Logo" width="100">
+<p align="left">
+  <img src="./artefacts/simdna.svg" alt="SimDNA Logo" width="200">
 </p>
 
 *High-performance DNA/RNA sequence encoding and decoding using SIMD instructions with automatic fallback to scalar implementations.*
