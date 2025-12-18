@@ -44,6 +44,8 @@
 - **Bit-rotation-compatible encoding** enabling efficient complement calculation
 - **SIMD-accelerated reverse complement** operations
 - **SIMD acceleration** on x86_64 (SSSE3) and ARM64 (NEON)
+- **Static lookup tables** for branch-free encoding/decoding
+- **Prefetch hints** for improved cache utilization on large sequences
 - **Automatic fallback** to optimized scalar implementation
 - **Thread-safe** pure functions with no global state
 - **2:1 compression** ratio compared to ASCII representation
@@ -260,9 +262,14 @@ Most FASTA/FASTQ parsers provide sequence data as `&[u8]` or types that implemen
 
 ## Performance
 
-- SIMD processes 16 nucleotides per iteration
-- 2:1 compression ratio (4 bits per nucleotide vs 8 bits ASCII)
-- Expected speedup: 4-8x over scalar code on modern CPUs
+simdna employs multiple optimization strategies:
+
+- **Static Lookup Tables**: Pre-computed encode/decode tables eliminate branch mispredictions
+- **SIMD Processing**: Handles 32 nucleotides per iteration (two 16-byte chunks) with prefetching
+- **Direct Case Handling**: LUT handles case-insensitivity without uppercase conversion overhead
+- **Optimized Scalar Path**: Remainder processing uses 4-at-a-time scalar encoding
+- **2:1 Compression**: 4 bits per nucleotide vs 8 bits ASCII
+- **Expected speedup**: 4-8x over naive scalar code on modern CPUs
 
 ![DNA Encoding/Decoding Throughput](./artefacts/throughput_plot.png)
 
