@@ -21,6 +21,7 @@
   - [Bit Rotation Property](#bit-rotation-property)
 - [Usage](#usage)
 - [Reverse Complement](#reverse-complement)
+  - [IUPAC Ambiguity Code Complements](#iupac-ambiguity-code-complements)
 - [Input Handling](#input-handling)
 - [Integration](#integration)
   - [Working with seq\_io](#working-with-seq_io)
