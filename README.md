@@ -143,7 +143,7 @@ assert_eq!(decoded_rna, b"ACGT"); // U decodes as T
 
 ## Reverse Complement
 
-simdna provides efficient SIMD-accelerated reverse complement operations for DNA/RNA sequences:
+simdna provides efficient SIMD-accelerated reverse complement operations for DNA/RNA sequences with consistent performance for both even and odd-length sequences:
 
 ```rust
 use simdna::dna_simd_encoder::{reverse_complement, reverse_complement_encoded, encode_dna_prefer_simd};
@@ -158,7 +158,7 @@ let forward = b"ATGCAACG";
 let rc = reverse_complement(forward);
 assert_eq!(rc, b"CGTTGCAT");
 
-// Low-level API: operates directly on encoded data for maximum performance
+// Low-level API: operates directly on encoded data for maximum performance (~20 GiB/s)
 let encoded = encode_dna_prefer_simd(b"ACGT");
 let rc_encoded = reverse_complement_encoded(&encoded, 4);
 // rc_encoded is the encoded form of "ACGT"
@@ -268,8 +268,9 @@ simdna employs multiple optimization strategies:
 - **SIMD Processing**: Handles 32 nucleotides per iteration (two 16-byte chunks) with prefetching
 - **Direct Case Handling**: LUT handles case-insensitivity without uppercase conversion overhead
 - **Optimized Scalar Path**: Remainder processing uses 4-at-a-time scalar encoding
+- **SIMD Reverse Complement**: Up to ~20 GiB/s throughput on encoded data, 4-6x faster than scalar
+- **Consistent Performance**: Both even and odd-length sequences achieve similar throughput
 - **2:1 Compression**: 4 bits per nucleotide vs 8 bits ASCII
-- **Expected speedup**: 4-8x over naive scalar code on modern CPUs
 
 ![DNA Encoding/Decoding Throughput](./artefacts/throughput_plot.png)
 

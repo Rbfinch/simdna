@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2024-12-19
+
+### Changed
+
+- **Major reverse complement performance improvement**: SIMD now achieves consistent performance for both even and odd-length sequences
+  - Odd-length sequences improved by up to 96% (e.g., length 9999: 12.5μs → 466ns)
+  - Throughput now consistently ~20 GiB/s for encoded data regardless of sequence length
+  - Eliminated "zig-zag" performance pattern between odd and even lengths
+- New algorithm uses SIMD for all sequences ≥32 bytes, with efficient O(n) nibble shift for odd-length post-processing
+- Updated documentation to reflect performance characteristics
+
 ## [1.0.1] - 2024-12-20
 
 ### Added

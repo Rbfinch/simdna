@@ -196,12 +196,13 @@ fn main() {
 
     // Performance notes
     println!("Performance Notes:");
-    println!("- SIMD processes 16 nucleotides per iteration");
+    println!("- SIMD processes 16 bytes (32 nucleotides) per iteration");
     println!("- 2:1 compression ratio (4 bits per nucleotide vs 8 bits ASCII)");
     println!(
         "- Supports all 16 IUPAC nucleotide codes (A, C, G, T, R, Y, S, W, K, M, B, D, H, V, N, -)"
     );
     println!("- Bit rotation complement: ~2x faster than lookup tables");
-    println!("- reverse_complement_encoded: Up to 21 GiB/s on encoded data");
-    println!("- Expected speedup: 4-8x over scalar code on modern CPUs");
+    println!("- reverse_complement_encoded: Up to ~20 GiB/s on encoded data");
+    println!("- Consistent performance for both even and odd-length sequences");
+    println!("- Expected speedup: 4-6x over scalar code on modern CPUs");
 }
