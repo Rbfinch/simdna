@@ -80,7 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<p><img src="./artefacts/simdna.svg" class="img-fluid"></p>
+<p align="left">
+<img src="./artefacts/simdna.svg" alt="SimDNA Logo" width="200">
+</p>
 <p><em>High-performance DNA/RNA sequence encoding and decoding using SIMD instructions with automatic fallback to scalar implementations.</em></p>
 <p><a href="https://crates.io/crates/simdna"><img src="https://img.shields.io/crates/v/simdna.svg" class="img-fluid" alt="Crates.io"></a> <a href="https://docs.rs/simdna"><img src="https://docs.rs/simdna/badge.svg" class="img-fluid" alt="Docs.rs"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" class="img-fluid" alt="License: MIT"></a></p>
 <section id="table-of-contents" class="level2">
@@ -95,8 +97,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><a href="#two-base-ambiguity-codes">Two-Base Ambiguity Codes</a></li>
 <li><a href="#three-base-ambiguity-codes">Three-Base Ambiguity Codes</a></li>
 <li><a href="#wildcards-and-gaps">Wildcards and Gaps</a></li>
+<li><a href="#bit-rotation-property">Bit Rotation Property</a></li>
 </ul></li>
 <li><a href="#usage">Usage</a></li>
+<li><a href="#reverse-complement">Reverse Complement</a>
+<ul>
+<li><a href="#iupac-ambiguity-code-complements">IUPAC Ambiguity Code Complements</a></li>
+</ul></li>
 <li><a href="#input-handling">Input Handling</a></li>
 <li><a href="#integration">Integration</a>
 <ul>
@@ -122,6 +129,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="features">Features</h2>
 <ul>
 <li><strong>4-bit encoding</strong> supporting all IUPAC nucleotide codes (16 standard + U for RNA)</li>
+<li><strong>Bit-rotation-compatible encoding</strong> enabling efficient complement calculation</li>
+<li><strong>SIMD-accelerated reverse complement</strong> operations</li>
 <li><strong>SIMD acceleration</strong> on x86_64 (SSSE3) and ARM64 (NEON)</li>
 <li><strong>Automatic fallback</strong> to optimized scalar implementation</li>
 <li><strong>Thread-safe</strong> pure functions with no global state</li>
@@ -139,7 +148,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="iupac-nucleotide-codes" class="level2">
 <h2 class="anchored" data-anchor-id="iupac-nucleotide-codes">IUPAC Nucleotide Codes</h2>
-<p>simdna supports the complete IUPAC nucleotide alphabet:</p>
+<p>simdna supports the complete IUPAC nucleotide alphabet with a bit-rotation-compatible encoding scheme. This encoding enables efficient complement calculation via a simple 2-bit rotation operation.</p>
 <section id="standard-nucleotides" class="level3">
 <h3 class="anchored" data-anchor-id="standard-nucleotides">Standard Nucleotides</h3>
 <table class="caption-top table">
@@ -148,33 +157,39 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <th>Code</th>
 <th>Meaning</th>
 <th>Value</th>
+<th>Complement</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td>A</td>
 <td>Adenine</td>
-<td>0x0</td>
+<td>0x1</td>
+<td>T (0x4)</td>
 </tr>
 <tr class="even">
 <td>C</td>
 <td>Cytosine</td>
-<td>0x1</td>
+<td>0x2</td>
+<td>G (0x8)</td>
 </tr>
 <tr class="odd">
 <td>G</td>
 <td>Guanine</td>
-<td>0x2</td>
+<td>0x8</td>
+<td>C (0x2)</td>
 </tr>
 <tr class="even">
 <td>T</td>
 <td>Thymine</td>
-<td>0x3</td>
+<td>0x4</td>
+<td>A (0x1)</td>
 </tr>
 <tr class="odd">
 <td>U</td>
 <td>Uracil (RNA → T)</td>
-<td>0x3</td>
+<td>0x4</td>
+<td>A (0x1)</td>
 </tr>
 </tbody>
 </table>
@@ -187,38 +202,45 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <th>Code</th>
 <th>Meaning</th>
 <th>Value</th>
+<th>Complement</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td>R</td>
 <td>A or G (purine)</td>
-<td>0x4</td>
+<td>0x9</td>
+<td>Y (0x6)</td>
 </tr>
 <tr class="even">
 <td>Y</td>
 <td>C or T (pyrimidine)</td>
-<td>0x5</td>
+<td>0x6</td>
+<td>R (0x9)</td>
 </tr>
 <tr class="odd">
 <td>S</td>
 <td>G or C (strong)</td>
-<td>0x6</td>
+<td>0xA</td>
+<td>S (0xA)</td>
 </tr>
 <tr class="even">
 <td>W</td>
 <td>A or T (weak)</td>
-<td>0x7</td>
+<td>0x5</td>
+<td>W (0x5)</td>
 </tr>
 <tr class="odd">
 <td>K</td>
 <td>G or T (keto)</td>
-<td>0x8</td>
+<td>0xC</td>
+<td>M (0x3)</td>
 </tr>
 <tr class="even">
 <td>M</td>
 <td>A or C (amino)</td>
-<td>0x9</td>
+<td>0x3</td>
+<td>K (0xC)</td>
 </tr>
 </tbody>
 </table>
@@ -231,28 +253,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <th>Code</th>
 <th>Meaning</th>
 <th>Value</th>
+<th>Complement</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td>B</td>
 <td>C, G, or T (not A)</td>
-<td>0xA</td>
+<td>0xE</td>
+<td>V (0xB)</td>
 </tr>
 <tr class="even">
 <td>D</td>
 <td>A, G, or T (not C)</td>
-<td>0xB</td>
+<td>0xD</td>
+<td>H (0x7)</td>
 </tr>
 <tr class="odd">
 <td>H</td>
 <td>A, C, or T (not G)</td>
-<td>0xC</td>
+<td>0x7</td>
+<td>D (0xD)</td>
 </tr>
 <tr class="even">
 <td>V</td>
 <td>A, C, or G (not T)</td>
-<td>0xD</td>
+<td>0xB</td>
+<td>B (0xE)</td>
 </tr>
 </tbody>
 </table>
@@ -265,48 +292,89 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <th>Code</th>
 <th>Meaning</th>
 <th>Value</th>
+<th>Complement</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td>N</td>
 <td>Any base</td>
-<td>0xE</td>
+<td>0xF</td>
+<td>N (0xF)</td>
 </tr>
 <tr class="even">
 <td>-</td>
 <td>Gap / deletion</td>
-<td>0xF</td>
+<td>0x0</td>
+<td>- (0x0)</td>
 </tr>
 <tr class="odd">
 <td>.</td>
 <td>Gap (alternative)</td>
-<td>0xF</td>
+<td>0x0</td>
+<td>- (0x0)</td>
 </tr>
 </tbody>
 </table>
 </section>
+<section id="bit-rotation-property" class="level3">
+<h3 class="anchored" data-anchor-id="bit-rotation-property">Bit Rotation Property</h3>
+<p>The encoding is designed so that the complement of any nucleotide can be computed via a 2-bit rotation:</p>
+<pre class="text"><code>complement = ((bits &lt;&lt; 2) | (bits &gt;&gt; 2)) &amp; 0xF</code></pre>
+<p>This enables SIMD-accelerated reverse complement operations that are ~2x faster than lookup table approaches.</p>
+</section>
 </section>
 <section id="usage" class="level2">
 <h2 class="anchored" data-anchor-id="usage">Usage</h2>
-<div class="sourceCode" id="cb3"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">simdna::dna_simd_encoder::</span><span class="op">{</span>encode_dna_prefer_simd<span class="op">,</span> decode_dna_prefer_simd<span class="op">};</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Encode a DNA sequence with IUPAC codes</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> sequence <span class="op">=</span> <span class="st">b"ACGTNRYSWKMBDHV-"</span><span class="op">;</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(sequence)<span class="op">;</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">// The encoded data is 2x smaller (2 nucleotides per byte)</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="pp">assert_eq!</span>(encoded<span class="op">.</span>len()<span class="op">,</span> sequence<span class="op">.</span>len() <span class="op">/</span> <span class="dv">2</span>)<span class="op">;</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co">// Decode back to the original sequence</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> decoded <span class="op">=</span> decode_dna_prefer_simd(<span class="op">&amp;</span>encoded<span class="op">,</span> sequence<span class="op">.</span>len())<span class="op">;</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="pp">assert_eq!</span>(decoded<span class="op">,</span> sequence)<span class="op">;</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co">// RNA sequences work seamlessly (U maps to T)</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> rna <span class="op">=</span> <span class="st">b"ACGU"</span><span class="op">;</span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> encoded_rna <span class="op">=</span> encode_dna_prefer_simd(rna)<span class="op">;</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> decoded_rna <span class="op">=</span> decode_dna_prefer_simd(<span class="op">&amp;</span>encoded_rna<span class="op">,</span> rna<span class="op">.</span>len())<span class="op">;</span></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="pp">assert_eq!</span>(decoded_rna<span class="op">,</span> <span class="st">b"ACGT"</span>)<span class="op">;</span> <span class="co">// U decodes as T</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">simdna::dna_simd_encoder::</span><span class="op">{</span>encode_dna_prefer_simd<span class="op">,</span> decode_dna_prefer_simd<span class="op">};</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Encode a DNA sequence with IUPAC codes</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> sequence <span class="op">=</span> <span class="st">b"ACGTNRYSWKMBDHV-"</span><span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(sequence)<span class="op">;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">// The encoded data is 2x smaller (2 nucleotides per byte)</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="pp">assert_eq!</span>(encoded<span class="op">.</span>len()<span class="op">,</span> sequence<span class="op">.</span>len() <span class="op">/</span> <span class="dv">2</span>)<span class="op">;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">// Decode back to the original sequence</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> decoded <span class="op">=</span> decode_dna_prefer_simd(<span class="op">&amp;</span>encoded<span class="op">,</span> sequence<span class="op">.</span>len())<span class="op">;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="pp">assert_eq!</span>(decoded<span class="op">,</span> sequence)<span class="op">;</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co">// RNA sequences work seamlessly (U maps to T)</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> rna <span class="op">=</span> <span class="st">b"ACGU"</span><span class="op">;</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> encoded_rna <span class="op">=</span> encode_dna_prefer_simd(rna)<span class="op">;</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> decoded_rna <span class="op">=</span> decode_dna_prefer_simd(<span class="op">&amp;</span>encoded_rna<span class="op">,</span> rna<span class="op">.</span>len())<span class="op">;</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="pp">assert_eq!</span>(decoded_rna<span class="op">,</span> <span class="st">b"ACGT"</span>)<span class="op">;</span> <span class="co">// U decodes as T</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="reverse-complement" class="level2">
+<h2 class="anchored" data-anchor-id="reverse-complement">Reverse Complement</h2>
+<p>simdna provides efficient SIMD-accelerated reverse complement operations for DNA/RNA sequences:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">simdna::dna_simd_encoder::</span><span class="op">{</span>reverse_complement<span class="op">,</span> reverse_complement_encoded<span class="op">,</span> encode_dna_prefer_simd<span class="op">};</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">// High-level API: ASCII in, ASCII out</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> sequence <span class="op">=</span> <span class="st">b"ACGT"</span><span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> rc <span class="op">=</span> reverse_complement(sequence)<span class="op">;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="pp">assert_eq!</span>(rc<span class="op">,</span> <span class="st">b"ACGT"</span>)<span class="op">;</span> <span class="co">// ACGT is its own reverse complement</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">// Biological example</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> forward <span class="op">=</span> <span class="st">b"ATGCAACG"</span><span class="op">;</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> rc <span class="op">=</span> reverse_complement(forward)<span class="op">;</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="pp">assert_eq!</span>(rc<span class="op">,</span> <span class="st">b"CGTTGCAT"</span>)<span class="op">;</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">// Low-level API: operates directly on encoded data for maximum performance</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(<span class="st">b"ACGT"</span>)<span class="op">;</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> rc_encoded <span class="op">=</span> reverse_complement_encoded(<span class="op">&amp;</span>encoded<span class="op">,</span> <span class="dv">4</span>)<span class="op">;</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">// rc_encoded is the encoded form of "ACGT"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="iupac-ambiguity-code-complements" class="level3">
+<h3 class="anchored" data-anchor-id="iupac-ambiguity-code-complements">IUPAC Ambiguity Code Complements</h3>
+<p>Reverse complement correctly handles all IUPAC ambiguity codes:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">simdna::dna_simd_encoder::</span>reverse_complement<span class="op">;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">// R (purine: A|G) complements to Y (pyrimidine: C|T)</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="pp">assert_eq!</span>(reverse_complement(<span class="st">b"R"</span>)<span class="op">,</span> <span class="st">b"Y"</span>)<span class="op">;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Self-complementary codes: S (G|C), W (A|T), N (any)</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="pp">assert_eq!</span>(reverse_complement(<span class="st">b"SWN"</span>)<span class="op">,</span> <span class="st">b"NWS"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
 </section>
 <section id="input-handling" class="level2">
 <h2 class="anchored" data-anchor-id="input-handling">Input Handling</h2>
@@ -322,52 +390,52 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="working-with-seq_io" class="level3">
 <h3 class="anchored" data-anchor-id="working-with-seq_io">Working with seq_io</h3>
 <p><a href="https://crates.io/crates/seq_io">seq_io</a> is a fast FASTA/FASTQ parser. simdna works directly with its borrowed sequence data:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">seq_io::fasta::</span>Reader<span class="op">;</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">simdna::dna_simd_encoder::</span>encode_dna_prefer_simd<span class="op">;</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> reader <span class="op">=</span> <span class="pp">Reader::</span>from_path(<span class="st">"genome.fasta"</span>)<span class="op">?;</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="kw">let</span> <span class="cn">Some</span>(record) <span class="op">=</span> reader<span class="op">.</span>next() <span class="op">{</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> record <span class="op">=</span> record<span class="op">?;</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// seq_io provides &amp;[u8] directly - no allocation needed</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(record<span class="op">.</span>seq())<span class="op">;</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ... use encoded data</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">seq_io::fasta::</span>Reader<span class="op">;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">simdna::dna_simd_encoder::</span>encode_dna_prefer_simd<span class="op">;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> reader <span class="op">=</span> <span class="pp">Reader::</span>from_path(<span class="st">"genome.fasta"</span>)<span class="op">?;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="kw">let</span> <span class="cn">Some</span>(record) <span class="op">=</span> reader<span class="op">.</span>next() <span class="op">{</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> record <span class="op">=</span> record<span class="op">?;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// seq_io provides &amp;[u8] directly - no allocation needed</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(record<span class="op">.</span>seq())<span class="op">;</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ... use encoded data</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="working-with-noodles" class="level3">
 <h3 class="anchored" data-anchor-id="working-with-noodles">Working with noodles</h3>
 <p><a href="https://crates.io/crates/noodles">noodles</a> is a comprehensive bioinformatics I/O library:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">noodles::</span>fasta<span class="op">;</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">simdna::dna_simd_encoder::</span>encode_dna_prefer_simd<span class="op">;</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> reader <span class="op">=</span> <span class="pp">fasta::io::reader::Builder::</span><span class="kw">default</span>()<span class="op">.</span>build_from_path(<span class="st">"genome.fasta"</span>)<span class="op">?;</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> result <span class="kw">in</span> reader<span class="op">.</span>records() <span class="op">{</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> record <span class="op">=</span> result<span class="op">?;</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(record<span class="op">.</span>sequence()<span class="op">.</span>as_ref())<span class="op">;</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ... use encoded data</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">noodles::</span>fasta<span class="op">;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">simdna::dna_simd_encoder::</span>encode_dna_prefer_simd<span class="op">;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> reader <span class="op">=</span> <span class="pp">fasta::io::reader::Builder::</span><span class="kw">default</span>()<span class="op">.</span>build_from_path(<span class="st">"genome.fasta"</span>)<span class="op">?;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> result <span class="kw">in</span> reader<span class="op">.</span>records() <span class="op">{</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> record <span class="op">=</span> result<span class="op">?;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(record<span class="op">.</span>sequence()<span class="op">.</span>as_ref())<span class="op">;</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ... use encoded data</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="working-with-rust-bio" class="level3">
 <h3 class="anchored" data-anchor-id="working-with-rust-bio">Working with rust-bio</h3>
 <p><a href="https://crates.io/crates/bio">rust-bio</a> provides algorithms and data structures for bioinformatics:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">bio::io::</span>fasta<span class="op">;</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">simdna::dna_simd_encoder::</span>encode_dna_prefer_simd<span class="op">;</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> reader <span class="op">=</span> <span class="pp">fasta::Reader::</span>from_file(<span class="st">"genome.fasta"</span>)<span class="op">?;</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> result <span class="kw">in</span> reader<span class="op">.</span>records() <span class="op">{</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> record <span class="op">=</span> result<span class="op">?;</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(record<span class="op">.</span>seq())<span class="op">;</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ... use encoded data</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">bio::io::</span>fasta<span class="op">;</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">simdna::dna_simd_encoder::</span>encode_dna_prefer_simd<span class="op">;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> reader <span class="op">=</span> <span class="pp">fasta::Reader::</span>from_file(<span class="st">"genome.fasta"</span>)<span class="op">?;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> result <span class="kw">in</span> reader<span class="op">.</span>records() <span class="op">{</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> record <span class="op">=</span> result<span class="op">?;</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(record<span class="op">.</span>seq())<span class="op">;</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ... use encoded data</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="zero-copy-integration" class="level3">
 <h3 class="anchored" data-anchor-id="zero-copy-integration">Zero-Copy Integration</h3>
 <p>simdna accepts <code>&amp;[u8]</code> slices, enabling zero-copy integration with parsers. Avoid unnecessary allocations:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">// ✓ Good: Work directly with borrowed data</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(record<span class="op">.</span>seq())<span class="op">;</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">// ✗ Avoid: Unnecessary allocation</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> owned<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">u8</span><span class="op">&gt;</span> <span class="op">=</span> record<span class="op">.</span>seq()<span class="op">.</span>to_vec()<span class="op">;</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(<span class="op">&amp;</span>owned)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">// ✓ Good: Work directly with borrowed data</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(record<span class="op">.</span>seq())<span class="op">;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">// ✗ Avoid: Unnecessary allocation</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> owned<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">u8</span><span class="op">&gt;</span> <span class="op">=</span> record<span class="op">.</span>seq()<span class="op">.</span>to_vec()<span class="op">;</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(<span class="op">&amp;</span>owned)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Most FASTA/FASTQ parsers provide sequence data as <code>&amp;[u8]</code> or types that implement <code>AsRef&lt;[u8]&gt;</code>, which work directly with simdna’s API.</p>
 </section>
 </section>
@@ -421,7 +489,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="unit-tests" class="level3">
 <h3 class="anchored" data-anchor-id="unit-tests">Unit Tests</h3>
 <p>Run the standard test suite with:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">cargo</span> test</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">cargo</span> test</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The unit tests cover:</p>
 <ul>
 <li>Encoding and decoding of all IUPAC nucleotide codes</li>
@@ -467,10 +535,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><code>simd_scalar_equivalence</code></td>
 <td>Verifies SIMD and scalar implementations produce identical results</td>
 </tr>
+<tr class="even">
+<td><code>bit_rotation</code></td>
+<td>Verifies bit rotation complement properties (involution, consistency)</td>
+</tr>
+<tr class="odd">
+<td><code>reverse_complement</code></td>
+<td>Tests reverse complement correctness (double-rc = original)</td>
+</tr>
 </tbody>
 </table>
 <p>Run fuzz tests with:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">cargo</span> +nightly fuzz run <span class="op">&lt;</span>target<span class="op">&gt;</span> -- <span class="at">-max_total_time</span><span class="op">=</span>60</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">cargo</span> +nightly fuzz run <span class="op">&lt;</span>target<span class="op">&gt;</span> -- <span class="at">-max_total_time</span><span class="op">=</span>60</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 </section>
 <section id="contributing" class="level2">
