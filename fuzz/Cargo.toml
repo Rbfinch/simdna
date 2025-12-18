@@ -52,3 +52,19 @@ path = "fuzz_targets/boundaries.rs"
 test = false
 doc = false
 bench = false
+
+# Bit rotation complement property testing
+[[bin]]
+name = "bit_rotation"
+path = "fuzz_targets/bit_rotation.rs"
+test = false
+doc = false
+bench = false
+
+# Reverse complement correctness testing
+[[bin]]
+name = "reverse_complement"
+path = "fuzz_targets/reverse_complement.rs"
+test = false
+doc = false
+bench = false
