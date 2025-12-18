@@ -55,7 +55,7 @@ done
 
 Example output:
 
-```
+```text
 #12345  NEW    cov: 174 ft: 500 corp: 50/1000b lim: 128 exec/s: 12345 rss: 50Mb
 ```
 

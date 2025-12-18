@@ -184,20 +184,21 @@ pub mod encoding {
 /// Encodes a DNA sequence into a compact 4-bit representation.
 ///
 /// Each nucleotide or IUPAC ambiguity code is encoded using 4 bits,
-/// with 2 nucleotides packed per byte.
+/// with 2 nucleotides packed per byte. The encoding supports efficient
+/// complement calculation via 2-bit rotation.
 ///
 /// # Encoding Table
 ///
 /// | Input | Encoding | Input | Encoding |
 /// |-------|----------|-------|----------|
-/// | A     | 0x0      | K     | 0x8      |
-/// | C     | 0x1      | M     | 0x9      |
-/// | G     | 0x2      | B     | 0xA      |
-/// | T, U  | 0x3      | D     | 0xB      |
-/// | R     | 0x4      | H     | 0xC      |
-/// | Y     | 0x5      | V     | 0xD      |
-/// | S     | 0x6      | N     | 0xE      |
-/// | W     | 0x7      | -, .  | 0xF      |
+/// | -, .  | 0x0      | G     | 0x8      |
+/// | A     | 0x1      | R     | 0x9      |
+/// | C     | 0x2      | S     | 0xA      |
+/// | M     | 0x3      | V     | 0xB      |
+/// | T, U  | 0x4      | K     | 0xC      |
+/// | W     | 0x5      | D     | 0xD      |
+/// | Y     | 0x6      | B     | 0xE      |
+/// | H     | 0x7      | N     | 0xF      |
 ///
 /// # Arguments
 ///
@@ -316,14 +317,14 @@ fn encode_with_simd_if_available(padded: &[u8], output: &mut [u8]) -> bool {
 ///
 /// | Encoding | Output | Encoding | Output |
 /// |----------|--------|----------|--------|
-/// | 0x0      | A      | 0x8      | K      |
-/// | 0x1      | C      | 0x9      | M      |
-/// | 0x2      | G      | 0xA      | B      |
-/// | 0x3      | T      | 0xB      | D      |
-/// | 0x4      | R      | 0xC      | H      |
-/// | 0x5      | Y      | 0xD      | V      |
-/// | 0x6      | S      | 0xE      | N      |
-/// | 0x7      | W      | 0xF      | -      |
+/// | 0x0      | -      | 0x8      | G      |
+/// | 0x1      | A      | 0x9      | R      |
+/// | 0x2      | C      | 0xA      | S      |
+/// | 0x3      | M      | 0xB      | V      |
+/// | 0x4      | T      | 0xC      | K      |
+/// | 0x5      | W      | 0xD      | D      |
+/// | 0x6      | Y      | 0xE      | B      |
+/// | 0x7      | H      | 0xF      | N      |
 ///
 /// # Arguments
 ///

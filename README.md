@@ -18,7 +18,9 @@
   - [Two-Base Ambiguity Codes](#two-base-ambiguity-codes)
   - [Three-Base Ambiguity Codes](#three-base-ambiguity-codes)
   - [Wildcards and Gaps](#wildcards-and-gaps)
+  - [Bit Rotation Property](#bit-rotation-property)
 - [Usage](#usage)
+- [Reverse Complement](#reverse-complement)
 - [Input Handling](#input-handling)
 - [Integration](#integration)
   - [Working with seq\_io](#working-with-seq_io)
@@ -38,6 +40,8 @@
 ## Features
 
 - **4-bit encoding** supporting all IUPAC nucleotide codes (16 standard + U for RNA)
+- **Bit-rotation-compatible encoding** enabling efficient complement calculation
+- **SIMD-accelerated reverse complement** operations
 - **SIMD acceleration** on x86_64 (SSSE3) and ARM64 (NEON)
 - **Automatic fallback** to optimized scalar implementation
 - **Thread-safe** pure functions with no global state
@@ -61,45 +65,55 @@ cargo add simdna
 
 ## IUPAC Nucleotide Codes
 
-simdna supports the complete IUPAC nucleotide alphabet:
+simdna supports the complete IUPAC nucleotide alphabet with a bit-rotation-compatible encoding scheme. This encoding enables efficient complement calculation via a simple 2-bit rotation operation.
 
 ### Standard Nucleotides
 
-| Code | Meaning              | Value |
-|------|----------------------|-------|
-| A    | Adenine              | 0x0   |
-| C    | Cytosine             | 0x1   |
-| G    | Guanine              | 0x2   |
-| T    | Thymine              | 0x3   |
-| U    | Uracil (RNA → T)     | 0x3   |
+| Code | Meaning              | Value | Complement |
+|------|----------------------|-------|------------|
+| A    | Adenine              | 0x1   | T (0x4)    |
+| C    | Cytosine             | 0x2   | G (0x8)    |
+| G    | Guanine              | 0x8   | C (0x2)    |
+| T    | Thymine              | 0x4   | A (0x1)    |
+| U    | Uracil (RNA → T)     | 0x4   | A (0x1)    |
 
 ### Two-Base Ambiguity Codes
 
-| Code | Meaning              | Value |
-|------|----------------------|-------|
-| R    | A or G (purine)      | 0x4   |
-| Y    | C or T (pyrimidine)  | 0x5   |
-| S    | G or C (strong)      | 0x6   |
-| W    | A or T (weak)        | 0x7   |
-| K    | G or T (keto)        | 0x8   |
-| M    | A or C (amino)       | 0x9   |
+| Code | Meaning              | Value | Complement |
+|------|----------------------|-------|------------|
+| R    | A or G (purine)      | 0x9   | Y (0x6)    |
+| Y    | C or T (pyrimidine)  | 0x6   | R (0x9)    |
+| S    | G or C (strong)      | 0xA   | S (0xA)    |
+| W    | A or T (weak)        | 0x5   | W (0x5)    |
+| K    | G or T (keto)        | 0xC   | M (0x3)    |
+| M    | A or C (amino)       | 0x3   | K (0xC)    |
 
 ### Three-Base Ambiguity Codes
 
-| Code | Meaning              | Value |
-|------|----------------------|-------|
-| B    | C, G, or T (not A)   | 0xA   |
-| D    | A, G, or T (not C)   | 0xB   |
-| H    | A, C, or T (not G)   | 0xC   |
-| V    | A, C, or G (not T)   | 0xD   |
+| Code | Meaning              | Value | Complement |
+|------|----------------------|-------|------------|
+| B    | C, G, or T (not A)   | 0xE   | V (0xB)    |
+| D    | A, G, or T (not C)   | 0xD   | H (0x7)    |
+| H    | A, C, or T (not G)   | 0x7   | D (0xD)    |
+| V    | A, C, or G (not T)   | 0xB   | B (0xE)    |
 
 ### Wildcards and Gaps
 
-| Code | Meaning              | Value |
-|------|----------------------|-------|
-| N    | Any base             | 0xE   |
-| -    | Gap / deletion       | 0xF   |
-| .    | Gap (alternative)    | 0xF   |
+| Code | Meaning              | Value | Complement |
+|------|----------------------|-------|------------|
+| N    | Any base             | 0xF   | N (0xF)    |
+| -    | Gap / deletion       | 0x0   | - (0x0)    |
+| .    | Gap (alternative)    | 0x0   | - (0x0)    |
+
+### Bit Rotation Property
+
+The encoding is designed so that the complement of any nucleotide can be computed via a 2-bit rotation:
+
+```text
+complement = ((bits << 2) | (bits >> 2)) & 0xF
+```
+
+This enables SIMD-accelerated reverse complement operations that are ~2x faster than lookup table approaches.
 
 ## Usage
 
@@ -122,6 +136,43 @@ let rna = b"ACGU";
 let encoded_rna = encode_dna_prefer_simd(rna);
 let decoded_rna = decode_dna_prefer_simd(&encoded_rna, rna.len());
 assert_eq!(decoded_rna, b"ACGT"); // U decodes as T
+```
+
+## Reverse Complement
+
+simdna provides efficient SIMD-accelerated reverse complement operations for DNA/RNA sequences:
+
+```rust
+use simdna::dna_simd_encoder::{reverse_complement, reverse_complement_encoded, encode_dna_prefer_simd};
+
+// High-level API: ASCII in, ASCII out
+let sequence = b"ACGT";
+let rc = reverse_complement(sequence);
+assert_eq!(rc, b"ACGT"); // ACGT is its own reverse complement
+
+// Biological example
+let forward = b"ATGCAACG";
+let rc = reverse_complement(forward);
+assert_eq!(rc, b"CGTTGCAT");
+
+// Low-level API: operates directly on encoded data for maximum performance
+let encoded = encode_dna_prefer_simd(b"ACGT");
+let rc_encoded = reverse_complement_encoded(&encoded, 4);
+// rc_encoded is the encoded form of "ACGT"
+```
+
+### IUPAC Ambiguity Code Complements
+
+Reverse complement correctly handles all IUPAC ambiguity codes:
+
+```rust
+use simdna::dna_simd_encoder::reverse_complement;
+
+// R (purine: A|G) complements to Y (pyrimidine: C|T)
+assert_eq!(reverse_complement(b"R"), b"Y");
+
+// Self-complementary codes: S (G|C), W (A|T), N (any)
+assert_eq!(reverse_complement(b"SWN"), b"NWS");
 ```
 
 ## Input Handling
@@ -248,6 +299,8 @@ simdna uses [`cargo-fuzz`](https://github.com/rust-fuzz/cargo-fuzz) for property
 | `decode_robust` | Tests decoder resilience to arbitrary byte sequences |
 | `boundaries` | Tests sequence length boundary conditions |
 | `simd_scalar_equivalence` | Verifies SIMD and scalar implementations produce identical results |
+| `bit_rotation` | Verifies bit rotation complement properties (involution, consistency) |
+| `reverse_complement` | Tests reverse complement correctness (double-rc = original) |
 
 Run fuzz tests with:
 
