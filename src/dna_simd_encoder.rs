@@ -1411,6 +1411,10 @@ pub fn complement_packed_byte(packed: u8) -> u8 {
     (complement_4bit(high) << 4) | complement_4bit(low)
 }
 
+/// Minimum byte count below which scalar is faster than SIMD due to setup overhead.
+/// Based on benchmarking, SIMD overhead is worthwhile only for larger sequences.
+const SIMD_REVCOMP_THRESHOLD: usize = 32;
+
 /// Computes the reverse complement of encoded DNA data.
 ///
 /// This function operates directly on 4-bit packed encoded data, avoiding
@@ -1466,19 +1470,65 @@ pub fn reverse_complement_encoded(encoded: &[u8], length: usize) -> Vec<u8> {
         return Vec::new();
     }
 
-    let mut output = vec![0u8; encoded.len()];
+    let num_bytes = encoded.len();
+    let is_odd_length = length % 2 == 1;
+    let mut output = vec![0u8; num_bytes];
 
-    // Try SIMD implementations first, fall back to scalar
+    // For very small sequences, scalar is faster due to SIMD setup overhead
+    if num_bytes < SIMD_REVCOMP_THRESHOLD {
+        reverse_complement_scalar(encoded, &mut output, length);
+        return output;
+    }
+
+    // Try SIMD implementations - works for both even and odd lengths
+    // For odd lengths, SIMD does byte-level reverse+complement, then we fix nibble alignment
     let used_simd = reverse_complement_with_simd_if_available(encoded, &mut output, length);
 
     if !used_simd {
         reverse_complement_scalar(encoded, &mut output, length);
+        return output;
+    }
+
+    // For odd-length sequences, SIMD processed as if even-length.
+    // The padding nibble (which was in low nibble of last input byte) is now
+    // in the HIGH nibble of the first output byte after SIMD processing.
+    // We need to shift all nibbles left by one position to move padding back
+    // to the low nibble of the last byte.
+    if is_odd_length {
+        shift_nibbles_left(&mut output);
     }
 
     output
 }
 
+/// Shifts all nibbles in the buffer left by one position.
+/// The high nibble of byte[0] is discarded (it was padding).
+/// The low nibble of the last byte becomes 0 (new padding).
+///
+/// This efficiently handles odd-length sequences after SIMD processing.
+#[inline]
+fn shift_nibbles_left(buffer: &mut [u8]) {
+    if buffer.is_empty() {
+        return;
+    }
+
+    let len = buffer.len();
+
+    // Process bytes from start to end-1
+    // Each byte takes its high nibble from its own low nibble,
+    // and its low nibble from the next byte's high nibble.
+    for i in 0..len - 1 {
+        let current_low = buffer[i] & 0x0F;
+        let next_high = buffer[i + 1] >> 4;
+        buffer[i] = (current_low << 4) | next_high;
+    }
+
+    // Last byte: high nibble from its own low nibble, low nibble becomes 0 (padding)
+    buffer[len - 1] = (buffer[len - 1] & 0x0F) << 4;
+}
+
 /// Attempts to use SIMD for reverse complement if available.
+/// Only called for even-length sequences >= SIMD_REVCOMP_THRESHOLD bytes.
 #[inline]
 fn reverse_complement_with_simd_if_available(
     encoded: &[u8],
@@ -1509,138 +1559,177 @@ fn reverse_complement_with_simd_if_available(
 /// 1. Iterates through bytes in reverse order
 /// 2. Swaps nibbles within each byte
 /// 3. Complements each nibble
+///
+/// For odd-length sequences, handles the nibble shift without allocation.
 fn reverse_complement_scalar(encoded: &[u8], output: &mut [u8], length: usize) {
     let num_bytes = encoded.len();
     let is_odd_length = length % 2 == 1;
 
-    for (i, &byte) in encoded.iter().enumerate() {
-        let reverse_idx = num_bytes - 1 - i;
+    if !is_odd_length {
+        // Even length: simple byte-by-byte reversal with nibble swap and complement
+        for (i, &byte) in encoded.iter().enumerate() {
+            let reverse_idx = num_bytes - 1 - i;
 
-        // Extract nibbles
-        let high = byte >> 4;
-        let low = byte & 0xF;
+            // Extract nibbles
+            let high = byte >> 4;
+            let low = byte & 0xF;
 
-        // Complement each nibble
-        let high_comp = complement_4bit(high);
-        let low_comp = complement_4bit(low);
+            // Complement each nibble and swap positions
+            let high_comp = complement_4bit(high);
+            let low_comp = complement_4bit(low);
 
-        // Swap and pack: the low nibble becomes high, high becomes low
-        // This effectively reverses the nucleotide order within the byte
-        output[reverse_idx] = (low_comp << 4) | high_comp;
-    }
-
-    // Handle odd-length sequences: the padding nibble needs adjustment
-    if is_odd_length && !output.is_empty() {
-        // The last nucleotide in the original is in the high nibble of encoded[0]
-        // After reversal, it should be in the high nibble of output[num_bytes-1]
-        // But we also have a padding nibble that was in the low nibble of the last encoded byte
-        // We need to shift the result to account for the padding
-
-        // Re-process to handle odd length correctly
-        let mut temp = Vec::with_capacity(length);
-
-        // First, decode to individual nibbles
-        for &byte in encoded.iter() {
-            temp.push(byte >> 4);
-            temp.push(byte & 0xF);
+            // Swap and pack: the low nibble becomes high, high becomes low
+            output[reverse_idx] = (low_comp << 4) | high_comp;
         }
-        temp.truncate(length);
+    } else {
+        // Odd length: need to handle nibble shifting without allocation
+        // The input has `length` nucleotides packed into `num_bytes` bytes,
+        // with the last byte having a padding nibble in the low position.
+        //
+        // For reverse complement, we need to:
+        // 1. Read nucleotides in reverse order (ignoring padding)
+        // 2. Complement each
+        // 3. Pack into output with padding at the end
+        //
+        // Process nucleotide by nucleotide to handle the shift correctly.
+        for out_nuc_idx in 0..length {
+            // Input nucleotide index (reversed)
+            let in_nuc_idx = length - 1 - out_nuc_idx;
 
-        // Reverse and complement
-        temp.reverse();
-        for nibble in temp.iter_mut() {
-            *nibble = complement_4bit(*nibble);
-        }
+            // Find the byte and nibble position in input
+            let in_byte_idx = in_nuc_idx / 2;
+            let in_is_high = in_nuc_idx.is_multiple_of(2);
 
-        // Re-pack
-        for (i, chunk) in temp.chunks(2).enumerate() {
-            if chunk.len() == 2 {
-                output[i] = (chunk[0] << 4) | chunk[1];
+            // Extract the nibble
+            let nibble = if in_is_high {
+                encoded[in_byte_idx] >> 4
             } else {
-                // Odd length: pad with gap (0x0)
-                output[i] = chunk[0] << 4;
+                encoded[in_byte_idx] & 0xF
+            };
+
+            // Complement
+            let comp_nibble = complement_4bit(nibble);
+
+            // Find the byte and nibble position in output
+            let out_byte_idx = out_nuc_idx / 2;
+            let out_is_high = out_nuc_idx.is_multiple_of(2);
+
+            // Pack into output
+            if out_is_high {
+                output[out_byte_idx] = comp_nibble << 4;
+            } else {
+                output[out_byte_idx] |= comp_nibble;
             }
         }
     }
 }
 
 /// SSSE3-accelerated reverse complement for x86_64.
+/// Handles both even and odd-length sequences. For odd-length, caller must
+/// call shift_nibbles_left() on the output to fix nibble alignment.
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "ssse3")]
-unsafe fn reverse_complement_x86_ssse3(encoded: &[u8], output: &mut [u8], length: usize) {
+unsafe fn reverse_complement_x86_ssse3(encoded: &[u8], output: &mut [u8], _length: usize) {
     let num_bytes = encoded.len();
-    let is_odd_length = length % 2 == 1;
 
-    // For simplicity, use scalar for small or odd-length sequences
-    if num_bytes < 16 || is_odd_length {
-        reverse_complement_scalar(encoded, output, length);
+    // Caller should ensure sufficient size
+    if num_bytes < 16 {
+        // Fallback to scalar for small inputs (caller handles odd-length shift)
+        for (i, &byte) in encoded.iter().enumerate() {
+            let reverse_idx = num_bytes - 1 - i;
+            let high = byte >> 4;
+            let low = byte & 0xF;
+            let high_comp = complement_4bit(high);
+            let low_comp = complement_4bit(low);
+            output[reverse_idx] = (low_comp << 4) | high_comp;
+        }
         return;
     }
 
     // Byte reverse shuffle mask
     let reverse_mask = _mm_setr_epi8(15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+    let mask_0f = _mm_set1_epi8(0x0F);
 
-    let mut in_idx = 0;
-    let mut out_idx = num_bytes;
+    // Calculate how many full 16-byte chunks we can process
+    let full_chunks = num_bytes / 16;
+    let remainder = num_bytes % 16;
 
-    // Process 16 bytes at a time from the end
-    while in_idx + 16 <= num_bytes && out_idx >= 16 {
-        out_idx -= 16;
+    // Process full 16-byte chunks with SIMD
+    for chunk_idx in 0..full_chunks {
+        let in_offset = chunk_idx * 16;
+        let out_offset = num_bytes - (chunk_idx + 1) * 16;
 
-        // Load 16 bytes
-        let data = _mm_loadu_si128(encoded[in_idx..].as_ptr() as *const __m128i);
+        // Load 16 bytes from input
+        let data = _mm_loadu_si128(encoded[in_offset..].as_ptr() as *const __m128i);
 
         // Reverse byte order
         let reversed = _mm_shuffle_epi8(data, reverse_mask);
 
         // Swap nibbles within each byte: ((x & 0x0F) << 4) | ((x >> 4) & 0x0F)
-        let low_nibbles = _mm_and_si128(reversed, _mm_set1_epi8(0x0F));
-        let high_nibbles = _mm_srli_epi16(reversed, 4);
-        let high_nibbles = _mm_and_si128(high_nibbles, _mm_set1_epi8(0x0F));
+        let low_nibbles = _mm_and_si128(reversed, mask_0f);
+        let high_nibbles = _mm_and_si128(_mm_srli_epi16(reversed, 4), mask_0f);
         let swapped = _mm_or_si128(_mm_slli_epi16(low_nibbles, 4), high_nibbles);
 
         // Complement each nibble using bit rotation
         // For each nibble: ((n << 2) | (n >> 2)) & 0xF
-        // Split into nibbles again for rotation
-        let low = _mm_and_si128(swapped, _mm_set1_epi8(0x0F));
-        let high = _mm_and_si128(_mm_srli_epi16(swapped, 4), _mm_set1_epi8(0x0F));
+        let low = _mm_and_si128(swapped, mask_0f);
+        let high = _mm_and_si128(_mm_srli_epi16(swapped, 4), mask_0f);
 
-        // Rotate low nibbles: ((n << 2) | (n >> 2)) & 0xF
+        // Rotate nibbles: ((n << 2) | (n >> 2)) & 0xF
         let low_rot = _mm_and_si128(
             _mm_or_si128(_mm_slli_epi16(low, 2), _mm_srli_epi16(low, 2)),
-            _mm_set1_epi8(0x0F),
+            mask_0f,
         );
-
-        // Rotate high nibbles
         let high_rot = _mm_and_si128(
             _mm_or_si128(_mm_slli_epi16(high, 2), _mm_srli_epi16(high, 2)),
-            _mm_set1_epi8(0x0F),
+            mask_0f,
         );
 
         // Repack nibbles
         let result = _mm_or_si128(_mm_slli_epi16(high_rot, 4), low_rot);
 
-        _mm_storeu_si128(output[out_idx..].as_mut_ptr() as *mut __m128i, result);
-        in_idx += 16;
+        _mm_storeu_si128(output[out_offset..].as_mut_ptr() as *mut __m128i, result);
     }
 
-    // Handle remainder with scalar
-    if in_idx < num_bytes {
-        let remaining_length = (num_bytes - in_idx) * 2;
-        reverse_complement_scalar(&encoded[in_idx..], &mut output[..out_idx], remaining_length);
+    // Handle remainder bytes with efficient scalar loop (no function call overhead)
+    if remainder > 0 {
+        let in_start = full_chunks * 16;
+        let out_end = remainder;
+
+        for i in 0..remainder {
+            let byte = encoded[in_start + i];
+            let reverse_idx = out_end - 1 - i;
+
+            // Extract, complement, and swap nibbles
+            let high = byte >> 4;
+            let low = byte & 0xF;
+            let high_comp = complement_4bit(high);
+            let low_comp = complement_4bit(low);
+
+            output[reverse_idx] = (low_comp << 4) | high_comp;
+        }
     }
 }
 
 /// NEON-accelerated reverse complement for ARM64.
+/// Handles both even and odd-length sequences. For odd-length, caller must
+/// call shift_nibbles_left() on the output to fix nibble alignment.
 #[cfg(target_arch = "aarch64")]
 #[target_feature(enable = "neon")]
-unsafe fn reverse_complement_arm_neon(encoded: &[u8], output: &mut [u8], length: usize) {
+unsafe fn reverse_complement_arm_neon(encoded: &[u8], output: &mut [u8], _length: usize) {
     let num_bytes = encoded.len();
-    let is_odd_length = length % 2 == 1;
 
-    // For simplicity, use scalar for small or odd-length sequences
-    if num_bytes < 16 || is_odd_length {
-        reverse_complement_scalar(encoded, output, length);
+    // Caller should ensure sufficient size
+    if num_bytes < 16 {
+        // Fallback to scalar for small inputs (caller handles odd-length shift)
+        for (i, &byte) in encoded.iter().enumerate() {
+            let reverse_idx = num_bytes - 1 - i;
+            let high = byte >> 4;
+            let low = byte & 0xF;
+            let high_comp = complement_4bit(high);
+            let low_comp = complement_4bit(low);
+            output[reverse_idx] = (low_comp << 4) | high_comp;
+        }
         return;
     }
 
@@ -1650,15 +1739,17 @@ unsafe fn reverse_complement_arm_neon(encoded: &[u8], output: &mut [u8], length:
 
     let mask_0f = vdupq_n_u8(0x0F);
 
-    let mut in_idx = 0;
-    let mut out_idx = num_bytes;
+    // Calculate how many full 16-byte chunks we can process
+    let full_chunks = num_bytes / 16;
+    let remainder = num_bytes % 16;
 
-    // Process 16 bytes at a time from the end
-    while in_idx + 16 <= num_bytes && out_idx >= 16 {
-        out_idx -= 16;
+    // Process full 16-byte chunks with SIMD
+    for chunk_idx in 0..full_chunks {
+        let in_offset = chunk_idx * 16;
+        let out_offset = num_bytes - (chunk_idx + 1) * 16;
 
-        // Load 16 bytes
-        let data = vld1q_u8(encoded[in_idx..].as_ptr());
+        // Load 16 bytes from input
+        let data = vld1q_u8(encoded[in_offset..].as_ptr());
 
         // Reverse byte order
         let reversed = vqtbl1q_u8(data, reverse_tbl);
@@ -1672,21 +1763,33 @@ unsafe fn reverse_complement_arm_neon(encoded: &[u8], output: &mut [u8], length:
         let low = vandq_u8(swapped, mask_0f);
         let high = vandq_u8(vshrq_n_u8(swapped, 4), mask_0f);
 
-        // Rotate low nibbles: ((n << 2) | (n >> 2)) & 0xF
+        // Rotate nibbles: ((n << 2) | (n >> 2)) & 0xF
         let low_rot = vandq_u8(vorrq_u8(vshlq_n_u8(low, 2), vshrq_n_u8(low, 2)), mask_0f);
         let high_rot = vandq_u8(vorrq_u8(vshlq_n_u8(high, 2), vshrq_n_u8(high, 2)), mask_0f);
 
         // Repack nibbles
         let result = vorrq_u8(vshlq_n_u8(high_rot, 4), low_rot);
 
-        vst1q_u8(output[out_idx..].as_mut_ptr(), result);
-        in_idx += 16;
+        vst1q_u8(output[out_offset..].as_mut_ptr(), result);
     }
 
-    // Handle remainder with scalar
-    if in_idx < num_bytes {
-        let remaining_length = (num_bytes - in_idx) * 2;
-        reverse_complement_scalar(&encoded[in_idx..], &mut output[..out_idx], remaining_length);
+    // Handle remainder bytes with efficient scalar loop (no function call overhead)
+    if remainder > 0 {
+        let in_start = full_chunks * 16;
+        let out_end = remainder;
+
+        for i in 0..remainder {
+            let byte = encoded[in_start + i];
+            let reverse_idx = out_end - 1 - i;
+
+            // Extract, complement, and swap nibbles
+            let high = byte >> 4;
+            let low = byte & 0xF;
+            let high_comp = complement_4bit(high);
+            let low_comp = complement_4bit(low);
+
+            output[reverse_idx] = (low_comp << 4) | high_comp;
+        }
     }
 }
 

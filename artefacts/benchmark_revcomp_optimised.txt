@@ -1,0 +1,870 @@
+   Compiling simdna v1.0.1 (/Users/nicholascrosbie/Documents/repos/bioinf-projects/simdna)
+    Finished `bench` profile [optimized] target(s) in 16.25s
+     Running benchmark/benchmark.rs (target/release/deps/benchmark-1dbf0b03f7f99eab)
+
+╔════════════════════════════════════════════════════════════╗
+║ simdna benchmark v1.0.1                                     ║
+║ Run date: 2025-12-18 21:42:36 UTC                              ║
+║ Platform: aarch64                                           ║
+╚════════════════════════════════════════════════════════════╝
+
+Benchmarking reverse_complement/simd_high_level/15
+Benchmarking reverse_complement/simd_high_level/15: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/15: Collecting 100 samples in estimated 5.0003 s (54M iterations)
+Benchmarking reverse_complement/simd_high_level/15: Analyzing
+reverse_complement/simd_high_level/15
+                        time:   [93.037 ns 93.119 ns 93.219 ns]
+                        thrpt:  [153.46 MiB/s 153.62 MiB/s 153.76 MiB/s]
+                 change:
+                        time:   [−44.033% −43.926% −43.807%] (p = 0.00 < 0.05)
+                        thrpt:  [+77.958% +78.334% +78.676%]
+                        Performance has improved.
+Found 11 outliers among 100 measurements (11.00%)
+  3 (3.00%) high mild
+  8 (8.00%) high severe
+Benchmarking reverse_complement/simd_encoded/15
+Benchmarking reverse_complement/simd_encoded/15: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/15: Collecting 100 samples in estimated 5.0002 s (126M iterations)
+Benchmarking reverse_complement/simd_encoded/15: Analyzing
+reverse_complement/simd_encoded/15
+                        time:   [39.593 ns 39.651 ns 39.705 ns]
+                        thrpt:  [360.28 MiB/s 360.78 MiB/s 361.30 MiB/s]
+                 change:
+                        time:   [−64.703% −64.617% −64.528%] (p = 0.00 < 0.05)
+                        thrpt:  [+181.91% +182.62% +183.31%]
+                        Performance has improved.
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) low mild
+  3 (3.00%) high mild
+  2 (2.00%) high severe
+Benchmarking reverse_complement/scalar/15
+Benchmarking reverse_complement/scalar/15: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/15: Collecting 100 samples in estimated 5.0000 s (202M iterations)
+Benchmarking reverse_complement/scalar/15: Analyzing
+reverse_complement/scalar/15
+                        time:   [24.772 ns 24.915 ns 25.171 ns]
+                        thrpt:  [568.33 MiB/s 574.17 MiB/s 577.46 MiB/s]
+                 change:
+                        time:   [+0.2091% +0.7097% +1.3635%] (p = 0.01 < 0.05)
+                        thrpt:  [−1.3452% −0.7047% −0.2086%]
+                        Change within noise threshold.
+Found 12 outliers among 100 measurements (12.00%)
+  3 (3.00%) high mild
+  9 (9.00%) high severe
+Benchmarking reverse_complement/simd_high_level/16
+Benchmarking reverse_complement/simd_high_level/16: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/16: Collecting 100 samples in estimated 5.0003 s (71M iterations)
+Benchmarking reverse_complement/simd_high_level/16: Analyzing
+reverse_complement/simd_high_level/16
+                        time:   [70.421 ns 70.465 ns 70.520 ns]
+                        thrpt:  [216.37 MiB/s 216.55 MiB/s 216.68 MiB/s]
+                 change:
+                        time:   [−7.5259% −6.9560% −6.6069%] (p = 0.00 < 0.05)
+                        thrpt:  [+7.0743% +7.4760% +8.1384%]
+                        Performance has improved.
+Found 8 outliers among 100 measurements (8.00%)
+  3 (3.00%) high mild
+  5 (5.00%) high severe
+Benchmarking reverse_complement/simd_encoded/16
+Benchmarking reverse_complement/simd_encoded/16: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/16: Collecting 100 samples in estimated 5.0001 s (220M iterations)
+Benchmarking reverse_complement/simd_encoded/16: Analyzing
+reverse_complement/simd_encoded/16
+                        time:   [22.450 ns 22.466 ns 22.485 ns]
+                        thrpt:  [678.63 MiB/s 679.20 MiB/s 679.69 MiB/s]
+                 change:
+                        time:   [−13.928% −13.773% −13.634%] (p = 0.00 < 0.05)
+                        thrpt:  [+15.786% +15.973% +16.182%]
+                        Performance has improved.
+Found 7 outliers among 100 measurements (7.00%)
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+Benchmarking reverse_complement/scalar/16
+Benchmarking reverse_complement/scalar/16: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/16: Collecting 100 samples in estimated 5.0000 s (207M iterations)
+Benchmarking reverse_complement/scalar/16: Analyzing
+reverse_complement/scalar/16
+                        time:   [24.184 ns 24.196 ns 24.211 ns]
+                        thrpt:  [630.25 MiB/s 630.63 MiB/s 630.96 MiB/s]
+                 change:
+                        time:   [+0.1444% +0.3226% +0.5126%] (p = 0.00 < 0.05)
+                        thrpt:  [−0.5100% −0.3215% −0.1441%]
+                        Change within noise threshold.
+Found 16 outliers among 100 measurements (16.00%)
+  3 (3.00%) high mild
+  13 (13.00%) high severe
+Benchmarking reverse_complement/simd_high_level/17
+Benchmarking reverse_complement/simd_high_level/17: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/17: Collecting 100 samples in estimated 5.0003 s (53M iterations)
+Benchmarking reverse_complement/simd_high_level/17: Analyzing
+reverse_complement/simd_high_level/17
+                        time:   [94.985 ns 95.044 ns 95.114 ns]
+                        thrpt:  [170.45 MiB/s 170.58 MiB/s 170.69 MiB/s]
+                 change:
+                        time:   [−42.963% −42.864% −42.753%] (p = 0.00 < 0.05)
+                        thrpt:  [+74.680% +75.021% +75.324%]
+                        Performance has improved.
+Found 11 outliers among 100 measurements (11.00%)
+  6 (6.00%) high mild
+  5 (5.00%) high severe
+Benchmarking reverse_complement/simd_encoded/17
+Benchmarking reverse_complement/simd_encoded/17: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/17: Collecting 100 samples in estimated 5.0001 s (118M iterations)
+Benchmarking reverse_complement/simd_encoded/17: Analyzing
+reverse_complement/simd_encoded/17
+                        time:   [42.340 ns 42.358 ns 42.379 ns]
+                        thrpt:  [382.56 MiB/s 382.74 MiB/s 382.91 MiB/s]
+                 change:
+                        time:   [−62.462% −62.410% −62.360%] (p = 0.00 < 0.05)
+                        thrpt:  [+165.67% +166.03% +166.40%]
+                        Performance has improved.
+Found 12 outliers among 100 measurements (12.00%)
+  4 (4.00%) high mild
+  8 (8.00%) high severe
+Benchmarking reverse_complement/scalar/17
+Benchmarking reverse_complement/scalar/17: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/17: Collecting 100 samples in estimated 5.0000 s (166M iterations)
+Benchmarking reverse_complement/scalar/17: Analyzing
+reverse_complement/scalar/17
+                        time:   [30.089 ns 30.128 ns 30.175 ns]
+                        thrpt:  [537.28 MiB/s 538.12 MiB/s 538.81 MiB/s]
+                 change:
+                        time:   [+9.9772% +10.285% +10.547%] (p = 0.00 < 0.05)
+                        thrpt:  [−9.5411% −9.3261% −9.0721%]
+                        Performance has regressed.
+Found 14 outliers among 100 measurements (14.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+  8 (8.00%) high severe
+Benchmarking reverse_complement/simd_high_level/32
+Benchmarking reverse_complement/simd_high_level/32: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/32: Collecting 100 samples in estimated 5.0003 s (64M iterations)
+Benchmarking reverse_complement/simd_high_level/32: Analyzing
+reverse_complement/simd_high_level/32
+                        time:   [78.063 ns 78.448 ns 79.050 ns]
+                        thrpt:  [386.05 MiB/s 389.02 MiB/s 390.93 MiB/s]
+                 change:
+                        time:   [−2.6002% −1.6429% −0.4437%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.4457% +1.6704% +2.6696%]
+                        Change within noise threshold.
+Found 17 outliers among 100 measurements (17.00%)
+  5 (5.00%) high mild
+  12 (12.00%) high severe
+Benchmarking reverse_complement/simd_encoded/32
+Benchmarking reverse_complement/simd_encoded/32: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/32: Collecting 100 samples in estimated 5.0001 s (221M iterations)
+Benchmarking reverse_complement/simd_encoded/32: Analyzing
+reverse_complement/simd_encoded/32
+                        time:   [22.651 ns 22.759 ns 22.907 ns]
+                        thrpt:  [1.3010 GiB/s 1.3095 GiB/s 1.3157 GiB/s]
+                 change:
+                        time:   [−10.580% −9.7070% −8.3267%] (p = 0.00 < 0.05)
+                        thrpt:  [+9.0830% +10.751% +11.831%]
+                        Performance has improved.
+Found 12 outliers among 100 measurements (12.00%)
+  2 (2.00%) high mild
+  10 (10.00%) high severe
+Benchmarking reverse_complement/scalar/32
+Benchmarking reverse_complement/scalar/32: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/32: Collecting 100 samples in estimated 5.0001 s (139M iterations)
+Benchmarking reverse_complement/scalar/32: Analyzing
+reverse_complement/scalar/32
+                        time:   [35.856 ns 35.876 ns 35.901 ns]
+                        thrpt:  [850.04 MiB/s 850.65 MiB/s 851.12 MiB/s]
+                 change:
+                        time:   [+6.5412% +6.8049% +7.0442%] (p = 0.00 < 0.05)
+                        thrpt:  [−6.5807% −6.3713% −6.1396%]
+                        Performance has regressed.
+Found 11 outliers among 100 measurements (11.00%)
+  4 (4.00%) high mild
+  7 (7.00%) high severe
+Benchmarking reverse_complement/simd_high_level/33
+Benchmarking reverse_complement/simd_high_level/33: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/33: Collecting 100 samples in estimated 5.0006 s (38M iterations)
+Benchmarking reverse_complement/simd_high_level/33: Analyzing
+reverse_complement/simd_high_level/33
+                        time:   [132.28 ns 132.37 ns 132.48 ns]
+                        thrpt:  [237.56 MiB/s 237.75 MiB/s 237.90 MiB/s]
+                 change:
+                        time:   [−32.485% −32.381% −32.284%] (p = 0.00 < 0.05)
+                        thrpt:  [+47.675% +47.887% +48.114%]
+                        Performance has improved.
+Found 16 outliers among 100 measurements (16.00%)
+  2 (2.00%) low mild
+  6 (6.00%) high mild
+  8 (8.00%) high severe
+Benchmarking reverse_complement/simd_encoded/33
+Benchmarking reverse_complement/simd_encoded/33: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/33: Collecting 100 samples in estimated 5.0003 s (74M iterations)
+Benchmarking reverse_complement/simd_encoded/33: Analyzing
+reverse_complement/simd_encoded/33
+                        time:   [67.568 ns 67.607 ns 67.652 ns]
+                        thrpt:  [465.20 MiB/s 465.50 MiB/s 465.77 MiB/s]
+                 change:
+                        time:   [−48.321% −48.223% −48.117%] (p = 0.00 < 0.05)
+                        thrpt:  [+92.740% +93.135% +93.501%]
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  1 (1.00%) low mild
+  3 (3.00%) high mild
+  9 (9.00%) high severe
+Benchmarking reverse_complement/scalar/33
+Benchmarking reverse_complement/scalar/33: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/33: Collecting 100 samples in estimated 5.0000 s (136M iterations)
+Benchmarking reverse_complement/scalar/33: Analyzing
+reverse_complement/scalar/33
+                        time:   [36.785 ns 36.836 ns 36.902 ns]
+                        thrpt:  [852.83 MiB/s 854.36 MiB/s 855.53 MiB/s]
+                 change:
+                        time:   [+6.3044% +6.5862% +6.8569%] (p = 0.00 < 0.05)
+                        thrpt:  [−6.4169% −6.1792% −5.9305%]
+                        Performance has regressed.
+Found 12 outliers among 100 measurements (12.00%)
+  5 (5.00%) high mild
+  7 (7.00%) high severe
+Benchmarking reverse_complement/simd_high_level/63
+Benchmarking reverse_complement/simd_high_level/63: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/63: Collecting 100 samples in estimated 5.0008 s (27M iterations)
+Benchmarking reverse_complement/simd_high_level/63: Analyzing
+reverse_complement/simd_high_level/63
+                        time:   [183.41 ns 184.98 ns 187.39 ns]
+                        thrpt:  [320.62 MiB/s 324.79 MiB/s 327.58 MiB/s]
+                 change:
+                        time:   [−28.583% −28.040% −27.455%] (p = 0.00 < 0.05)
+                        thrpt:  [+37.845% +38.967% +40.022%]
+                        Performance has improved.
+Found 8 outliers among 100 measurements (8.00%)
+  2 (2.00%) high mild
+  6 (6.00%) high severe
+Benchmarking reverse_complement/simd_encoded/63
+Benchmarking reverse_complement/simd_encoded/63: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/63: Collecting 100 samples in estimated 5.0002 s (46M iterations)
+Benchmarking reverse_complement/simd_encoded/63: Analyzing
+reverse_complement/simd_encoded/63
+                        time:   [107.97 ns 108.63 ns 109.63 ns]
+                        thrpt:  [548.02 MiB/s 553.08 MiB/s 556.46 MiB/s]
+                 change:
+                        time:   [−40.150% −39.252% −38.563%] (p = 0.00 < 0.05)
+                        thrpt:  [+62.769% +64.614% +67.084%]
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  5 (5.00%) high mild
+  8 (8.00%) high severe
+Benchmarking reverse_complement/scalar/63
+Benchmarking reverse_complement/scalar/63: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/63: Collecting 100 samples in estimated 5.0001 s (117M iterations)
+Benchmarking reverse_complement/scalar/63: Analyzing
+reverse_complement/scalar/63
+                        time:   [42.629 ns 42.663 ns 42.706 ns]
+                        thrpt:  [1.3739 GiB/s 1.3753 GiB/s 1.3764 GiB/s]
+                 change:
+                        time:   [−0.0149% +0.1821% +0.4077%] (p = 0.10 > 0.05)
+                        thrpt:  [−0.4061% −0.1818% +0.0149%]
+                        No change in performance detected.
+Found 14 outliers among 100 measurements (14.00%)
+  5 (5.00%) high mild
+  9 (9.00%) high severe
+Benchmarking reverse_complement/simd_high_level/64
+Benchmarking reverse_complement/simd_high_level/64: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/64: Collecting 100 samples in estimated 5.0001 s (50M iterations)
+Benchmarking reverse_complement/simd_high_level/64: Analyzing
+reverse_complement/simd_high_level/64
+                        time:   [99.258 ns 99.322 ns 99.402 ns]
+                        thrpt:  [614.02 MiB/s 614.52 MiB/s 614.91 MiB/s]
+                 change:
+                        time:   [+3.5820% +3.7473% +3.8959%] (p = 0.00 < 0.05)
+                        thrpt:  [−3.7498% −3.6120% −3.4582%]
+                        Performance has regressed.
+Found 9 outliers among 100 measurements (9.00%)
+  5 (5.00%) high mild
+  4 (4.00%) high severe
+Benchmarking reverse_complement/simd_encoded/64
+Benchmarking reverse_complement/simd_encoded/64: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/64: Collecting 100 samples in estimated 5.0000 s (172M iterations)
+Benchmarking reverse_complement/simd_encoded/64: Analyzing
+reverse_complement/simd_encoded/64
+                        time:   [29.073 ns 29.107 ns 29.152 ns]
+                        thrpt:  [2.0446 GiB/s 2.0478 GiB/s 2.0502 GiB/s]
+                 change:
+                        time:   [+18.122% +18.291% +18.465%] (p = 0.00 < 0.05)
+                        thrpt:  [−15.587% −15.463% −15.342%]
+                        Performance has regressed.
+Found 12 outliers among 100 measurements (12.00%)
+  7 (7.00%) high mild
+  5 (5.00%) high severe
+Benchmarking reverse_complement/scalar/64
+Benchmarking reverse_complement/scalar/64: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/64: Collecting 100 samples in estimated 5.0000 s (119M iterations)
+Benchmarking reverse_complement/scalar/64: Analyzing
+reverse_complement/scalar/64
+                        time:   [41.974 ns 42.011 ns 42.057 ns]
+                        thrpt:  [1.4172 GiB/s 1.4188 GiB/s 1.4200 GiB/s]
+                 change:
+                        time:   [+0.0561% +0.2757% +0.5340%] (p = 0.02 < 0.05)
+                        thrpt:  [−0.5311% −0.2750% −0.0561%]
+                        Change within noise threshold.
+Found 10 outliers among 100 measurements (10.00%)
+  3 (3.00%) high mild
+  7 (7.00%) high severe
+Benchmarking reverse_complement/simd_high_level/127
+Benchmarking reverse_complement/simd_high_level/127: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/127: Collecting 100 samples in estimated 5.0007 s (17M iterations)
+Benchmarking reverse_complement/simd_high_level/127: Analyzing
+reverse_complement/simd_high_level/127
+                        time:   [285.05 ns 287.20 ns 290.47 ns]
+                        thrpt:  [416.96 MiB/s 421.72 MiB/s 424.90 MiB/s]
+                 change:
+                        time:   [−26.267% −25.938% −25.418%] (p = 0.00 < 0.05)
+                        thrpt:  [+34.080% +35.022% +35.625%]
+                        Performance has improved.
+Found 14 outliers among 100 measurements (14.00%)
+  3 (3.00%) low mild
+  4 (4.00%) high mild
+  7 (7.00%) high severe
+Benchmarking reverse_complement/simd_encoded/127
+Benchmarking reverse_complement/simd_encoded/127: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/127: Collecting 100 samples in estimated 5.0003 s (27M iterations)
+Benchmarking reverse_complement/simd_encoded/127: Analyzing
+reverse_complement/simd_encoded/127
+                        time:   [183.80 ns 184.96 ns 186.67 ns]
+                        thrpt:  [648.84 MiB/s 654.84 MiB/s 658.95 MiB/s]
+                 change:
+                        time:   [−32.305% −31.541% −30.953%] (p = 0.00 < 0.05)
+                        thrpt:  [+44.829% +46.073% +47.722%]
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  6 (6.00%) high mild
+  7 (7.00%) high severe
+Benchmarking reverse_complement/scalar/127
+Benchmarking reverse_complement/scalar/127: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/127: Collecting 100 samples in estimated 5.0003 s (78M iterations)
+Benchmarking reverse_complement/scalar/127: Analyzing
+reverse_complement/scalar/127
+                        time:   [64.173 ns 64.219 ns 64.277 ns]
+                        thrpt:  [1.8401 GiB/s 1.8418 GiB/s 1.8431 GiB/s]
+                 change:
+                        time:   [+0.0530% +0.1968% +0.3413%] (p = 0.01 < 0.05)
+                        thrpt:  [−0.3402% −0.1964% −0.0530%]
+                        Change within noise threshold.
+Found 11 outliers among 100 measurements (11.00%)
+  6 (6.00%) high mild
+  5 (5.00%) high severe
+Benchmarking reverse_complement/simd_high_level/128
+Benchmarking reverse_complement/simd_high_level/128: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/128: Collecting 100 samples in estimated 5.0000 s (41M iterations)
+Benchmarking reverse_complement/simd_high_level/128: Analyzing
+reverse_complement/simd_high_level/128
+                        time:   [122.80 ns 122.92 ns 123.11 ns]
+                        thrpt:  [991.55 MiB/s 993.05 MiB/s 994.02 MiB/s]
+                 change:
+                        time:   [−3.4787% −3.3111% −3.1382%] (p = 0.00 < 0.05)
+                        thrpt:  [+3.2399% +3.4245% +3.6041%]
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  3 (3.00%) high mild
+  10 (10.00%) high severe
+Benchmarking reverse_complement/simd_encoded/128
+Benchmarking reverse_complement/simd_encoded/128: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/128: Collecting 100 samples in estimated 5.0001 s (199M iterations)
+Benchmarking reverse_complement/simd_encoded/128: Analyzing
+reverse_complement/simd_encoded/128
+                        time:   [25.088 ns 25.147 ns 25.226 ns]
+                        thrpt:  [4.7256 GiB/s 4.7405 GiB/s 4.7517 GiB/s]
+                 change:
+                        time:   [−10.807% −10.551% −10.280%] (p = 0.00 < 0.05)
+                        thrpt:  [+11.457% +11.795% +12.117%]
+                        Performance has improved.
+Found 16 outliers among 100 measurements (16.00%)
+  5 (5.00%) high mild
+  11 (11.00%) high severe
+Benchmarking reverse_complement/scalar/128
+Benchmarking reverse_complement/scalar/128: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/128: Collecting 100 samples in estimated 5.0001 s (79M iterations)
+Benchmarking reverse_complement/scalar/128: Analyzing
+reverse_complement/scalar/128
+                        time:   [63.570 ns 63.604 ns 63.647 ns]
+                        thrpt:  [1.8730 GiB/s 1.8743 GiB/s 1.8752 GiB/s]
+                 change:
+                        time:   [+0.0708% +0.2089% +0.3717%] (p = 0.00 < 0.05)
+                        thrpt:  [−0.3703% −0.2085% −0.0708%]
+                        Change within noise threshold.
+Found 10 outliers among 100 measurements (10.00%)
+  4 (4.00%) high mild
+  6 (6.00%) high severe
+Benchmarking reverse_complement/simd_high_level/255
+Benchmarking reverse_complement/simd_high_level/255: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/255: Collecting 100 samples in estimated 5.0002 s (9.9M iterations)
+Benchmarking reverse_complement/simd_high_level/255: Analyzing
+reverse_complement/simd_high_level/255
+                        time:   [501.62 ns 501.91 ns 502.26 ns]
+                        thrpt:  [484.18 MiB/s 484.53 MiB/s 484.80 MiB/s]
+                 change:
+                        time:   [−23.395% −23.200% −23.008%] (p = 0.00 < 0.05)
+                        thrpt:  [+29.884% +30.208% +30.540%]
+                        Performance has improved.
+Found 14 outliers among 100 measurements (14.00%)
+  1 (1.00%) low mild
+  7 (7.00%) high mild
+  6 (6.00%) high severe
+Benchmarking reverse_complement/simd_encoded/255
+Benchmarking reverse_complement/simd_encoded/255: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/255: Collecting 100 samples in estimated 5.0003 s (14M iterations)
+Benchmarking reverse_complement/simd_encoded/255: Analyzing
+reverse_complement/simd_encoded/255
+                        time:   [345.92 ns 348.78 ns 352.97 ns]
+                        thrpt:  [688.97 MiB/s 697.25 MiB/s 703.02 MiB/s]
+                 change:
+                        time:   [−28.117% −27.389% −26.816%] (p = 0.00 < 0.05)
+                        thrpt:  [+36.642% +37.720% +39.115%]
+                        Performance has improved.
+Found 14 outliers among 100 measurements (14.00%)
+  4 (4.00%) high mild
+  10 (10.00%) high severe
+Benchmarking reverse_complement/scalar/255
+Benchmarking reverse_complement/scalar/255: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/255: Collecting 100 samples in estimated 5.0001 s (49M iterations)
+Benchmarking reverse_complement/scalar/255: Analyzing
+reverse_complement/scalar/255
+                        time:   [102.70 ns 102.76 ns 102.82 ns]
+                        thrpt:  [2.3096 GiB/s 2.3111 GiB/s 2.3124 GiB/s]
+                 change:
+                        time:   [−0.0494% +0.1514% +0.3573%] (p = 0.14 > 0.05)
+                        thrpt:  [−0.3561% −0.1512% +0.0494%]
+                        No change in performance detected.
+Found 11 outliers among 100 measurements (11.00%)
+  4 (4.00%) high mild
+  7 (7.00%) high severe
+Benchmarking reverse_complement/simd_high_level/256
+Benchmarking reverse_complement/simd_high_level/256: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/256: Collecting 100 samples in estimated 5.0007 s (27M iterations)
+Benchmarking reverse_complement/simd_high_level/256: Analyzing
+reverse_complement/simd_high_level/256
+                        time:   [182.27 ns 182.40 ns 182.57 ns]
+                        thrpt:  [1.3059 GiB/s 1.3071 GiB/s 1.3081 GiB/s]
+                 change:
+                        time:   [−0.9295% −0.7861% −0.6440%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.6482% +0.7924% +0.9382%]
+                        Change within noise threshold.
+Found 14 outliers among 100 measurements (14.00%)
+  2 (2.00%) low mild
+  7 (7.00%) high mild
+  5 (5.00%) high severe
+Benchmarking reverse_complement/simd_encoded/256
+Benchmarking reverse_complement/simd_encoded/256: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/256: Collecting 100 samples in estimated 5.0000 s (158M iterations)
+Benchmarking reverse_complement/simd_encoded/256: Analyzing
+reverse_complement/simd_encoded/256
+                        time:   [31.588 ns 31.609 ns 31.635 ns]
+                        thrpt:  [7.5366 GiB/s 7.5428 GiB/s 7.5477 GiB/s]
+                 change:
+                        time:   [−0.7641% −0.6185% −0.4884%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.4908% +0.6223% +0.7699%]
+                        Change within noise threshold.
+Found 11 outliers among 100 measurements (11.00%)
+  1 (1.00%) low mild
+  3 (3.00%) high mild
+  7 (7.00%) high severe
+Benchmarking reverse_complement/scalar/256
+Benchmarking reverse_complement/scalar/256: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/256: Collecting 100 samples in estimated 5.0005 s (49M iterations)
+Benchmarking reverse_complement/scalar/256: Analyzing
+reverse_complement/scalar/256
+                        time:   [102.07 ns 102.16 ns 102.28 ns]
+                        thrpt:  [2.3310 GiB/s 2.3339 GiB/s 2.3358 GiB/s]
+                 change:
+                        time:   [+0.2251% +0.3711% +0.5223%] (p = 0.00 < 0.05)
+                        thrpt:  [−0.5195% −0.3698% −0.2246%]
+                        Change within noise threshold.
+Found 17 outliers among 100 measurements (17.00%)
+  2 (2.00%) low mild
+  3 (3.00%) high mild
+  12 (12.00%) high severe
+Benchmarking reverse_complement/simd_high_level/512
+Benchmarking reverse_complement/simd_high_level/512: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/512: Collecting 100 samples in estimated 5.0000 s (17M iterations)
+Benchmarking reverse_complement/simd_high_level/512: Analyzing
+reverse_complement/simd_high_level/512
+                        time:   [299.56 ns 302.07 ns 306.79 ns]
+                        thrpt:  [1.5543 GiB/s 1.5786 GiB/s 1.5918 GiB/s]
+                 change:
+                        time:   [−0.4819% −0.0133% +0.7556%] (p = 0.98 > 0.05)
+                        thrpt:  [−0.7499% +0.0133% +0.4842%]
+                        No change in performance detected.
+Found 14 outliers among 100 measurements (14.00%)
+  1 (1.00%) low mild
+  4 (4.00%) high mild
+  9 (9.00%) high severe
+Benchmarking reverse_complement/simd_encoded/512
+Benchmarking reverse_complement/simd_encoded/512: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/512: Collecting 100 samples in estimated 5.0001 s (126M iterations)
+Benchmarking reverse_complement/simd_encoded/512: Analyzing
+reverse_complement/simd_encoded/512
+                        time:   [39.573 ns 39.600 ns 39.639 ns]
+                        thrpt:  [12.029 GiB/s 12.041 GiB/s 12.050 GiB/s]
+                 change:
+                        time:   [−3.2331% −3.1144% −2.9864%] (p = 0.00 < 0.05)
+                        thrpt:  [+3.0784% +3.2145% +3.3411%]
+                        Performance has improved.
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking reverse_complement/scalar/512
+Benchmarking reverse_complement/scalar/512: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/512: Collecting 100 samples in estimated 5.0003 s (27M iterations)
+Benchmarking reverse_complement/scalar/512: Analyzing
+reverse_complement/scalar/512
+                        time:   [183.92 ns 184.07 ns 184.31 ns]
+                        thrpt:  [2.5872 GiB/s 2.5905 GiB/s 2.5926 GiB/s]
+                 change:
+                        time:   [+0.0393% +0.1837% +0.3423%] (p = 0.02 < 0.05)
+                        thrpt:  [−0.3411% −0.1834% −0.0393%]
+                        Change within noise threshold.
+Found 11 outliers among 100 measurements (11.00%)
+  5 (5.00%) high mild
+  6 (6.00%) high severe
+Benchmarking reverse_complement/simd_high_level/1023
+Benchmarking reverse_complement/simd_high_level/1023: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/1023: Collecting 100 samples in estimated 5.0076 s (2.8M iterations)
+Benchmarking reverse_complement/simd_high_level/1023: Analyzing
+reverse_complement/simd_high_level/1023
+                        time:   [1.8100 µs 1.8115 µs 1.8136 µs]
+                        thrpt:  [537.95 MiB/s 538.56 MiB/s 539.00 MiB/s]
+                 change:
+                        time:   [−10.644% −10.506% −10.360%] (p = 0.00 < 0.05)
+                        thrpt:  [+11.557% +11.739% +11.911%]
+                        Performance has improved.
+Found 16 outliers among 100 measurements (16.00%)
+  3 (3.00%) low mild
+  7 (7.00%) high mild
+  6 (6.00%) high severe
+Benchmarking reverse_complement/simd_encoded/1023
+Benchmarking reverse_complement/simd_encoded/1023: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/1023: Collecting 100 samples in estimated 5.0007 s (3.8M iterations)
+Benchmarking reverse_complement/simd_encoded/1023: Analyzing
+reverse_complement/simd_encoded/1023
+                        time:   [1.3269 µs 1.3278 µs 1.3292 µs]
+                        thrpt:  [733.99 MiB/s 734.74 MiB/s 735.26 MiB/s]
+                 change:
+                        time:   [−13.574% −13.444% −13.310%] (p = 0.00 < 0.05)
+                        thrpt:  [+15.354% +15.533% +15.707%]
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  4 (4.00%) high mild
+  9 (9.00%) high severe
+Benchmarking reverse_complement/scalar/1023
+Benchmarking reverse_complement/scalar/1023: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/1023: Collecting 100 samples in estimated 5.0008 s (15M iterations)
+Benchmarking reverse_complement/scalar/1023: Analyzing
+reverse_complement/scalar/1023
+                        time:   [339.52 ns 340.16 ns 341.03 ns]
+                        thrpt:  [2.7937 GiB/s 2.8009 GiB/s 2.8062 GiB/s]
+                 change:
+                        time:   [+0.8777% +1.0418% +1.2026%] (p = 0.00 < 0.05)
+                        thrpt:  [−1.1883% −1.0310% −0.8701%]
+                        Change within noise threshold.
+Found 11 outliers among 100 measurements (11.00%)
+  3 (3.00%) high mild
+  8 (8.00%) high severe
+Benchmarking reverse_complement/simd_high_level/1024
+Benchmarking reverse_complement/simd_high_level/1024: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/1024: Collecting 100 samples in estimated 5.0022 s (9.4M iterations)
+Benchmarking reverse_complement/simd_high_level/1024: Analyzing
+reverse_complement/simd_high_level/1024
+                        time:   [531.01 ns 531.51 ns 532.13 ns]
+                        thrpt:  [1.7922 GiB/s 1.7943 GiB/s 1.7959 GiB/s]
+                 change:
+                        time:   [−0.8070% −0.5882% −0.3878%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.3893% +0.5916% +0.8135%]
+                        Change within noise threshold.
+Found 12 outliers among 100 measurements (12.00%)
+  3 (3.00%) high mild
+  9 (9.00%) high severe
+Benchmarking reverse_complement/simd_encoded/1024
+Benchmarking reverse_complement/simd_encoded/1024: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/1024: Collecting 100 samples in estimated 5.0002 s (89M iterations)
+Benchmarking reverse_complement/simd_encoded/1024: Analyzing
+reverse_complement/simd_encoded/1024
+                        time:   [55.469 ns 55.522 ns 55.593 ns]
+                        thrpt:  [17.155 GiB/s 17.177 GiB/s 17.193 GiB/s]
+                 change:
+                        time:   [−6.8996% −6.7582% −6.6215%] (p = 0.00 < 0.05)
+                        thrpt:  [+7.0911% +7.2480% +7.4109%]
+                        Performance has improved.
+Found 8 outliers among 100 measurements (8.00%)
+  3 (3.00%) high mild
+  5 (5.00%) high severe
+Benchmarking reverse_complement/scalar/1024
+Benchmarking reverse_complement/scalar/1024: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/1024: Collecting 100 samples in estimated 5.0015 s (15M iterations)
+Benchmarking reverse_complement/scalar/1024: Analyzing
+reverse_complement/scalar/1024
+                        time:   [339.27 ns 339.51 ns 339.83 ns]
+                        thrpt:  [2.8063 GiB/s 2.8090 GiB/s 2.8109 GiB/s]
+                 change:
+                        time:   [+0.7247% +0.9172% +1.0919%] (p = 0.00 < 0.05)
+                        thrpt:  [−1.0801% −0.9089% −0.7195%]
+                        Change within noise threshold.
+Found 13 outliers among 100 measurements (13.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+  7 (7.00%) high severe
+Benchmarking reverse_complement/simd_high_level/2048
+Benchmarking reverse_complement/simd_high_level/2048: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/2048: Collecting 100 samples in estimated 5.0006 s (4.9M iterations)
+Benchmarking reverse_complement/simd_high_level/2048: Analyzing
+reverse_complement/simd_high_level/2048
+                        time:   [1.0093 µs 1.0100 µs 1.0109 µs]
+                        thrpt:  [1.8867 GiB/s 1.8885 GiB/s 1.8898 GiB/s]
+                 change:
+                        time:   [−1.0009% −0.8682% −0.7378%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.7433% +0.8758% +1.0111%]
+                        Change within noise threshold.
+Found 15 outliers among 100 measurements (15.00%)
+  2 (2.00%) low mild
+  7 (7.00%) high mild
+  6 (6.00%) high severe
+Benchmarking reverse_complement/simd_encoded/2048
+Benchmarking reverse_complement/simd_encoded/2048: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/2048: Collecting 100 samples in estimated 5.0003 s (55M iterations)
+Benchmarking reverse_complement/simd_encoded/2048: Analyzing
+reverse_complement/simd_encoded/2048
+                        time:   [89.977 ns 90.040 ns 90.114 ns]
+                        thrpt:  [21.166 GiB/s 21.183 GiB/s 21.198 GiB/s]
+                 change:
+                        time:   [−12.305% −12.192% −12.079%] (p = 0.00 < 0.05)
+                        thrpt:  [+13.738% +13.885% +14.031%]
+                        Performance has improved.
+Found 7 outliers among 100 measurements (7.00%)
+  3 (3.00%) high mild
+  4 (4.00%) high severe
+Benchmarking reverse_complement/scalar/2048
+Benchmarking reverse_complement/scalar/2048: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/2048: Collecting 100 samples in estimated 5.0004 s (7.8M iterations)
+Benchmarking reverse_complement/scalar/2048: Analyzing
+reverse_complement/scalar/2048
+                        time:   [637.66 ns 638.13 ns 638.73 ns]
+                        thrpt:  [2.9862 GiB/s 2.9890 GiB/s 2.9911 GiB/s]
+                 change:
+                        time:   [+0.0452% +0.1727% +0.2871%] (p = 0.01 < 0.05)
+                        thrpt:  [−0.2863% −0.1724% −0.0452%]
+                        Change within noise threshold.
+Found 10 outliers among 100 measurements (10.00%)
+  2 (2.00%) low mild
+  4 (4.00%) high mild
+  4 (4.00%) high severe
+Benchmarking reverse_complement/simd_high_level/4095
+Benchmarking reverse_complement/simd_high_level/4095: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/4095: Collecting 100 samples in estimated 5.0159 s (717k iterations)
+Benchmarking reverse_complement/simd_high_level/4095: Analyzing
+reverse_complement/simd_high_level/4095
+                        time:   [6.9880 µs 6.9972 µs 7.0087 µs]
+                        thrpt:  [557.20 MiB/s 558.12 MiB/s 558.86 MiB/s]
+                 change:
+                        time:   [−8.2092% −8.0610% −7.9095%] (p = 0.00 < 0.05)
+                        thrpt:  [+8.5888% +8.7678% +8.9433%]
+                        Performance has improved.
+Found 10 outliers among 100 measurements (10.00%)
+  5 (5.00%) high mild
+  5 (5.00%) high severe
+Benchmarking reverse_complement/simd_encoded/4095
+Benchmarking reverse_complement/simd_encoded/4095: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/4095: Collecting 100 samples in estimated 5.0111 s (965k iterations)
+Benchmarking reverse_complement/simd_encoded/4095: Analyzing
+reverse_complement/simd_encoded/4095
+                        time:   [5.1646 µs 5.1678 µs 5.1724 µs]
+                        thrpt:  [755.02 MiB/s 755.70 MiB/s 756.17 MiB/s]
+                 change:
+                        time:   [−11.264% −11.094% −10.921%] (p = 0.00 < 0.05)
+                        thrpt:  [+12.260% +12.478% +12.694%]
+                        Performance has improved.
+Found 9 outliers among 100 measurements (9.00%)
+  4 (4.00%) high mild
+  5 (5.00%) high severe
+Benchmarking reverse_complement/scalar/4095
+Benchmarking reverse_complement/scalar/4095: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/4095: Collecting 100 samples in estimated 5.0061 s (4.0M iterations)
+Benchmarking reverse_complement/scalar/4095: Analyzing
+reverse_complement/scalar/4095
+                        time:   [1.2457 µs 1.2466 µs 1.2479 µs]
+                        thrpt:  [3.0562 GiB/s 3.0594 GiB/s 3.0615 GiB/s]
+                 change:
+                        time:   [+0.1725% +0.3545% +0.5318%] (p = 0.00 < 0.05)
+                        thrpt:  [−0.5290% −0.3532% −0.1722%]
+                        Change within noise threshold.
+Found 11 outliers among 100 measurements (11.00%)
+  2 (2.00%) low mild
+  3 (3.00%) high mild
+  6 (6.00%) high severe
+Benchmarking reverse_complement/simd_high_level/4096
+Benchmarking reverse_complement/simd_high_level/4096: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/4096: Collecting 100 samples in estimated 5.0092 s (2.5M iterations)
+Benchmarking reverse_complement/simd_high_level/4096: Analyzing
+reverse_complement/simd_high_level/4096
+                        time:   [1.9731 µs 1.9745 µs 1.9766 µs]
+                        thrpt:  [1.9299 GiB/s 1.9319 GiB/s 1.9333 GiB/s]
+                 change:
+                        time:   [−12.180% −6.2710% −1.6963%] (p = 0.01 < 0.05)
+                        thrpt:  [+1.7256% +6.6906% +13.869%]
+                        Performance has improved.
+Found 8 outliers among 100 measurements (8.00%)
+  4 (4.00%) high mild
+  4 (4.00%) high severe
+Benchmarking reverse_complement/simd_encoded/4096
+Benchmarking reverse_complement/simd_encoded/4096: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/4096: Collecting 100 samples in estimated 5.0007 s (29M iterations)
+Benchmarking reverse_complement/simd_encoded/4096: Analyzing
+reverse_complement/simd_encoded/4096
+                        time:   [171.48 ns 171.61 ns 171.77 ns]
+                        thrpt:  [22.208 GiB/s 22.229 GiB/s 22.245 GiB/s]
+                 change:
+                        time:   [−9.5222% −9.3854% −9.2559%] (p = 0.00 < 0.05)
+                        thrpt:  [+10.200% +10.357% +10.524%]
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  7 (7.00%) high mild
+  6 (6.00%) high severe
+Benchmarking reverse_complement/scalar/4096
+Benchmarking reverse_complement/scalar/4096: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/4096: Collecting 100 samples in estimated 5.0062 s (4.0M iterations)
+Benchmarking reverse_complement/scalar/4096: Analyzing
+reverse_complement/scalar/4096
+                        time:   [1.2449 µs 1.2456 µs 1.2465 µs]
+                        thrpt:  [3.0603 GiB/s 3.0625 GiB/s 3.0642 GiB/s]
+                 change:
+                        time:   [+0.0553% +0.2340% +0.4082%] (p = 0.01 < 0.05)
+                        thrpt:  [−0.4065% −0.2334% −0.0553%]
+                        Change within noise threshold.
+Found 16 outliers among 100 measurements (16.00%)
+  2 (2.00%) low mild
+  5 (5.00%) high mild
+  9 (9.00%) high severe
+Benchmarking reverse_complement/simd_high_level/8192
+Benchmarking reverse_complement/simd_high_level/8192: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/8192: Collecting 100 samples in estimated 5.0022 s (1.3M iterations)
+Benchmarking reverse_complement/simd_high_level/8192: Analyzing
+reverse_complement/simd_high_level/8192
+                        time:   [3.8640 µs 3.8677 µs 3.8722 µs]
+                        thrpt:  [1.9703 GiB/s 1.9726 GiB/s 1.9745 GiB/s]
+                 change:
+                        time:   [−1.2463% −1.0330% −0.7595%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.7653% +1.0438% +1.2620%]
+                        Change within noise threshold.
+Found 15 outliers among 100 measurements (15.00%)
+  8 (8.00%) high mild
+  7 (7.00%) high severe
+Benchmarking reverse_complement/simd_encoded/8192
+Benchmarking reverse_complement/simd_encoded/8192: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/8192: Collecting 100 samples in estimated 5.0006 s (16M iterations)
+Benchmarking reverse_complement/simd_encoded/8192: Analyzing
+reverse_complement/simd_encoded/8192
+                        time:   [314.78 ns 316.65 ns 320.53 ns]
+                        thrpt:  [23.802 GiB/s 24.094 GiB/s 24.237 GiB/s]
+                 change:
+                        time:   [−10.419% −10.095% −9.5788%] (p = 0.00 < 0.05)
+                        thrpt:  [+10.594% +11.228% +11.630%]
+                        Performance has improved.
+Found 14 outliers among 100 measurements (14.00%)
+  5 (5.00%) high mild
+  9 (9.00%) high severe
+Benchmarking reverse_complement/scalar/8192
+Benchmarking reverse_complement/scalar/8192: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/8192: Collecting 100 samples in estimated 5.0005 s (2.0M iterations)
+Benchmarking reverse_complement/scalar/8192: Analyzing
+reverse_complement/scalar/8192
+                        time:   [2.4669 µs 2.4679 µs 2.4692 µs]
+                        thrpt:  [3.0898 GiB/s 3.0914 GiB/s 3.0927 GiB/s]
+                 change:
+                        time:   [−0.6605% −0.2807% +0.0346%] (p = 0.12 > 0.05)
+                        thrpt:  [−0.0345% +0.2815% +0.6649%]
+                        No change in performance detected.
+Found 8 outliers among 100 measurements (8.00%)
+  2 (2.00%) high mild
+  6 (6.00%) high severe
+Benchmarking reverse_complement/simd_high_level/9999
+Benchmarking reverse_complement/simd_high_level/9999: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/9999: Collecting 100 samples in estimated 5.0447 s (298k iterations)
+Benchmarking reverse_complement/simd_high_level/9999: Analyzing
+reverse_complement/simd_high_level/9999
+                        time:   [16.916 µs 16.925 µs 16.935 µs]
+                        thrpt:  [563.09 MiB/s 563.43 MiB/s 563.72 MiB/s]
+                 change:
+                        time:   [−4.9871% −4.8465% −4.6825%] (p = 0.00 < 0.05)
+                        thrpt:  [+4.9126% +5.0933% +5.2489%]
+                        Performance has improved.
+Found 14 outliers among 100 measurements (14.00%)
+  2 (2.00%) low mild
+  3 (3.00%) high mild
+  9 (9.00%) high severe
+Benchmarking reverse_complement/simd_encoded/9999
+Benchmarking reverse_complement/simd_encoded/9999: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/9999: Collecting 100 samples in estimated 5.0192 s (399k iterations)
+Benchmarking reverse_complement/simd_encoded/9999: Analyzing
+reverse_complement/simd_encoded/9999
+                        time:   [12.567 µs 12.575 µs 12.583 µs]
+                        thrpt:  [757.81 MiB/s 758.34 MiB/s 758.77 MiB/s]
+                 change:
+                        time:   [−6.4703% −6.3520% −6.2269%] (p = 0.00 < 0.05)
+                        thrpt:  [+6.6404% +6.7829% +6.9180%]
+                        Performance has improved.
+Found 14 outliers among 100 measurements (14.00%)
+  2 (2.00%) low mild
+  6 (6.00%) high mild
+  6 (6.00%) high severe
+Benchmarking reverse_complement/scalar/9999
+Benchmarking reverse_complement/scalar/9999: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/9999: Collecting 100 samples in estimated 5.0011 s (1.7M iterations)
+Benchmarking reverse_complement/scalar/9999: Analyzing
+reverse_complement/scalar/9999
+                        time:   [3.0056 µs 3.0081 µs 3.0111 µs]
+                        thrpt:  [3.0927 GiB/s 3.0957 GiB/s 3.0983 GiB/s]
+                 change:
+                        time:   [−0.1141% +0.0653% +0.2353%] (p = 0.48 > 0.05)
+                        thrpt:  [−0.2347% −0.0653% +0.1142%]
+                        No change in performance detected.
+Found 13 outliers among 100 measurements (13.00%)
+  4 (4.00%) high mild
+  9 (9.00%) high severe
+Benchmarking reverse_complement/simd_high_level/10000
+Benchmarking reverse_complement/simd_high_level/10000: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_high_level/10000: Collecting 100 samples in estimated 5.0035 s (1.1M iterations)
+Benchmarking reverse_complement/simd_high_level/10000: Analyzing
+reverse_complement/simd_high_level/10000
+                        time:   [4.7391 µs 4.7440 µs 4.7498 µs]
+                        thrpt:  [1.9608 GiB/s 1.9632 GiB/s 1.9652 GiB/s]
+                 change:
+                        time:   [−2.6669% −1.4140% −0.6944%] (p = 0.01 < 0.05)
+                        thrpt:  [+0.6993% +1.4343% +2.7400%]
+                        Change within noise threshold.
+Found 13 outliers among 100 measurements (13.00%)
+  1 (1.00%) high mild
+  12 (12.00%) high severe
+Benchmarking reverse_complement/simd_encoded/10000
+Benchmarking reverse_complement/simd_encoded/10000: Warming up for 3.0000 s
+Benchmarking reverse_complement/simd_encoded/10000: Collecting 100 samples in estimated 5.0016 s (13M iterations)
+Benchmarking reverse_complement/simd_encoded/10000: Analyzing
+reverse_complement/simd_encoded/10000
+                        time:   [387.86 ns 388.14 ns 388.53 ns]
+                        thrpt:  [23.971 GiB/s 23.995 GiB/s 24.012 GiB/s]
+                 change:
+                        time:   [−11.252% −11.062% −10.889%] (p = 0.00 < 0.05)
+                        thrpt:  [+12.220% +12.438% +12.679%]
+                        Performance has improved.
+Found 11 outliers among 100 measurements (11.00%)
+  4 (4.00%) high mild
+  7 (7.00%) high severe
+Benchmarking reverse_complement/scalar/10000
+Benchmarking reverse_complement/scalar/10000: Warming up for 3.0000 s
+Benchmarking reverse_complement/scalar/10000: Collecting 100 samples in estimated 5.0131 s (1.7M iterations)
+Benchmarking reverse_complement/scalar/10000: Analyzing
+reverse_complement/scalar/10000
+                        time:   [3.0038 µs 3.0053 µs 3.0070 µs]
+                        thrpt:  [3.0972 GiB/s 3.0989 GiB/s 3.1004 GiB/s]
+                 change:
+                        time:   [−0.9243% −0.2779% +0.1704%] (p = 0.41 > 0.05)
+                        thrpt:  [−0.1701% +0.2787% +0.9329%]
+                        No change in performance detected.
+Found 14 outliers among 100 measurements (14.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+  8 (8.00%) high severe
+
