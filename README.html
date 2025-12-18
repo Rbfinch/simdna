@@ -132,6 +132,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><strong>Bit-rotation-compatible encoding</strong> enabling efficient complement calculation</li>
 <li><strong>SIMD-accelerated reverse complement</strong> operations</li>
 <li><strong>SIMD acceleration</strong> on x86_64 (SSSE3) and ARM64 (NEON)</li>
+<li><strong>Static lookup tables</strong> for branch-free encoding/decoding</li>
+<li><strong>Prefetch hints</strong> for improved cache utilization on large sequences</li>
 <li><strong>Automatic fallback</strong> to optimized scalar implementation</li>
 <li><strong>Thread-safe</strong> pure functions with no global state</li>
 <li><strong>2:1 compression</strong> ratio compared to ASCII representation</li>
@@ -470,10 +472,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="performance" class="level2">
 <h2 class="anchored" data-anchor-id="performance">Performance</h2>
+<p>simdna employs multiple optimization strategies:</p>
 <ul>
-<li>SIMD processes 16 nucleotides per iteration</li>
-<li>2:1 compression ratio (4 bits per nucleotide vs 8 bits ASCII)</li>
-<li>Expected speedup: 4-8x over scalar code on modern CPUs</li>
+<li><strong>Static Lookup Tables</strong>: Pre-computed encode/decode tables eliminate branch mispredictions</li>
+<li><strong>SIMD Processing</strong>: Handles 32 nucleotides per iteration (two 16-byte chunks) with prefetching</li>
+<li><strong>Direct Case Handling</strong>: LUT handles case-insensitivity without uppercase conversion overhead</li>
+<li><strong>Optimized Scalar Path</strong>: Remainder processing uses 4-at-a-time scalar encoding</li>
+<li><strong>2:1 Compression</strong>: 4 bits per nucleotide vs 8 bits ASCII</li>
+<li><strong>Expected speedup</strong>: 4-8x over naive scalar code on modern CPUs</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">

@@ -61,18 +61,25 @@ def plot_benchmarks(results: dict, output_file: str = "benchmark_plot.png"):
     """
     Create box-and-whisker style plots for benchmark results.
     """
-    operations = ["encode", "decode", "roundtrip"]
+    operations = ["encode", "decode", "roundtrip", "reverse_complement"]
 
     # Define colors and markers for different methods
+    # Includes styles for both encode/decode/roundtrip and reverse_complement benchmarks
     method_styles = {
+        # Encode/decode/roundtrip methods
         "simd_2bit": {"color": "#2ecc71", "marker": "o", "label": "SIMD 2-bit"},
         "simd_4bit": {"color": "#3498db", "marker": "s", "label": "SIMD 4-bit"},
         "scalar_2bit": {"color": "#e74c3c", "marker": "^", "label": "Scalar 2-bit"},
         "scalar_4bit": {"color": "#f39c12", "marker": "D", "label": "Scalar 4-bit"},
+        # Reverse complement methods
+        "simd": {"color": "#3498db", "marker": "s", "label": "SIMD (ASCII)"},
+        "simd_high_level": {"color": "#3498db", "marker": "s", "label": "SIMD (ASCII)"},
+        "simd_encoded": {"color": "#9b59b6", "marker": "p", "label": "SIMD (Encoded)"},
+        "scalar": {"color": "#e74c3c", "marker": "^", "label": "Scalar"},
     }
 
-    # Responsive sizing: wider aspect ratio works well on both mobile and desktop
-    fig, axes = plt.subplots(3, 1, figsize=(10, 14))
+    # Responsive sizing: 4 subplots for encode, decode, roundtrip, reverse_complement
+    fig, axes = plt.subplots(4, 1, figsize=(10, 18))
     fig.suptitle(
         "DNA Encoding/Decoding Benchmark Results",
         fontsize=18,
@@ -120,7 +127,9 @@ def plot_benchmarks(results: dict, output_file: str = "benchmark_plot.png"):
 
         ax.set_xlabel("Sequence Length (bases)", fontsize=13)
         ax.set_ylabel("Time (ns)", fontsize=13)
-        ax.set_title(f"{operation.capitalize()}", fontsize=15, fontweight="bold")
+        ax.set_title(
+            f"{operation.replace('_', ' ').title()}", fontsize=15, fontweight="bold"
+        )
         ax.set_xscale("log", base=10)
         ax.set_yscale("log")
         ax.tick_params(axis="both", which="major", labelsize=11)
@@ -142,18 +151,30 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
     """
     Create throughput plots (bases per second) for benchmark results.
     """
-    operations = ["encode", "decode", "roundtrip"]
-    titles = {"encode": "Encode", "decode": "Decode", "roundtrip": "Roundtrip (Total)"}
+    operations = ["encode", "decode", "roundtrip", "reverse_complement"]
+    titles = {
+        "encode": "Encode",
+        "decode": "Decode",
+        "roundtrip": "Roundtrip (Total)",
+        "reverse_complement": "Reverse Complement",
+    }
 
+    # Includes styles for both encode/decode/roundtrip and reverse_complement benchmarks
     method_styles = {
+        # Encode/decode/roundtrip methods
         "simd_2bit": {"color": "#2ecc71", "marker": "o", "label": "SIMD 2-bit"},
         "simd_4bit": {"color": "#3498db", "marker": "s", "label": "SIMD 4-bit"},
         "scalar_2bit": {"color": "#e74c3c", "marker": "^", "label": "Scalar 2-bit"},
         "scalar_4bit": {"color": "#f39c12", "marker": "D", "label": "Scalar 4-bit"},
+        # Reverse complement methods
+        "simd": {"color": "#3498db", "marker": "s", "label": "SIMD (ASCII)"},
+        "simd_high_level": {"color": "#3498db", "marker": "s", "label": "SIMD (ASCII)"},
+        "simd_encoded": {"color": "#9b59b6", "marker": "p", "label": "SIMD (Encoded)"},
+        "scalar": {"color": "#e74c3c", "marker": "^", "label": "Scalar"},
     }
 
-    # Responsive sizing: wider aspect ratio works well on both mobile and desktop
-    fig, axes = plt.subplots(3, 1, figsize=(10, 14))
+    # Responsive sizing: 4 subplots for encode, decode, roundtrip, reverse_complement
+    fig, axes = plt.subplots(4, 1, figsize=(10, 18))
     fig.suptitle(
         "DNA Encoding/Decoding Throughput", fontsize=18, fontweight="bold", y=0.98
     )
@@ -215,15 +236,22 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
         )
         ax.set_xscale("log", base=10)
         ax.set_yscale("log")
-        # Set up tick locations to show more labels
-        ax.yaxis.set_major_locator(LogLocator(base=10, numticks=15))
-        ax.yaxis.set_minor_locator(
-            LogLocator(base=10, subs=np.arange(2, 10) * 0.1, numticks=15)
-        )
+        # Set up tick locations - more labels for encode/decode/roundtrip, fewer for reverse_complement
+        if operation == "reverse_complement":
+            # Fewer ticks for reverse_complement (wider range)
+            ax.yaxis.set_major_locator(LogLocator(base=10, numticks=10))
+            ax.yaxis.set_minor_locator(LogLocator(base=10, subs=[2, 5], numticks=10))
+            ax.yaxis.set_minor_formatter(FuncFormatter(lambda x, p: ""))
+        else:
+            # More ticks for encode/decode/roundtrip
+            ax.yaxis.set_major_locator(LogLocator(base=10, numticks=15))
+            ax.yaxis.set_minor_locator(
+                LogLocator(base=10, subs=[2, 3, 4, 5, 6, 7, 8, 9], numticks=15)
+            )
+            ax.yaxis.set_minor_formatter(FuncFormatter(format_throughput))
         ax.yaxis.set_major_formatter(FuncFormatter(format_throughput))
-        ax.yaxis.set_minor_formatter(FuncFormatter(format_throughput))
-        ax.tick_params(axis="both", which="major", labelsize=11)
-        ax.tick_params(axis="both", which="minor", labelsize=9)
+        ax.tick_params(axis="both", which="major", labelsize=10)
+        ax.tick_params(axis="both", which="minor", labelsize=7)
         ax.grid(True, which="major", axis="y", alpha=0.5, linestyle="-", linewidth=0.8)
         ax.grid(True, which="minor", axis="y", alpha=0.2, linestyle="--", linewidth=0.5)
         ax.grid(True, which="major", axis="x", alpha=0.3, linestyle="--", linewidth=0.5)
@@ -231,7 +259,7 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
 
         # Set Y-axis maximum for roundtrip to match encode scale
         if operation == "roundtrip":
-            ax.set_ylim(top=2.0e9)
+            ax.set_ylim(top=4.0e9)
 
     plt.tight_layout(rect=[0, 0, 1, 0.97])
     plt.savefig(output_file, dpi=200, bbox_inches="tight", facecolor="white")
@@ -245,7 +273,7 @@ def print_summary(results: dict):
     print("BENCHMARK SUMMARY")
     print("=" * 80)
 
-    for operation in ["encode", "decode", "roundtrip"]:
+    for operation in ["encode", "decode", "roundtrip", "reverse_complement"]:
         op_data = results.get(operation, {})
         if not op_data:
             continue
