@@ -24,6 +24,8 @@ TARGETS=(
     "valid_iupac"
     "decode_robust"
     "boundaries"
+    "bit_rotation"
+    "reverse_complement"
 )
 
 FAILED=()

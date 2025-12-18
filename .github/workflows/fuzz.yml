@@ -31,6 +31,8 @@ jobs:
                     - valid_iupac
                     - decode_robust
                     - boundaries
+                    - bit_rotation
+                    - reverse_complement
 
         steps:
             - uses: actions/checkout@v4
