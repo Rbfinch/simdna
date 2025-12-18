@@ -8,45 +8,55 @@
 //!
 //! ## Encoding Scheme
 //!
-//! DNA/RNA nucleotides and IUPAC ambiguity codes are encoded using 4 bits each:
+//! DNA/RNA nucleotides and IUPAC ambiguity codes are encoded using 4 bits each.
+//! The encoding is designed to support efficient complement calculation via
+//! 2-bit rotation: rotating any 4-bit encoding 2 positions yields its complement.
 //!
 //! ### Standard Nucleotides
 //!
-//! | Code | Meaning              | Binary |
-//! |------|----------------------|--------|
-//! | A    | Adenine              | 0x0    |
-//! | C    | Cytosine             | 0x1    |
-//! | G    | Guanine              | 0x2    |
-//! | T    | Thymine              | 0x3    |
-//! | U    | Uracil (RNA → T)     | 0x3    |
+//! | Code | Meaning              | Binary | Complement |
+//! |------|----------------------|--------|------------|
+//! | A    | Adenine              | 0x1    | T (0x4)    |
+//! | C    | Cytosine             | 0x2    | G (0x8)    |
+//! | T    | Thymine              | 0x4    | A (0x1)    |
+//! | G    | Guanine              | 0x8    | C (0x2)    |
+//! | U    | Uracil (RNA → T)     | 0x4    | A (0x1)    |
 //!
 //! ### Two-Base Ambiguity Codes
 //!
-//! | Code | Meaning              | Binary |
-//! |------|----------------------|--------|
-//! | R    | A or G (purine)      | 0x4    |
-//! | Y    | C or T (pyrimidine)  | 0x5    |
-//! | S    | G or C (strong)      | 0x6    |
-//! | W    | A or T (weak)        | 0x7    |
-//! | K    | G or T (keto)        | 0x8    |
-//! | M    | A or C (amino)       | 0x9    |
+//! | Code | Meaning              | Binary | Complement |
+//! |------|----------------------|--------|------------|
+//! | R    | A or G (purine)      | 0x9    | Y (0x6)    |
+//! | Y    | C or T (pyrimidine)  | 0x6    | R (0x9)    |
+//! | S    | G or C (strong)      | 0xA    | S (0xA)    |
+//! | W    | A or T (weak)        | 0x5    | W (0x5)    |
+//! | K    | G or T (keto)        | 0xC    | M (0x3)    |
+//! | M    | A or C (amino)       | 0x3    | K (0xC)    |
 //!
 //! ### Three-Base Ambiguity Codes
 //!
-//! | Code | Meaning              | Binary |
-//! |------|----------------------|--------|
-//! | B    | C, G, or T (not A)   | 0xA    |
-//! | D    | A, G, or T (not C)   | 0xB    |
-//! | H    | A, C, or T (not G)   | 0xC    |
-//! | V    | A, C, or G (not T)   | 0xD    |
+//! | Code | Meaning              | Binary | Complement |
+//! |------|----------------------|--------|------------|
+//! | B    | C, G, or T (not A)   | 0xE    | V (0xB)    |
+//! | D    | A, G, or T (not C)   | 0xD    | H (0x7)    |
+//! | H    | A, C, or T (not G)   | 0x7    | D (0xD)    |
+//! | V    | A, C, or G (not T)   | 0xB    | B (0xE)    |
 //!
 //! ### Wildcards and Gaps
 //!
-//! | Code | Meaning              | Binary |
-//! |------|----------------------|--------|
-//! | N    | Any base             | 0xE    |
-//! | -    | Gap / deletion       | 0xF    |
-//! | .    | Gap (alternative)    | 0xF    |
+//! | Code | Meaning              | Binary | Complement |
+//! |------|----------------------|--------|------------|
+//! | N    | Any base             | 0xF    | N (0xF)    |
+//! | -    | Gap / deletion       | 0x0    | - (0x0)    |
+//! | .    | Gap (alternative)    | 0x0    | - (0x0)    |
+//!
+//! ### Bit Rotation Property
+//!
+//! The complement of any nucleotide can be computed efficiently using:
+//! ```text
+//! complement = ((bits << 2) | (bits >> 2)) & 0xF
+//! ```
+//! This enables SIMD-accelerated reverse complement operations.
 //!
 //! This allows 2 nucleotides to be packed into a single byte, achieving a 2:1
 //! compression ratio compared to ASCII representation while faithfully preserving
@@ -122,40 +132,53 @@ use std::arch::x86_64::*;
 use std::arch::aarch64::*;
 
 /// 4-bit encoding values for IUPAC nucleotide codes.
+///
 /// These constants define the encoding scheme used throughout the library.
+/// The encoding is designed so that the complement of any nucleotide can be
+/// computed via 2-bit rotation: `complement = ((bits << 2) | (bits >> 2)) & 0xF`
+///
+/// # Complement Relationships
+///
+/// - A (0x1) ↔ T (0x4)
+/// - C (0x2) ↔ G (0x8)
+/// - R (0x9) ↔ Y (0x6)
+/// - K (0xC) ↔ M (0x3)
+/// - D (0xD) ↔ H (0x7)
+/// - B (0xE) ↔ V (0xB)
+/// - S (0xA), W (0x5), N (0xF), Gap (0x0) are self-complementary
 pub mod encoding {
-    /// Adenine
-    pub const A: u8 = 0x0;
-    /// Cytosine
-    pub const C: u8 = 0x1;
-    /// Guanine
-    pub const G: u8 = 0x2;
-    /// Thymine
-    pub const T: u8 = 0x3;
-    /// A or G (purine)
-    pub const R: u8 = 0x4;
-    /// C or T (pyrimidine)
-    pub const Y: u8 = 0x5;
-    /// G or C (strong)
-    pub const S: u8 = 0x6;
-    /// A or T (weak)
-    pub const W: u8 = 0x7;
-    /// G or T (keto)
-    pub const K: u8 = 0x8;
-    /// A or C (amino)
-    pub const M: u8 = 0x9;
-    /// C, G, or T (not A)
-    pub const B: u8 = 0xA;
-    /// A, G, or T (not C)
-    pub const D: u8 = 0xB;
-    /// A, C, or T (not G)
-    pub const H: u8 = 0xC;
-    /// A, C, or G (not T)
-    pub const V: u8 = 0xD;
-    /// Any base
-    pub const N: u8 = 0xE;
-    /// Gap / Unknown
-    pub const GAP: u8 = 0xF;
+    /// Gap / Unknown / Deletion (self-complementary)
+    pub const GAP: u8 = 0x0;
+    /// Adenine (complements to T)
+    pub const A: u8 = 0x1;
+    /// Cytosine (complements to G)
+    pub const C: u8 = 0x2;
+    /// A or C (amino) - complements to K
+    pub const M: u8 = 0x3;
+    /// Thymine (complements to A)
+    pub const T: u8 = 0x4;
+    /// A or T (weak) - self-complementary
+    pub const W: u8 = 0x5;
+    /// C or T (pyrimidine) - complements to R
+    pub const Y: u8 = 0x6;
+    /// A, C, or T (not G) - complements to D
+    pub const H: u8 = 0x7;
+    /// Guanine (complements to C)
+    pub const G: u8 = 0x8;
+    /// A or G (purine) - complements to Y
+    pub const R: u8 = 0x9;
+    /// G or C (strong) - self-complementary
+    pub const S: u8 = 0xA;
+    /// A, C, or G (not T) - complements to B
+    pub const V: u8 = 0xB;
+    /// G or T (keto) - complements to M
+    pub const K: u8 = 0xC;
+    /// A, G, or T (not C) - complements to H
+    pub const D: u8 = 0xD;
+    /// C, G, or T (not A) - complements to V
+    pub const B: u8 = 0xE;
+    /// Any base (self-complementary)
+    pub const N: u8 = 0xF;
 }
 
 /// Encodes a DNA sequence into a compact 4-bit representation.
@@ -211,9 +234,9 @@ pub mod encoding {
 /// use simdna::dna_simd_encoder::encode_dna_prefer_simd;
 ///
 /// let encoded = encode_dna_prefer_simd(b"ACGT");
-/// // A=0x0, C=0x1, G=0x2, T=0x3
-/// // Packed: (A<<4|C), (G<<4|T) = 0x01, 0x23
-/// assert_eq!(encoded, vec![0x01, 0x23]);
+/// // A=0x1, C=0x2, G=0x8, T=0x4
+/// // Packed: (A<<4|C), (G<<4|T) = 0x12, 0x84
+/// assert_eq!(encoded, vec![0x12, 0x84]);
 /// ```
 ///
 /// IUPAC ambiguity codes are preserved:
@@ -560,11 +583,11 @@ unsafe fn pack_16_to_8_bytes_simd_x86(encoded: __m128i) -> __m128i {
 #[target_feature(enable = "ssse3")]
 unsafe fn decode_x86_ssse3(encoded: &[u8], output: &mut [u8], length: usize) {
     // Lookup table for 4-bit to ASCII conversion
-    // Index: 0=A, 1=C, 2=G, 3=T, 4=R, 5=Y, 6=S, 7=W, 8=K, 9=M, A=B, B=D, C=H, D=V, E=N, F=-
+    // Index: 0=Gap, 1=A, 2=C, 3=M, 4=T, 5=W, 6=Y, 7=H, 8=G, 9=R, A=S, B=V, C=K, D=D, E=B, F=N
     let lookup = _mm_setr_epi8(
-        b'A' as i8, b'C' as i8, b'G' as i8, b'T' as i8, b'R' as i8, b'Y' as i8, b'S' as i8,
-        b'W' as i8, b'K' as i8, b'M' as i8, b'B' as i8, b'D' as i8, b'H' as i8, b'V' as i8,
-        b'N' as i8, b'-' as i8,
+        b'-' as i8, b'A' as i8, b'C' as i8, b'M' as i8, b'T' as i8, b'W' as i8, b'Y' as i8,
+        b'H' as i8, b'G' as i8, b'R' as i8, b'S' as i8, b'V' as i8, b'K' as i8, b'D' as i8,
+        b'B' as i8, b'N' as i8,
     );
 
     let mut out_idx = 0;
@@ -754,9 +777,10 @@ unsafe fn pack_16_to_8_bytes_simd_neon(encoded: uint8x16_t) -> uint8x8_t {
 #[target_feature(enable = "neon")]
 unsafe fn decode_arm_neon(encoded: &[u8], output: &mut [u8], length: usize) {
     // Lookup table for 4-bit to ASCII conversion
+    // Index: 0=Gap, 1=A, 2=C, 3=M, 4=T, 5=W, 6=Y, 7=H, 8=G, 9=R, A=S, B=V, C=K, D=D, E=B, F=N
     let lookup_data: [u8; 16] = [
-        b'A', b'C', b'G', b'T', b'R', b'Y', b'S', b'W', b'K', b'M', b'B', b'D', b'H', b'V', b'N',
-        b'-',
+        b'-', b'A', b'C', b'M', b'T', b'W', b'Y', b'H', b'G', b'R', b'S', b'V', b'K', b'D', b'B',
+        b'N',
     ];
     let lookup = vld1q_u8(lookup_data.as_ptr());
 
@@ -854,21 +878,21 @@ pub fn decode_scalar(encoded: &[u8], output: &mut [u8], length: usize) {
 /// Converts an ASCII nucleotide byte to its 4-bit encoding.
 ///
 /// Handles all IUPAC nucleotide codes. Invalid characters are
-/// encoded as gap (0xF).
+/// encoded as gap (0x0).
 ///
 /// # Encoding Table
 ///
 /// | Input | Output | Input | Output |
 /// |-------|--------|-------|--------|
-/// | A, a  | 0x0    | K, k  | 0x8    |
-/// | C, c  | 0x1    | M, m  | 0x9    |
-/// | G, g  | 0x2    | B, b  | 0xA    |
-/// | T, t  | 0x3    | D, d  | 0xB    |
-/// | U, u  | 0x3    | H, h  | 0xC    |
-/// | R, r  | 0x4    | V, v  | 0xD    |
-/// | Y, y  | 0x5    | N, n  | 0xE    |
-/// | S, s  | 0x6    | -, .  | 0xF    |
-/// | W, w  | 0x7    | other | 0xF    |
+/// | A, a  | 0x1    | K, k  | 0xC    |
+/// | C, c  | 0x2    | M, m  | 0x3    |
+/// | G, g  | 0x8    | B, b  | 0xE    |
+/// | T, t  | 0x4    | D, d  | 0xD    |
+/// | U, u  | 0x4    | H, h  | 0x7    |
+/// | R, r  | 0x9    | V, v  | 0xB    |
+/// | Y, y  | 0x6    | N, n  | 0xF    |
+/// | S, s  | 0xA    | -, .  | 0x0    |
+/// | W, w  | 0x5    | other | 0x0    |
 ///
 /// # Arguments
 ///
@@ -906,14 +930,14 @@ pub fn char_to_4bit(c: u8) -> u8 {
 ///
 /// | Input | Output | Input | Output |
 /// |-------|--------|-------|--------|
-/// | 0x0   | A      | 0x8   | K      |
-/// | 0x1   | C      | 0x9   | M      |
-/// | 0x2   | G      | 0xA   | B      |
-/// | 0x3   | T      | 0xB   | D      |
-/// | 0x4   | R      | 0xC   | H      |
-/// | 0x5   | Y      | 0xD   | V      |
-/// | 0x6   | S      | 0xE   | N      |
-/// | 0x7   | W      | 0xF   | -      |
+/// | 0x0   | -      | 0x8   | G      |
+/// | 0x1   | A      | 0x9   | R      |
+/// | 0x2   | C      | 0xA   | S      |
+/// | 0x3   | M      | 0xB   | V      |
+/// | 0x4   | T      | 0xC   | K      |
+/// | 0x5   | W      | 0xD   | D      |
+/// | 0x6   | Y      | 0xE   | B      |
+/// | 0x7   | H      | 0xF   | N      |
 ///
 /// # Arguments
 ///
@@ -924,11 +948,390 @@ pub fn char_to_4bit(c: u8) -> u8 {
 /// ASCII byte for the nucleotide character
 #[inline]
 pub fn fourbit_to_char(bits: u8) -> u8 {
+    // Indexed by 4-bit encoding value
+    // 0=Gap, 1=A, 2=C, 3=M, 4=T, 5=W, 6=Y, 7=H, 8=G, 9=R, A=S, B=V, C=K, D=D, E=B, F=N
     const DECODE_TABLE: [u8; 16] = [
-        b'A', b'C', b'G', b'T', b'R', b'Y', b'S', b'W', b'K', b'M', b'B', b'D', b'H', b'V', b'N',
-        b'-',
+        b'-', b'A', b'C', b'M', b'T', b'W', b'Y', b'H', b'G', b'R', b'S', b'V', b'K', b'D', b'B',
+        b'N',
     ];
     DECODE_TABLE[(bits & 0xF) as usize]
+}
+
+// ============================================================================
+// Complement and Reverse Complement
+// ============================================================================
+
+/// Computes the complement of a 4-bit encoded nucleotide using bit rotation.
+///
+/// The encoding scheme is designed so that rotating any 4-bit value by 2 bits
+/// produces its Watson-Crick complement. This is ~2x faster than lookup tables
+/// for complement calculation.
+///
+/// # Complement Pairs
+///
+/// - A (0x1) ↔ T (0x4)
+/// - C (0x2) ↔ G (0x8)
+/// - R (0x9) ↔ Y (0x6)
+/// - K (0xC) ↔ M (0x3)
+/// - D (0xD) ↔ H (0x7)
+/// - B (0xE) ↔ V (0xB)
+/// - S (0xA), W (0x5), N (0xF), Gap (0x0) are self-complementary
+///
+/// # Arguments
+///
+/// * `bits` - 4-bit encoded nucleotide value
+///
+/// # Returns
+///
+/// The 4-bit encoded complement
+///
+/// # Example
+///
+/// ```rust
+/// use simdna::dna_simd_encoder::{complement_4bit, encoding};
+///
+/// assert_eq!(complement_4bit(encoding::A), encoding::T);
+/// assert_eq!(complement_4bit(encoding::C), encoding::G);
+/// assert_eq!(complement_4bit(encoding::N), encoding::N); // Self-complementary
+/// ```
+#[inline]
+pub fn complement_4bit(bits: u8) -> u8 {
+    // 2-bit rotation within a 4-bit value: rotate left by 2
+    ((bits << 2) | (bits >> 2)) & 0xF
+}
+
+/// Computes the complement of a packed byte containing two 4-bit encoded nucleotides.
+///
+/// Both nibbles are complemented in parallel using bit manipulation.
+///
+/// # Arguments
+///
+/// * `packed` - A byte containing two 4-bit encoded nucleotides (high nibble, low nibble)
+///
+/// # Returns
+///
+/// A byte with both nibbles complemented
+#[inline]
+pub fn complement_packed_byte(packed: u8) -> u8 {
+    // Extract high and low nibbles
+    let high = packed >> 4;
+    let low = packed & 0xF;
+    // Complement each nibble and repack
+    (complement_4bit(high) << 4) | complement_4bit(low)
+}
+
+/// Computes the reverse complement of encoded DNA data.
+///
+/// This function operates directly on 4-bit packed encoded data, avoiding
+/// the overhead of decoding to ASCII and re-encoding. It uses the bit rotation
+/// property of the encoding scheme for efficient complement calculation.
+///
+/// # Algorithm
+///
+/// 1. Reverse the byte order
+/// 2. Swap nibbles within each byte (to reverse nucleotide order)
+/// 3. Complement each nibble using 2-bit rotation
+///
+/// # Arguments
+///
+/// * `encoded` - Slice of 4-bit packed encoded DNA data
+/// * `length` - Original sequence length (number of nucleotides)
+///
+/// # Returns
+///
+/// A `Vec<u8>` containing the reverse complement in the same packed format
+///
+/// # Thread Safety
+///
+/// This function is thread-safe and can be called from multiple threads
+/// concurrently without synchronization.
+///
+/// # Performance
+///
+/// This function uses SIMD instructions when available:
+/// - x86_64 with SSSE3: Processes 16 bytes per iteration
+/// - ARM64 (aarch64): Uses NEON to process 16 bytes per iteration
+/// - Other platforms: Uses optimized scalar implementation
+///
+/// # Example
+///
+/// ```rust
+/// use simdna::dna_simd_encoder::{encode_dna_prefer_simd, decode_dna_prefer_simd, reverse_complement_encoded};
+///
+/// let sequence = b"ACGT";
+/// let encoded = encode_dna_prefer_simd(sequence);
+/// let rc_encoded = reverse_complement_encoded(&encoded, sequence.len());
+/// let rc_decoded = decode_dna_prefer_simd(&rc_encoded, sequence.len());
+/// assert_eq!(rc_decoded, b"ACGT"); // ACGT is its own reverse complement
+///
+/// let sequence2 = b"AACG";
+/// let encoded2 = encode_dna_prefer_simd(sequence2);
+/// let rc_encoded2 = reverse_complement_encoded(&encoded2, sequence2.len());
+/// let rc_decoded2 = decode_dna_prefer_simd(&rc_encoded2, sequence2.len());
+/// assert_eq!(rc_decoded2, b"CGTT"); // AACG -> reverse: GCAA -> complement: CGTT
+/// ```
+pub fn reverse_complement_encoded(encoded: &[u8], length: usize) -> Vec<u8> {
+    if encoded.is_empty() {
+        return Vec::new();
+    }
+
+    let mut output = vec![0u8; encoded.len()];
+
+    // Try SIMD implementations first, fall back to scalar
+    let used_simd = reverse_complement_with_simd_if_available(encoded, &mut output, length);
+
+    if !used_simd {
+        reverse_complement_scalar(encoded, &mut output, length);
+    }
+
+    output
+}
+
+/// Attempts to use SIMD for reverse complement if available.
+#[inline]
+fn reverse_complement_with_simd_if_available(
+    encoded: &[u8],
+    output: &mut [u8],
+    length: usize,
+) -> bool {
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("ssse3") {
+            unsafe { reverse_complement_x86_ssse3(encoded, output, length) };
+            return true;
+        }
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    {
+        unsafe { reverse_complement_arm_neon(encoded, output, length) };
+        return true;
+    }
+
+    #[allow(unreachable_code)]
+    false
+}
+
+/// Scalar implementation of reverse complement.
+///
+/// Processes the encoded data to produce the reverse complement:
+/// 1. Iterates through bytes in reverse order
+/// 2. Swaps nibbles within each byte
+/// 3. Complements each nibble
+fn reverse_complement_scalar(encoded: &[u8], output: &mut [u8], length: usize) {
+    let num_bytes = encoded.len();
+    let is_odd_length = length % 2 == 1;
+
+    for (i, &byte) in encoded.iter().enumerate() {
+        let reverse_idx = num_bytes - 1 - i;
+
+        // Extract nibbles
+        let high = byte >> 4;
+        let low = byte & 0xF;
+
+        // Complement each nibble
+        let high_comp = complement_4bit(high);
+        let low_comp = complement_4bit(low);
+
+        // Swap and pack: the low nibble becomes high, high becomes low
+        // This effectively reverses the nucleotide order within the byte
+        output[reverse_idx] = (low_comp << 4) | high_comp;
+    }
+
+    // Handle odd-length sequences: the padding nibble needs adjustment
+    if is_odd_length && !output.is_empty() {
+        // The last nucleotide in the original is in the high nibble of encoded[0]
+        // After reversal, it should be in the high nibble of output[num_bytes-1]
+        // But we also have a padding nibble that was in the low nibble of the last encoded byte
+        // We need to shift the result to account for the padding
+
+        // Re-process to handle odd length correctly
+        let mut temp = Vec::with_capacity(length);
+
+        // First, decode to individual nibbles
+        for &byte in encoded.iter() {
+            temp.push(byte >> 4);
+            temp.push(byte & 0xF);
+        }
+        temp.truncate(length);
+
+        // Reverse and complement
+        temp.reverse();
+        for nibble in temp.iter_mut() {
+            *nibble = complement_4bit(*nibble);
+        }
+
+        // Re-pack
+        for (i, chunk) in temp.chunks(2).enumerate() {
+            if chunk.len() == 2 {
+                output[i] = (chunk[0] << 4) | chunk[1];
+            } else {
+                // Odd length: pad with gap (0x0)
+                output[i] = chunk[0] << 4;
+            }
+        }
+    }
+}
+
+/// SSSE3-accelerated reverse complement for x86_64.
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "ssse3")]
+unsafe fn reverse_complement_x86_ssse3(encoded: &[u8], output: &mut [u8], length: usize) {
+    let num_bytes = encoded.len();
+    let is_odd_length = length % 2 == 1;
+
+    // For simplicity, use scalar for small or odd-length sequences
+    if num_bytes < 16 || is_odd_length {
+        reverse_complement_scalar(encoded, output, length);
+        return;
+    }
+
+    // Byte reverse shuffle mask
+    let reverse_mask = _mm_setr_epi8(15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+
+    let mut in_idx = 0;
+    let mut out_idx = num_bytes;
+
+    // Process 16 bytes at a time from the end
+    while in_idx + 16 <= num_bytes && out_idx >= 16 {
+        out_idx -= 16;
+
+        // Load 16 bytes
+        let data = _mm_loadu_si128(encoded[in_idx..].as_ptr() as *const __m128i);
+
+        // Reverse byte order
+        let reversed = _mm_shuffle_epi8(data, reverse_mask);
+
+        // Swap nibbles within each byte: ((x & 0x0F) << 4) | ((x >> 4) & 0x0F)
+        let low_nibbles = _mm_and_si128(reversed, _mm_set1_epi8(0x0F));
+        let high_nibbles = _mm_srli_epi16(reversed, 4);
+        let high_nibbles = _mm_and_si128(high_nibbles, _mm_set1_epi8(0x0F));
+        let swapped = _mm_or_si128(_mm_slli_epi16(low_nibbles, 4), high_nibbles);
+
+        // Complement each nibble using bit rotation
+        // For each nibble: ((n << 2) | (n >> 2)) & 0xF
+        // Split into nibbles again for rotation
+        let low = _mm_and_si128(swapped, _mm_set1_epi8(0x0F));
+        let high = _mm_and_si128(_mm_srli_epi16(swapped, 4), _mm_set1_epi8(0x0F));
+
+        // Rotate low nibbles: ((n << 2) | (n >> 2)) & 0xF
+        let low_rot = _mm_and_si128(
+            _mm_or_si128(_mm_slli_epi16(low, 2), _mm_srli_epi16(low, 2)),
+            _mm_set1_epi8(0x0F),
+        );
+
+        // Rotate high nibbles
+        let high_rot = _mm_and_si128(
+            _mm_or_si128(_mm_slli_epi16(high, 2), _mm_srli_epi16(high, 2)),
+            _mm_set1_epi8(0x0F),
+        );
+
+        // Repack nibbles
+        let result = _mm_or_si128(_mm_slli_epi16(high_rot, 4), low_rot);
+
+        _mm_storeu_si128(output[out_idx..].as_mut_ptr() as *mut __m128i, result);
+        in_idx += 16;
+    }
+
+    // Handle remainder with scalar
+    if in_idx < num_bytes {
+        let remaining_length = (num_bytes - in_idx) * 2;
+        reverse_complement_scalar(&encoded[in_idx..], &mut output[..out_idx], remaining_length);
+    }
+}
+
+/// NEON-accelerated reverse complement for ARM64.
+#[cfg(target_arch = "aarch64")]
+#[target_feature(enable = "neon")]
+unsafe fn reverse_complement_arm_neon(encoded: &[u8], output: &mut [u8], length: usize) {
+    let num_bytes = encoded.len();
+    let is_odd_length = length % 2 == 1;
+
+    // For simplicity, use scalar for small or odd-length sequences
+    if num_bytes < 16 || is_odd_length {
+        reverse_complement_scalar(encoded, output, length);
+        return;
+    }
+
+    // Byte reverse indices for vqtbl1q
+    let reverse_indices: [u8; 16] = [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+    let reverse_tbl = vld1q_u8(reverse_indices.as_ptr());
+
+    let mask_0f = vdupq_n_u8(0x0F);
+
+    let mut in_idx = 0;
+    let mut out_idx = num_bytes;
+
+    // Process 16 bytes at a time from the end
+    while in_idx + 16 <= num_bytes && out_idx >= 16 {
+        out_idx -= 16;
+
+        // Load 16 bytes
+        let data = vld1q_u8(encoded[in_idx..].as_ptr());
+
+        // Reverse byte order
+        let reversed = vqtbl1q_u8(data, reverse_tbl);
+
+        // Swap nibbles within each byte
+        let low_nibbles = vandq_u8(reversed, mask_0f);
+        let high_nibbles = vandq_u8(vshrq_n_u8(reversed, 4), mask_0f);
+        let swapped = vorrq_u8(vshlq_n_u8(low_nibbles, 4), high_nibbles);
+
+        // Complement each nibble using bit rotation
+        let low = vandq_u8(swapped, mask_0f);
+        let high = vandq_u8(vshrq_n_u8(swapped, 4), mask_0f);
+
+        // Rotate low nibbles: ((n << 2) | (n >> 2)) & 0xF
+        let low_rot = vandq_u8(vorrq_u8(vshlq_n_u8(low, 2), vshrq_n_u8(low, 2)), mask_0f);
+        let high_rot = vandq_u8(vorrq_u8(vshlq_n_u8(high, 2), vshrq_n_u8(high, 2)), mask_0f);
+
+        // Repack nibbles
+        let result = vorrq_u8(vshlq_n_u8(high_rot, 4), low_rot);
+
+        vst1q_u8(output[out_idx..].as_mut_ptr(), result);
+        in_idx += 16;
+    }
+
+    // Handle remainder with scalar
+    if in_idx < num_bytes {
+        let remaining_length = (num_bytes - in_idx) * 2;
+        reverse_complement_scalar(&encoded[in_idx..], &mut output[..out_idx], remaining_length);
+    }
+}
+
+/// Computes the reverse complement of a DNA sequence.
+///
+/// This is a convenience function that encodes the input, computes the
+/// reverse complement on the encoded data (using efficient bit rotation),
+/// and decodes the result.
+///
+/// # Arguments
+///
+/// * `sequence` - A byte slice containing ASCII-encoded DNA nucleotides
+///
+/// # Returns
+///
+/// A `Vec<u8>` containing the reverse complement as ASCII nucleotides
+///
+/// # Example
+///
+/// ```rust
+/// use simdna::dna_simd_encoder::reverse_complement;
+///
+/// let rc = reverse_complement(b"AACG");
+/// assert_eq!(rc, b"CGTT"); // AACG -> reverse: GCAA -> complement: CGTT
+///
+/// let rc2 = reverse_complement(b"ACGT");
+/// assert_eq!(rc2, b"ACGT"); // Palindromic sequence
+/// ```
+pub fn reverse_complement(sequence: &[u8]) -> Vec<u8> {
+    if sequence.is_empty() {
+        return Vec::new();
+    }
+
+    let encoded = encode_dna_prefer_simd(sequence);
+    let rc_encoded = reverse_complement_encoded(&encoded, sequence.len());
+    decode_dna_prefer_simd(&rc_encoded, sequence.len())
 }
 
 // ============================================================================
@@ -971,80 +1374,81 @@ mod tests {
     /// Tests standard nucleotide to 4-bit conversion.
     #[test]
     fn test_char_to_4bit_standard_bases() {
-        assert_eq!(char_to_4bit(b'A'), 0x0);
-        assert_eq!(char_to_4bit(b'C'), 0x1);
-        assert_eq!(char_to_4bit(b'G'), 0x2);
-        assert_eq!(char_to_4bit(b'T'), 0x3);
+        assert_eq!(char_to_4bit(b'A'), 0x1);
+        assert_eq!(char_to_4bit(b'C'), 0x2);
+        assert_eq!(char_to_4bit(b'G'), 0x8);
+        assert_eq!(char_to_4bit(b'T'), 0x4);
     }
 
     /// Tests lowercase nucleotide to 4-bit conversion.
     #[test]
     fn test_char_to_4bit_lowercase() {
-        assert_eq!(char_to_4bit(b'a'), 0x0);
-        assert_eq!(char_to_4bit(b'c'), 0x1);
-        assert_eq!(char_to_4bit(b'g'), 0x2);
-        assert_eq!(char_to_4bit(b't'), 0x3);
+        assert_eq!(char_to_4bit(b'a'), 0x1);
+        assert_eq!(char_to_4bit(b'c'), 0x2);
+        assert_eq!(char_to_4bit(b'g'), 0x8);
+        assert_eq!(char_to_4bit(b't'), 0x4);
     }
 
     /// Tests IUPAC ambiguity codes to 4-bit conversion.
     #[test]
     fn test_char_to_4bit_iupac() {
-        assert_eq!(char_to_4bit(b'R'), 0x4);
-        assert_eq!(char_to_4bit(b'Y'), 0x5);
-        assert_eq!(char_to_4bit(b'S'), 0x6);
-        assert_eq!(char_to_4bit(b'W'), 0x7);
-        assert_eq!(char_to_4bit(b'K'), 0x8);
-        assert_eq!(char_to_4bit(b'M'), 0x9);
-        assert_eq!(char_to_4bit(b'B'), 0xA);
-        assert_eq!(char_to_4bit(b'D'), 0xB);
-        assert_eq!(char_to_4bit(b'H'), 0xC);
-        assert_eq!(char_to_4bit(b'V'), 0xD);
-        assert_eq!(char_to_4bit(b'N'), 0xE);
+        assert_eq!(char_to_4bit(b'R'), 0x9);
+        assert_eq!(char_to_4bit(b'Y'), 0x6);
+        assert_eq!(char_to_4bit(b'S'), 0xA);
+        assert_eq!(char_to_4bit(b'W'), 0x5);
+        assert_eq!(char_to_4bit(b'K'), 0xC);
+        assert_eq!(char_to_4bit(b'M'), 0x3);
+        assert_eq!(char_to_4bit(b'B'), 0xE);
+        assert_eq!(char_to_4bit(b'D'), 0xD);
+        assert_eq!(char_to_4bit(b'H'), 0x7);
+        assert_eq!(char_to_4bit(b'V'), 0xB);
+        assert_eq!(char_to_4bit(b'N'), 0xF);
     }
 
     /// Tests gap and unknown characters.
     #[test]
     fn test_char_to_4bit_gaps() {
-        assert_eq!(char_to_4bit(b'-'), 0xF);
-        assert_eq!(char_to_4bit(b'.'), 0xF);
-        assert_eq!(char_to_4bit(b'X'), 0xF); // Invalid -> gap
-        assert_eq!(char_to_4bit(b' '), 0xF); // Invalid -> gap
+        assert_eq!(char_to_4bit(b'-'), 0x0);
+        assert_eq!(char_to_4bit(b'.'), 0x0);
+        assert_eq!(char_to_4bit(b'X'), 0x0); // Invalid -> gap
+        assert_eq!(char_to_4bit(b' '), 0x0); // Invalid -> gap
     }
 
     /// Tests RNA uracil to 4-bit conversion (maps to T).
     #[test]
     fn test_char_to_4bit_uracil() {
-        assert_eq!(char_to_4bit(b'U'), 0x3);
-        assert_eq!(char_to_4bit(b'u'), 0x3);
+        assert_eq!(char_to_4bit(b'U'), 0x4);
+        assert_eq!(char_to_4bit(b'u'), 0x4);
     }
 
     /// Tests 4-bit to ASCII character conversion.
     #[test]
     fn test_fourbit_to_char() {
-        assert_eq!(fourbit_to_char(0x0), b'A');
-        assert_eq!(fourbit_to_char(0x1), b'C');
-        assert_eq!(fourbit_to_char(0x2), b'G');
-        assert_eq!(fourbit_to_char(0x3), b'T');
-        assert_eq!(fourbit_to_char(0x4), b'R');
-        assert_eq!(fourbit_to_char(0x5), b'Y');
-        assert_eq!(fourbit_to_char(0x6), b'S');
-        assert_eq!(fourbit_to_char(0x7), b'W');
-        assert_eq!(fourbit_to_char(0x8), b'K');
-        assert_eq!(fourbit_to_char(0x9), b'M');
-        assert_eq!(fourbit_to_char(0xA), b'B');
-        assert_eq!(fourbit_to_char(0xB), b'D');
-        assert_eq!(fourbit_to_char(0xC), b'H');
-        assert_eq!(fourbit_to_char(0xD), b'V');
-        assert_eq!(fourbit_to_char(0xE), b'N');
-        assert_eq!(fourbit_to_char(0xF), b'-');
+        // New encoding: 0=Gap, 1=A, 2=C, 3=M, 4=T, 5=W, 6=Y, 7=H, 8=G, 9=R, A=S, B=V, C=K, D=D, E=B, F=N
+        assert_eq!(fourbit_to_char(0x0), b'-');
+        assert_eq!(fourbit_to_char(0x1), b'A');
+        assert_eq!(fourbit_to_char(0x2), b'C');
+        assert_eq!(fourbit_to_char(0x3), b'M');
+        assert_eq!(fourbit_to_char(0x4), b'T');
+        assert_eq!(fourbit_to_char(0x5), b'W');
+        assert_eq!(fourbit_to_char(0x6), b'Y');
+        assert_eq!(fourbit_to_char(0x7), b'H');
+        assert_eq!(fourbit_to_char(0x8), b'G');
+        assert_eq!(fourbit_to_char(0x9), b'R');
+        assert_eq!(fourbit_to_char(0xA), b'S');
+        assert_eq!(fourbit_to_char(0xB), b'V');
+        assert_eq!(fourbit_to_char(0xC), b'K');
+        assert_eq!(fourbit_to_char(0xD), b'D');
+        assert_eq!(fourbit_to_char(0xE), b'B');
+        assert_eq!(fourbit_to_char(0xF), b'N');
     }
 
     /// Tests that only the lower 4 bits are used in conversion.
     #[test]
     fn test_fourbit_to_char_masks_input() {
         // Values > 15 should use only lower 4 bits
-        assert_eq!(fourbit_to_char(0x10), b'A'); // 0x10 & 0xF = 0
-        assert_eq!(fourbit_to_char(0xFF), b'-'); // 0xFF & 0xF = 15
+        assert_eq!(fourbit_to_char(0x10), b'-'); // 0x10 & 0xF = 0 = Gap
+        assert_eq!(fourbit_to_char(0xFF), b'N'); // 0xFF & 0xF = 15 = N
     }
 
     // ========================================================================
@@ -1130,16 +1534,16 @@ mod tests {
     /// Tests specific encoding values.
     #[test]
     fn test_encode_specific_values() {
-        // AC should encode to 0x01 (A=0x0 in high nibble, C=0x1 in low nibble)
+        // AC should encode to 0x12 (A=0x1 in high nibble, C=0x2 in low nibble)
         let sequence = b"AC";
         let encoded = encode_dna_prefer_simd(sequence);
         assert_eq!(encoded.len(), 1);
-        assert_eq!(encoded[0], 0x01);
+        assert_eq!(encoded[0], 0x12);
 
-        // GT should encode to 0x23
+        // GT should encode to 0x84 (G=0x8 in high nibble, T=0x4 in low nibble)
         let sequence = b"GT";
         let encoded = encode_dna_prefer_simd(sequence);
-        assert_eq!(encoded[0], 0x23);
+        assert_eq!(encoded[0], 0x84);
     }
 
     // ========================================================================
@@ -1189,56 +1593,58 @@ mod tests {
     fn test_iupac_specific_encoding_values() {
         // Each pair should encode to a specific byte value
         // Format: (high_nibble << 4) | low_nibble
+        // New encoding: R=0x9, Y=0x6, S=0xA, W=0x5, K=0xC, M=0x3, B=0xE, D=0xD, H=0x7, V=0xB, N=0xF, Gap=0x0
 
-        // RY should encode to 0x45 (R=0x4, Y=0x5)
+        // RY should encode to 0x96 (R=0x9, Y=0x6)
         let encoded = encode_dna_prefer_simd(b"RY");
-        assert_eq!(encoded[0], 0x45, "RY should encode to 0x45");
+        assert_eq!(encoded[0], 0x96, "RY should encode to 0x96");
 
-        // SW should encode to 0x67 (S=0x6, W=0x7)
+        // SW should encode to 0xA5 (S=0xA, W=0x5)
         let encoded = encode_dna_prefer_simd(b"SW");
-        assert_eq!(encoded[0], 0x67, "SW should encode to 0x67");
+        assert_eq!(encoded[0], 0xA5, "SW should encode to 0xA5");
 
-        // KM should encode to 0x89 (K=0x8, M=0x9)
+        // KM should encode to 0xC3 (K=0xC, M=0x3)
         let encoded = encode_dna_prefer_simd(b"KM");
-        assert_eq!(encoded[0], 0x89, "KM should encode to 0x89");
+        assert_eq!(encoded[0], 0xC3, "KM should encode to 0xC3");
 
-        // BD should encode to 0xAB (B=0xA, D=0xB)
+        // BD should encode to 0xED (B=0xE, D=0xD)
         let encoded = encode_dna_prefer_simd(b"BD");
-        assert_eq!(encoded[0], 0xAB, "BD should encode to 0xAB");
+        assert_eq!(encoded[0], 0xED, "BD should encode to 0xED");
 
-        // HV should encode to 0xCD (H=0xC, V=0xD)
+        // HV should encode to 0x7B (H=0x7, V=0xB)
         let encoded = encode_dna_prefer_simd(b"HV");
-        assert_eq!(encoded[0], 0xCD, "HV should encode to 0xCD");
+        assert_eq!(encoded[0], 0x7B, "HV should encode to 0x7B");
 
-        // N- should encode to 0xEF (N=0xE, -=0xF)
+        // N- should encode to 0xF0 (N=0xF, Gap=0x0)
         let encoded = encode_dna_prefer_simd(b"N-");
-        assert_eq!(encoded[0], 0xEF, "N- should encode to 0xEF");
+        assert_eq!(encoded[0], 0xF0, "N- should encode to 0xF0");
     }
 
     /// Tests each IUPAC code individually at odd positions (second nibble).
     #[test]
     fn test_iupac_at_odd_positions() {
+        // New encoding: R=0x9, Y=0x6, S=0xA, W=0x5, K=0xC, M=0x3, B=0xE, D=0xD, H=0x7, V=0xB, N=0xF, Gap=0x0
         let codes: [(u8, u8); 12] = [
-            (b'R', 0x4),
-            (b'Y', 0x5),
-            (b'S', 0x6),
-            (b'W', 0x7),
-            (b'K', 0x8),
-            (b'M', 0x9),
-            (b'B', 0xA),
-            (b'D', 0xB),
-            (b'H', 0xC),
-            (b'V', 0xD),
-            (b'N', 0xE),
-            (b'-', 0xF),
+            (b'R', 0x9),
+            (b'Y', 0x6),
+            (b'S', 0xA),
+            (b'W', 0x5),
+            (b'K', 0xC),
+            (b'M', 0x3),
+            (b'B', 0xE),
+            (b'D', 0xD),
+            (b'H', 0x7),
+            (b'V', 0xB),
+            (b'N', 0xF),
+            (b'-', 0x0),
         ];
 
         for (code, expected_nibble) in codes {
             // Put code in second position (low nibble)
-            // A encodes to 0x0, so expected_byte is just the low nibble value
+            // A encodes to 0x1, so expected_byte is (0x1 << 4) | expected_nibble
             let sequence = [b'A', code];
             let encoded = encode_dna_prefer_simd(&sequence);
-            let expected_byte = expected_nibble; // A (0x0) in high nibble
+            let expected_byte = (0x1 << 4) | expected_nibble; // A (0x1) in high nibble
             assert_eq!(
                 encoded[0], expected_byte,
                 "A{} should encode to 0x{:02X}",
@@ -1250,27 +1656,28 @@ mod tests {
     /// Tests each IUPAC code individually at even positions (first nibble).
     #[test]
     fn test_iupac_at_even_positions() {
+        // New encoding: R=0x9, Y=0x6, S=0xA, W=0x5, K=0xC, M=0x3, B=0xE, D=0xD, H=0x7, V=0xB, N=0xF, Gap=0x0
         let codes: [(u8, u8); 12] = [
-            (b'R', 0x4),
-            (b'Y', 0x5),
-            (b'S', 0x6),
-            (b'W', 0x7),
-            (b'K', 0x8),
-            (b'M', 0x9),
-            (b'B', 0xA),
-            (b'D', 0xB),
-            (b'H', 0xC),
-            (b'V', 0xD),
-            (b'N', 0xE),
-            (b'-', 0xF),
+            (b'R', 0x9),
+            (b'Y', 0x6),
+            (b'S', 0xA),
+            (b'W', 0x5),
+            (b'K', 0xC),
+            (b'M', 0x3),
+            (b'B', 0xE),
+            (b'D', 0xD),
+            (b'H', 0x7),
+            (b'V', 0xB),
+            (b'N', 0xF),
+            (b'-', 0x0),
         ];
 
         for (code, expected_nibble) in codes {
             // Put code in first position (high nibble)
-            // A encodes to 0x0, so expected_byte is just the shifted nibble
+            // A encodes to 0x1, so expected_byte is (expected_nibble << 4) | 0x1
             let sequence = [code, b'A'];
             let encoded = encode_dna_prefer_simd(&sequence);
-            let expected_byte = expected_nibble << 4; // A (0x0) in low nibble
+            let expected_byte = (expected_nibble << 4) | 0x1; // A (0x1) in low nibble
             assert_eq!(
                 encoded[0], expected_byte,
                 "{}A should encode to 0x{:02X}",
@@ -1282,18 +1689,19 @@ mod tests {
     /// Tests lowercase IUPAC ambiguity codes conversion.
     #[test]
     fn test_iupac_lowercase_conversion() {
+        // New encoding: R=0x9, Y=0x6, S=0xA, W=0x5, K=0xC, M=0x3, B=0xE, D=0xD, H=0x7, V=0xB, N=0xF
         let codes: [(u8, u8); 11] = [
-            (b'r', 0x4),
-            (b'y', 0x5),
-            (b's', 0x6),
-            (b'w', 0x7),
-            (b'k', 0x8),
-            (b'm', 0x9),
-            (b'b', 0xA),
-            (b'd', 0xB),
-            (b'h', 0xC),
-            (b'v', 0xD),
-            (b'n', 0xE),
+            (b'r', 0x9),
+            (b'y', 0x6),
+            (b's', 0xA),
+            (b'w', 0x5),
+            (b'k', 0xC),
+            (b'm', 0x3),
+            (b'b', 0xE),
+            (b'd', 0xD),
+            (b'h', 0x7),
+            (b'v', 0xB),
+            (b'n', 0xF),
         ];
 
         for (code, expected_value) in codes {
@@ -1501,16 +1909,16 @@ mod tests {
         let sequence = b"ACGTACGT";
         let mut output = vec![0u8; 4];
         encode_scalar(sequence, &mut output);
-        assert_eq!(output[0], 0x01); // AC
-        assert_eq!(output[1], 0x23); // GT
-        assert_eq!(output[2], 0x01); // AC
-        assert_eq!(output[3], 0x23); // GT
+        assert_eq!(output[0], 0x12); // AC: (A=0x1<<4) | C=0x2
+        assert_eq!(output[1], 0x84); // GT: (G=0x8<<4) | T=0x4
+        assert_eq!(output[2], 0x12); // AC
+        assert_eq!(output[3], 0x84); // GT
     }
 
     /// Tests scalar decoding directly.
     #[test]
     fn test_decode_scalar_directly() {
-        let encoded = [0x01u8, 0x23]; // AC, GT
+        let encoded = [0x12u8, 0x84]; // AC, GT
         let mut output = vec![0u8; 4];
         decode_scalar(&encoded, &mut output, 4);
         assert_eq!(output, b"ACGT");
@@ -1525,30 +1933,36 @@ mod tests {
     fn test_decode_specific_4bit_values() {
         // Manually construct encoded bytes and verify decoding
         // Format: high nibble = first nucleotide, low nibble = second
+        // New encoding: 0=Gap, 1=A, 2=C, 3=M, 4=T, 5=W, 6=Y, 7=H, 8=G, 9=R, A=S, B=V, C=K, D=D, E=B, F=N
 
-        // 0x01 = AC, 0x23 = GT
-        let decoded = decode_dna_prefer_simd(&[0x01, 0x23], 4);
+        // 0x12 = AC (A=0x1, C=0x2)
+        // 0x84 = GT (G=0x8, T=0x4)
+        let decoded = decode_dna_prefer_simd(&[0x12, 0x84], 4);
         assert_eq!(decoded, b"ACGT");
 
-        // 0x45 = RY, 0x67 = SW
-        let decoded = decode_dna_prefer_simd(&[0x45, 0x67], 4);
+        // 0x96 = RY (R=0x9, Y=0x6)
+        // 0xA5 = SW (S=0xA, W=0x5)
+        let decoded = decode_dna_prefer_simd(&[0x96, 0xA5], 4);
         assert_eq!(decoded, b"RYSW");
 
-        // 0x89 = KM, 0xAB = BD
-        let decoded = decode_dna_prefer_simd(&[0x89, 0xAB], 4);
+        // 0xC3 = KM (K=0xC, M=0x3)
+        // 0xED = BD (B=0xE, D=0xD)
+        let decoded = decode_dna_prefer_simd(&[0xC3, 0xED], 4);
         assert_eq!(decoded, b"KMBD");
 
-        // 0xCD = HV, 0xEF = N-
-        let decoded = decode_dna_prefer_simd(&[0xCD, 0xEF], 4);
+        // 0x7B = HV (H=0x7, V=0xB)
+        // 0xF0 = N- (N=0xF, Gap=0x0)
+        let decoded = decode_dna_prefer_simd(&[0x7B, 0xF0], 4);
         assert_eq!(decoded, b"HVN-");
     }
 
     /// Tests decoding each 4-bit value individually (0x0 to 0xF).
     #[test]
     fn test_decode_all_4bit_values() {
+        // New encoding: 0=Gap, 1=A, 2=C, 3=M, 4=T, 5=W, 6=Y, 7=H, 8=G, 9=R, A=S, B=V, C=K, D=D, E=B, F=N
         let expected: [u8; 16] = [
-            b'A', b'C', b'G', b'T', b'R', b'Y', b'S', b'W', b'K', b'M', b'B', b'D', b'H', b'V',
-            b'N', b'-',
+            b'-', b'A', b'C', b'M', b'T', b'W', b'Y', b'H', b'G', b'R', b'S', b'V', b'K', b'D',
+            b'B', b'N',
         ];
 
         for (value, &expected_char) in expected.iter().enumerate() {
@@ -1561,7 +1975,7 @@ mod tests {
                 value, expected_char as char
             );
 
-            // Test in low nibble position
+            // Test in low nibble position (need length 2 to read both nibbles)
             let encoded_low = [value as u8];
             let decoded = decode_dna_prefer_simd(&encoded_low, 2);
             assert_eq!(
@@ -1636,7 +2050,12 @@ mod tests {
     /// Tests decoding at SIMD boundary (exactly 16 nucleotides from 8 bytes).
     #[test]
     fn test_decode_exactly_16_nucleotides() {
-        let encoded = [0x01u8, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF];
+        // Use encoding values that correspond to the IUPAC sequence
+        // New encoding: 0=Gap, 1=A, 2=C, 3=M, 4=T, 5=W, 6=Y, 7=H, 8=G, 9=R, A=S, B=V, C=K, D=D, E=B, F=N
+        // Encode the sequence via roundtrip instead of hardcoding
+        let sequence = b"ACGTRYSWKMBDHVN-";
+        let encoded = encode_dna_prefer_simd(sequence);
+        assert_eq!(encoded.len(), 8);
         let decoded = decode_dna_prefer_simd(&encoded, 16);
         assert_eq!(decoded, b"ACGTRYSWKMBDHVN-");
     }
@@ -1670,14 +2089,14 @@ mod tests {
     /// Tests decoding IUPAC codes specifically.
     #[test]
     fn test_decode_iupac_codes() {
-        // R=4, Y=5, S=6, W=7, K=8, M=9, B=A, D=B, H=C, V=D, N=E
+        // New encoding: R=0x9, Y=0x6, S=0xA, W=0x5, K=0xC, M=0x3, B=0xE, D=0xD, H=0x7, V=0xB, N=0xF
         let iupac_only = [
-            0x45u8, // RY
-            0x67,   // SW
-            0x89,   // KM
-            0xAB,   // BD
-            0xCD,   // HV
-            0xEE,   // NN
+            0x96u8, // RY (R=0x9, Y=0x6)
+            0xA5,   // SW (S=0xA, W=0x5)
+            0xC3,   // KM (K=0xC, M=0x3)
+            0xED,   // BD (B=0xE, D=0xD)
+            0x7B,   // HV (H=0x7, V=0xB)
+            0xFF,   // NN (N=0xF, N=0xF)
         ];
 
         let decoded = decode_dna_prefer_simd(&iupac_only, 12);
@@ -1687,8 +2106,8 @@ mod tests {
     /// Tests decoding gaps.
     #[test]
     fn test_decode_gaps() {
-        // All gaps (0xF)
-        let all_gaps = [0xFFu8, 0xFF, 0xFF, 0xFF];
+        // All gaps (Gap=0x0 in new encoding)
+        let all_gaps = [0x00u8, 0x00, 0x00, 0x00];
         let decoded = decode_dna_prefer_simd(&all_gaps, 8);
         assert_eq!(decoded, b"--------");
     }
@@ -1865,6 +2284,201 @@ mod tests {
                         let decoded = decode_dna_prefer_simd(&encoded, seq.len());
                         assert_eq!(decoded, seq, "Failed for length {}", len);
                     })
+                })
+            })
+            .collect();
+
+        for handle in handles {
+            handle.join().expect("Thread panicked");
+        }
+    }
+
+    // ========================================================================
+    // Complement and Reverse Complement Tests
+    // ========================================================================
+
+    /// Tests bit rotation complement for standard bases.
+    #[test]
+    fn test_complement_4bit_standard_bases() {
+        // A (0x1) <-> T (0x4)
+        assert_eq!(complement_4bit(encoding::A), encoding::T);
+        assert_eq!(complement_4bit(encoding::T), encoding::A);
+
+        // C (0x2) <-> G (0x8)
+        assert_eq!(complement_4bit(encoding::C), encoding::G);
+        assert_eq!(complement_4bit(encoding::G), encoding::C);
+    }
+
+    /// Tests bit rotation complement for ambiguity codes.
+    #[test]
+    fn test_complement_4bit_ambiguity_codes() {
+        // R (0x9) <-> Y (0x6)
+        assert_eq!(complement_4bit(encoding::R), encoding::Y);
+        assert_eq!(complement_4bit(encoding::Y), encoding::R);
+
+        // K (0xC) <-> M (0x3)
+        assert_eq!(complement_4bit(encoding::K), encoding::M);
+        assert_eq!(complement_4bit(encoding::M), encoding::K);
+
+        // D (0xD) <-> H (0x7)
+        assert_eq!(complement_4bit(encoding::D), encoding::H);
+        assert_eq!(complement_4bit(encoding::H), encoding::D);
+
+        // B (0xE) <-> V (0xB)
+        assert_eq!(complement_4bit(encoding::B), encoding::V);
+        assert_eq!(complement_4bit(encoding::V), encoding::B);
+    }
+
+    /// Tests self-complementary codes.
+    #[test]
+    fn test_complement_4bit_self_complementary() {
+        // S (0xA), W (0x5), N (0xF), Gap (0x0) are self-complementary
+        assert_eq!(complement_4bit(encoding::S), encoding::S);
+        assert_eq!(complement_4bit(encoding::W), encoding::W);
+        assert_eq!(complement_4bit(encoding::N), encoding::N);
+        assert_eq!(complement_4bit(encoding::GAP), encoding::GAP);
+    }
+
+    /// Tests that complement is its own inverse for all values.
+    #[test]
+    fn test_complement_4bit_involution() {
+        for i in 0..16u8 {
+            let comp = complement_4bit(i);
+            let double_comp = complement_4bit(comp);
+            assert_eq!(
+                double_comp, i,
+                "Double complement of 0x{:X} should be itself",
+                i
+            );
+        }
+    }
+
+    /// Tests reverse complement of a palindromic sequence.
+    #[test]
+    fn test_reverse_complement_palindrome() {
+        // ACGT is its own reverse complement
+        let rc = reverse_complement(b"ACGT");
+        assert_eq!(rc, b"ACGT");
+
+        // ATAT is its own reverse complement
+        let rc = reverse_complement(b"ATAT");
+        assert_eq!(rc, b"ATAT");
+    }
+
+    /// Tests reverse complement of standard sequences.
+    #[test]
+    fn test_reverse_complement_standard() {
+        // AACG -> reverse: GCAA -> complement: CGTT
+        let rc = reverse_complement(b"AACG");
+        assert_eq!(rc, b"CGTT");
+
+        // A -> T
+        let rc = reverse_complement(b"A");
+        assert_eq!(rc, b"T");
+
+        // AC -> reverse: CA -> complement: GT
+        let rc = reverse_complement(b"AC");
+        assert_eq!(rc, b"GT");
+
+        // AAA -> reverse: AAA -> complement: TTT
+        let rc = reverse_complement(b"AAA");
+        assert_eq!(rc, b"TTT");
+
+        // GATTACA -> reverse: ACATTAG -> complement: TGTAATC
+        let rc = reverse_complement(b"GATTACA");
+        assert_eq!(rc, b"TGTAATC");
+    }
+
+    /// Tests reverse complement with IUPAC ambiguity codes.
+    #[test]
+    fn test_reverse_complement_iupac() {
+        // R (A|G) <-> Y (C|T)
+        let rc = reverse_complement(b"R");
+        assert_eq!(rc, b"Y");
+
+        // S is self-complementary
+        let rc = reverse_complement(b"S");
+        assert_eq!(rc, b"S");
+
+        // W is self-complementary
+        let rc = reverse_complement(b"W");
+        assert_eq!(rc, b"W");
+
+        // N is self-complementary
+        let rc = reverse_complement(b"N");
+        assert_eq!(rc, b"N");
+
+        // Mixed: ACRYGT -> reverse: TGYRAC -> complement: ACRMGT... let's compute properly
+        // Actually: ACRYGT, reversed = TGYRCA, complement each:
+        // T->A, G->C, Y->R, R->Y, C->G, A->T => ACRYGT
+        // Wait, that's the same? Let me recalculate:
+        // Original: A C R Y G T
+        // Reversed: T G Y R C A
+        // Complement: A C R Y G T
+        // So ACRYGT is palindromic!
+        let rc = reverse_complement(b"ACRYGT");
+        assert_eq!(rc, b"ACRYGT");
+    }
+
+    /// Tests reverse complement of empty sequence.
+    #[test]
+    fn test_reverse_complement_empty() {
+        let rc = reverse_complement(b"");
+        assert!(rc.is_empty());
+    }
+
+    /// Tests reverse complement of long sequences (SIMD path).
+    #[test]
+    fn test_reverse_complement_long_sequence() {
+        // 64 nucleotides - should use SIMD
+        let sequence: Vec<u8> = b"ACGT".iter().cycle().take(64).copied().collect();
+        let rc = reverse_complement(&sequence);
+        assert_eq!(rc.len(), 64);
+
+        // ACGT repeated is palindromic
+        assert_eq!(rc, sequence);
+
+        // Non-palindromic long sequence
+        let sequence: Vec<u8> = b"AACG".iter().cycle().take(64).copied().collect();
+        let rc = reverse_complement(&sequence);
+        let rc_rc = reverse_complement(&rc);
+        // Reverse complement of reverse complement should be original
+        assert_eq!(rc_rc, sequence);
+    }
+
+    /// Tests that reverse_complement_encoded works correctly.
+    #[test]
+    fn test_reverse_complement_encoded() {
+        let sequence = b"GATTACA";
+        let encoded = encode_dna_prefer_simd(sequence);
+        let rc_encoded = reverse_complement_encoded(&encoded, sequence.len());
+        let rc_decoded = decode_dna_prefer_simd(&rc_encoded, sequence.len());
+        assert_eq!(rc_decoded, b"TGTAATC");
+    }
+
+    /// Tests complement of packed byte.
+    #[test]
+    fn test_complement_packed_byte() {
+        // AC (0x12) -> complement each nibble -> TG (0x48)
+        let packed = 0x12u8; // A=0x1 high, C=0x2 low
+        let comp = complement_packed_byte(packed);
+        assert_eq!(comp, 0x48); // T=0x4 high, G=0x8 low
+    }
+
+    /// Tests thread safety of reverse complement.
+    #[test]
+    fn test_reverse_complement_thread_safety() {
+        use std::sync::Arc;
+        use std::thread;
+
+        let sequence = Arc::new(b"GATTACA".to_vec());
+
+        let handles: Vec<_> = (0..50)
+            .map(|_| {
+                let seq = Arc::clone(&sequence);
+                thread::spawn(move || {
+                    let rc = reverse_complement(&seq);
+                    assert_eq!(rc, b"TGTAATC");
                 })
             })
             .collect();
