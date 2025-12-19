@@ -27,6 +27,7 @@ TARGETS=(
     "boundaries"
     "bit_rotation"
     "reverse_complement"
+    "revcomp_boundaries"
 )
 
 FAILED=()

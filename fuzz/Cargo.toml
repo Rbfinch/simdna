@@ -68,3 +68,11 @@ path = "fuzz_targets/reverse_complement.rs"
 test = false
 doc = false
 bench = false
+
+# Reverse complement boundary condition testing (SIMD threshold, odd/even lengths)
+[[bin]]
+name = "revcomp_boundaries"
+path = "fuzz_targets/revcomp_boundaries.rs"
+test = false
+doc = false
+bench = false

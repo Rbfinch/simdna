@@ -3009,4 +3009,234 @@ mod tests {
             handle.join().expect("Thread panicked");
         }
     }
+
+    // ==========================================================================
+    // Reverse Complement Optimization Tests
+    // ==========================================================================
+    // These tests specifically target the SIMD + nibble shift optimization
+    // for odd-length sequences introduced in v1.0.2.
+
+    /// Tests reverse complement at the SIMD threshold boundary (32 bytes).
+    /// This is the critical transition point between scalar and SIMD paths.
+    #[test]
+    fn test_reverse_complement_simd_threshold_boundary() {
+        // 31 bases (scalar path)
+        let seq_31: Vec<u8> = b"ACGTACGTACGTACGTACGTACGTACGTACG".to_vec();
+        assert_eq!(seq_31.len(), 31);
+        let rc_31 = reverse_complement(&seq_31);
+        let rc_rc_31 = reverse_complement(&rc_31);
+        assert_eq!(rc_rc_31, seq_31, "31-base involution failed");
+
+        // 32 bases (SIMD path, even length)
+        let seq_32: Vec<u8> = b"ACGTACGTACGTACGTACGTACGTACGTACGT".to_vec();
+        assert_eq!(seq_32.len(), 32);
+        let rc_32 = reverse_complement(&seq_32);
+        let rc_rc_32 = reverse_complement(&rc_32);
+        assert_eq!(rc_rc_32, seq_32, "32-base involution failed");
+
+        // 33 bases (SIMD path, odd length - uses nibble shift)
+        let seq_33: Vec<u8> = b"ACGTACGTACGTACGTACGTACGTACGTACGTA".to_vec();
+        assert_eq!(seq_33.len(), 33);
+        let rc_33 = reverse_complement(&seq_33);
+        let rc_rc_33 = reverse_complement(&rc_33);
+        assert_eq!(rc_rc_33, seq_33, "33-base involution failed");
+    }
+
+    /// Tests reverse complement for odd-length sequences using SIMD + nibble shift.
+    /// Verifies the shift_nibbles_left post-processing is correct.
+    #[test]
+    fn test_reverse_complement_odd_length_simd_path() {
+        // Test various odd lengths >= 32 (all use SIMD + nibble shift)
+        for len in [33, 35, 47, 49, 63, 65, 99, 127, 255, 511, 1023] {
+            let sequence: Vec<u8> = (0..len).map(|i| b"ACGT"[i % 4]).collect();
+            assert_eq!(sequence.len(), len);
+
+            let rc = reverse_complement(&sequence);
+            assert_eq!(rc.len(), len, "Length mismatch for {}-base sequence", len);
+
+            // Involution property: rc(rc(x)) == x
+            let rc_rc = reverse_complement(&rc);
+            assert_eq!(
+                rc_rc, sequence,
+                "Involution failed for {}-base sequence",
+                len
+            );
+
+            // Verify first and last base complement relationship
+            let expected_first = complement_char(sequence[len - 1]);
+            let expected_last = complement_char(sequence[0]);
+            assert_eq!(rc[0], expected_first, "First base wrong for len={}", len);
+            assert_eq!(
+                rc[len - 1],
+                expected_last,
+                "Last base wrong for len={}",
+                len
+            );
+        }
+    }
+
+    /// Tests reverse complement for even-length sequences using pure SIMD.
+    /// Ensures even-length SIMD path still works correctly.
+    #[test]
+    fn test_reverse_complement_even_length_simd_path() {
+        // Test various even lengths >= 32 (all use pure SIMD)
+        for len in [32, 34, 48, 64, 100, 128, 256, 512, 1024] {
+            let sequence: Vec<u8> = (0..len).map(|i| b"ACGT"[i % 4]).collect();
+            assert_eq!(sequence.len(), len);
+
+            let rc = reverse_complement(&sequence);
+            assert_eq!(rc.len(), len, "Length mismatch for {}-base sequence", len);
+
+            // Involution property
+            let rc_rc = reverse_complement(&rc);
+            assert_eq!(
+                rc_rc, sequence,
+                "Involution failed for {}-base sequence",
+                len
+            );
+        }
+    }
+
+    /// Tests that SIMD and scalar paths produce identical results.
+    /// Compares high-level API (which uses SIMD) with manual scalar computation.
+    #[test]
+    fn test_reverse_complement_simd_scalar_equivalence() {
+        // Test sequences at various lengths
+        for len in [1, 2, 15, 16, 17, 31, 32, 33, 63, 64, 65, 127, 128, 129] {
+            let sequence: Vec<u8> = (0..len).map(|i| b"GATTACA"[i % 7]).collect();
+
+            // High-level API (uses SIMD for >= 32 bytes)
+            let rc_api = reverse_complement(&sequence);
+
+            // Manual scalar computation for verification
+            let rc_manual: Vec<u8> = sequence.iter().rev().map(|&c| complement_char(c)).collect();
+
+            assert_eq!(rc_api, rc_manual, "SIMD/scalar mismatch at length {}", len);
+        }
+    }
+
+    /// Tests reverse complement with non-palindromic odd-length sequences.
+    /// These specifically exercise the nibble shift correction.
+    #[test]
+    fn test_reverse_complement_odd_length_non_palindromic() {
+        // Sequences that are definitely NOT palindromic
+        let test_cases = [
+            (b"AAACCCGGGTTTT".to_vec(), 13), // Odd, scalar path
+            (b"AAACCCGGGTTTTAAACCCGGGTTTTAAAAAAA".to_vec(), 33), // Odd, SIMD + nibble shift
+            (b"GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG".to_vec(), 33), // All G, odd length
+            (b"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT".to_vec(), 33), // All T, odd length
+        ];
+
+        for (sequence, expected_len) in test_cases {
+            assert_eq!(sequence.len(), expected_len);
+
+            let rc = reverse_complement(&sequence);
+            assert_eq!(rc.len(), expected_len);
+
+            // Verify involution
+            let rc_rc = reverse_complement(&rc);
+            assert_eq!(rc_rc, sequence, "Involution failed for {:?}", sequence);
+
+            // For non-palindromic, rc != original
+            if sequence != b"AAACCCGGGTTTT".to_vec() {
+                // All-G becomes all-C, all-T becomes all-A
+                // These are still different from original
+            }
+        }
+    }
+
+    /// Tests reverse complement encoded API consistency with high-level API.
+    /// Ensures both code paths produce identical results.
+    #[test]
+    fn test_reverse_complement_encoded_api_consistency() {
+        for len in [
+            1, 15, 16, 17, 31, 32, 33, 63, 64, 65, 100, 127, 128, 129, 255, 256, 257,
+        ] {
+            let sequence: Vec<u8> = (0..len).map(|i| b"ACGTRYSWKMBDHVN"[i % 15]).collect();
+
+            // High-level API
+            let rc_high = reverse_complement(&sequence);
+
+            // Low-level API: encode -> reverse_complement_encoded -> decode
+            let encoded = encode_dna_prefer_simd(&sequence);
+            let rc_encoded = reverse_complement_encoded(&encoded, len);
+            let rc_low = decode_dna_prefer_simd(&rc_encoded, len);
+
+            assert_eq!(
+                rc_high,
+                rc_low,
+                "API mismatch at length {} (odd={})",
+                len,
+                len % 2 == 1
+            );
+        }
+    }
+
+    /// Tests that all IUPAC codes are correctly complemented in long odd-length sequences.
+    #[test]
+    fn test_reverse_complement_iupac_odd_length_simd() {
+        // All IUPAC codes, repeated to make odd-length >= 32
+        let all_iupac = b"ACGTRYSWKMBDHVN-";
+        let sequence: Vec<u8> = all_iupac.iter().cycle().take(65).copied().collect();
+        assert_eq!(sequence.len(), 65);
+
+        let rc = reverse_complement(&sequence);
+        assert_eq!(rc.len(), 65);
+
+        // Verify each position has correct complement
+        for i in 0..65 {
+            let original_idx = 65 - 1 - i;
+            let original = sequence[original_idx];
+            let expected = complement_char(original);
+            assert_eq!(
+                rc[i], expected,
+                "Position {}: expected complement of {} to be {}, got {}",
+                i, original as char, expected as char, rc[i] as char
+            );
+        }
+    }
+
+    /// Tests shift_nibbles_left indirectly through odd-length encoded sequences.
+    /// The encoded representation should be correctly aligned after nibble shifting.
+    #[test]
+    fn test_nibble_shift_via_encoded_odd_sequences() {
+        // Test that encoding->rc->decoding works for odd lengths
+        // This exercises shift_nibbles_left indirectly
+        for len in [33, 35, 65, 99, 127, 255] {
+            let sequence: Vec<u8> = (0..len).map(|i| b"ACGT"[i % 4]).collect();
+
+            let encoded = encode_dna_prefer_simd(&sequence);
+            let rc_encoded = reverse_complement_encoded(&encoded, len);
+            let decoded = decode_dna_prefer_simd(&rc_encoded, len);
+
+            // The decoded should equal the high-level reverse complement
+            let expected = reverse_complement(&sequence);
+            assert_eq!(decoded, expected, "Nibble shift issue at length {}", len);
+        }
+    }
+
+    /// Helper to get complement of a single character (for test verification).
+    fn complement_char(c: u8) -> u8 {
+        match c {
+            b'A' | b'a' => b'T',
+            b'T' | b't' => b'A',
+            b'C' | b'c' => b'G',
+            b'G' | b'g' => b'C',
+            b'U' | b'u' => b'A',
+            b'R' | b'r' => b'Y',
+            b'Y' | b'y' => b'R',
+            b'S' | b's' => b'S',
+            b'W' | b'w' => b'W',
+            b'K' | b'k' => b'M',
+            b'M' | b'm' => b'K',
+            b'B' | b'b' => b'V',
+            b'V' | b'v' => b'B',
+            b'D' | b'd' => b'H',
+            b'H' | b'h' => b'D',
+            b'N' | b'n' => b'N',
+            b'-' => b'-',
+            b'.' => b'-',
+            _ => b'-',
+        }
+    }
 }

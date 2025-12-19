@@ -14,12 +14,13 @@ cargo install cargo-fuzz
 | Target | Description |
 |--------|-------------|
 | `roundtrip` | Tests encode→decode produces original data (normalized). Most important for correctness. |
-| `simd_scalar_equivalence` | Ensures SIMD and scalar implementations produce identical results. |
+| `simd_scalar_equivalence` | Ensures SIMD and scalar implementations produce identical results for encode, decode, and reverse complement. |
 | `valid_iupac` | Generates sequences with only valid IUPAC codes and verifies encoding success. |
 | `decode_robust` | Tests decoder handles arbitrary/malformed input gracefully. |
 | `boundaries` | Tests edge cases around SIMD width boundaries (16, 32, 64 bytes). |
 | `bit_rotation` | Verifies bit rotation complement properties (involution, consistency, known pairs). |
 | `reverse_complement` | Tests reverse complement correctness (double-rc = original, API consistency). |
+| `revcomp_boundaries` | Tests reverse complement at SIMD threshold boundaries (32 bytes) and odd/even lengths. |
 
 ## Running Fuzz Tests
 
@@ -40,7 +41,7 @@ cargo +nightly fuzz run roundtrip -- -jobs=8 -workers=8
 cargo +nightly fuzz run roundtrip -- -rss_limit_mb=4096
 
 # Quick smoke test all targets
-for target in roundtrip simd_scalar_equivalence valid_iupac decode_robust boundaries bit_rotation reverse_complement; do
+for target in roundtrip simd_scalar_equivalence valid_iupac decode_robust boundaries bit_rotation reverse_complement revcomp_boundaries; do
     echo "=== Testing $target ==="
     cargo +nightly fuzz run $target -- -max_total_time=30
 done
