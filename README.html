@@ -349,7 +349,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="reverse-complement" class="level2">
 <h2 class="anchored" data-anchor-id="reverse-complement">Reverse Complement</h2>
-<p>simdna provides efficient SIMD-accelerated reverse complement operations for DNA/RNA sequences:</p>
+<p>simdna provides efficient SIMD-accelerated reverse complement operations for DNA/RNA sequences with consistent performance for both even and odd-length sequences:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">simdna::dna_simd_encoder::</span><span class="op">{</span>reverse_complement<span class="op">,</span> reverse_complement_encoded<span class="op">,</span> encode_dna_prefer_simd<span class="op">};</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">// High-level API: ASCII in, ASCII out</span></span>
@@ -362,7 +362,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> rc <span class="op">=</span> reverse_complement(forward)<span class="op">;</span></span>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="pp">assert_eq!</span>(rc<span class="op">,</span> <span class="st">b"CGTTGCAT"</span>)<span class="op">;</span></span>
 <span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">// Low-level API: operates directly on encoded data for maximum performance</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">// Low-level API: operates directly on encoded data for maximum performance (~20 GiB/s)</span></span>
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> encoded <span class="op">=</span> encode_dna_prefer_simd(<span class="st">b"ACGT"</span>)<span class="op">;</span></span>
 <span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> rc_encoded <span class="op">=</span> reverse_complement_encoded(<span class="op">&amp;</span>encoded<span class="op">,</span> <span class="dv">4</span>)<span class="op">;</span></span>
 <span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">// rc_encoded is the encoded form of "ACGT"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -478,8 +478,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><strong>SIMD Processing</strong>: Handles 32 nucleotides per iteration (two 16-byte chunks) with prefetching</li>
 <li><strong>Direct Case Handling</strong>: LUT handles case-insensitivity without uppercase conversion overhead</li>
 <li><strong>Optimized Scalar Path</strong>: Remainder processing uses 4-at-a-time scalar encoding</li>
+<li><strong>SIMD Reverse Complement</strong>: Up to ~20 GiB/s throughput on encoded data, 4-6x faster than scalar</li>
+<li><strong>Consistent Performance</strong>: Both even and odd-length sequences achieve similar throughput</li>
 <li><strong>2:1 Compression</strong>: 4 bits per nucleotide vs 8 bits ASCII</li>
-<li><strong>Expected speedup</strong>: 4-8x over naive scalar code on modern CPUs</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">

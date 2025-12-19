@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New algorithm uses SIMD for all sequences ≥32 bytes, with efficient O(n) nibble shift for odd-length post-processing
 - Updated documentation to reflect performance characteristics
 
-## [1.0.1] - 2024-12-20
+## [1.0.1] - 2024-12-18
 
 ### Added
 

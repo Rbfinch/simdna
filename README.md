@@ -57,7 +57,7 @@ Add simdna to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-simdna = "1.0"
+simdna = "1.0.2"
 ```
 
 Or install via cargo:
