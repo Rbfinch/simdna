@@ -13,6 +13,7 @@
 //! - **SIMD acceleration** on x86_64 (SSSE3) and ARM64 (NEON)
 //! - **Zero-allocation API** via `_into` variants for high-throughput pipelines
 //! - **2:1 compression** ratio compared to ASCII representation
+//! - **FASTQ quality score encoding** with binning and run-length encoding
 //!
 //! ## Quick Start
 //!
@@ -49,6 +50,19 @@
 //! assert_eq!(rc, b"CGTTGCAT");
 //! ```
 //!
+//! ## Quality Score Encoding
+//!
+//! Compress FASTQ quality scores with binning and run-length encoding:
+//!
+//! ```rust
+//! use simdna::quality_encoder::{encode_quality_scores, decode_quality_scores, PhredEncoding};
+//!
+//! let quality = b"IIIIIIIIII"; // High-quality Illumina scores
+//! let encoded = encode_quality_scores(quality, PhredEncoding::Phred33);
+//! let decoded = decode_quality_scores(&encoded, PhredEncoding::Phred33);
+//! assert_eq!(decoded.len(), quality.len());
+//! ```
+//!
 //! ## Examples
 //!
 //! Run the comprehensive examples demonstrating all library functions:
@@ -57,6 +71,7 @@
 //! cargo run --example examples
 //! ```
 //!
-//! See the [`dna_simd_encoder`] module for the complete API.
+//! See the [`dna_simd_encoder`] and [`quality_encoder`] modules for the complete API.
 
 pub mod dna_simd_encoder;
+pub mod quality_encoder;

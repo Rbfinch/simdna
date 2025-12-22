@@ -22,6 +22,10 @@
 - [Usage](#usage)
 - [Reverse Complement](#reverse-complement)
   - [IUPAC Ambiguity Code Complements](#iupac-ambiguity-code-complements)
+- [Quality Score Encoding](#quality-score-encoding)
+  - [Phred Encoding Support](#phred-encoding-support)
+  - [Binning Scheme](#binning-scheme)
+  - [Compression Ratios](#compression-ratios)
 - [Zero-Allocation API](#zero-allocation-api)
 - [Input Handling](#input-handling)
 - [Integration](#integration)
@@ -45,7 +49,7 @@
 - **4-bit encoding** supporting all IUPAC nucleotide codes (16 standard + U for RNA)
 - **Bit-rotation-compatible encoding** enabling efficient complement calculation
 - **SIMD-accelerated reverse complement** operations
-- **SIMD acceleration** on x86_64 (SSSE3) and ARM64 (NEON)
+- **SIMD acceleration** on x86_64 (SSSE3/SSE2) and ARM64 (NEON)
 - **Static lookup tables** for branch-free encoding/decoding
 - **Prefetch hints** for improved cache utilization on large sequences
 - **Automatic fallback** to optimized scalar implementation
@@ -53,6 +57,8 @@
 - **Zero-allocation API** via `_into` variants for high-throughput pipelines
 - **2:1 compression** ratio compared to ASCII representation
 - **RNA support** via U (Uracil) mapping to T
+- **FASTQ quality score encoding** with 4-level binning and run-length encoding
+- **Phred+33/Phred+64 support** with automatic detection
 
 ## Installation
 
@@ -180,6 +186,72 @@ assert_eq!(reverse_complement(b"R"), b"Y");
 // Self-complementary codes: S (G|C), W (A|T), N (any)
 assert_eq!(reverse_complement(b"SWN"), b"NWS");
 ```
+
+## Quality Score Encoding
+
+simdna provides SIMD-accelerated encoding of FASTQ quality scores using a binning + run-length encoding (RLE) approach. This achieves 85-95% compression on typical Illumina data.
+
+```rust
+use simdna::quality_encoder::{
+    encode_quality_scores, decode_quality_scores, PhredEncoding
+};
+
+// Encode quality scores (Phred+33 is default for modern Illumina)
+let quality = b"IIIIIIIIIIFFFFFFFF@@@@@@@@@";
+let encoded = encode_quality_scores(quality, PhredEncoding::Phred33);
+
+// Significant compression achieved
+assert!(encoded.len() < quality.len() / 5);
+
+// Decode back (with representative bin values)
+let decoded = decode_quality_scores(&encoded, PhredEncoding::Phred33);
+assert_eq!(decoded.len(), quality.len());
+```
+
+### Phred Encoding Support
+
+| Format    | ASCII Offset | Phred Range | Common Usage           |
+|-----------|--------------|-------------|------------------------|
+| Phred+33  | 33           | 0-41        | Illumina 1.8+, Sanger  |
+| Phred+64  | 64           | 0-40        | Illumina 1.3-1.7       |
+
+The library can auto-detect the encoding:
+
+```rust
+use simdna::quality_encoder::PhredEncoding;
+
+// Phred+33 uses low ASCII characters like '!'
+let phred33_quality = b"!\"#$%&'()*+,-./";
+assert_eq!(PhredEncoding::detect(phred33_quality), Some(PhredEncoding::Phred33));
+
+// Phred+64 uses higher ASCII characters
+let phred64_quality = b"efghijklmnop";
+assert_eq!(PhredEncoding::detect(phred64_quality), Some(PhredEncoding::Phred64));
+```
+
+### Binning Scheme
+
+Quality scores are binned into 4 levels (2 bits each) for efficient compression:
+
+| Phred Range | Bin | Representative Q | Meaning          |
+|-------------|-----|------------------|------------------|
+| Q0-9        | 0   | Q6               | Very low quality |
+| Q10-19      | 1   | Q15              | Low quality      |
+| Q20-29      | 2   | Q25              | Medium quality   |
+| Q30+        | 3   | Q37              | High quality     |
+
+### Compression Ratios
+
+Typical compression ratios for Illumina quality strings:
+
+| Quality Profile        | Compression | Notes                              |
+|------------------------|-------------|------------------------------------|
+| Uniform high quality   | 95-99%      | Long runs of Q30+ scores           |
+| Realistic Illumina     | 85-95%      | Quality degrades toward read end   |
+| Mixed quality          | 70-85%      | Frequent quality transitions       |
+| Alternating (worst)    | 0%          | Every score different (pathological) |
+
+For a typical 150bp Illumina read with good quality, expect **10-20 bytes** of compressed output vs **150 bytes** of raw ASCII quality scores.
 
 ## Zero-Allocation API
 

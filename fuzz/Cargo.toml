@@ -84,3 +84,11 @@ path = "fuzz_targets/into_variants.rs"
 test = false
 doc = false
 bench = false
+
+# Quality score encoding round-trip testing
+[[bin]]
+name = "quality_roundtrip"
+path = "fuzz_targets/quality_roundtrip.rs"
+test = false
+doc = false
+bench = false

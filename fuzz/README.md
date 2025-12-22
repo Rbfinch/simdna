@@ -21,6 +21,8 @@ cargo install cargo-fuzz
 | `bit_rotation` | Verifies bit rotation complement properties (involution, consistency, known pairs). |
 | `reverse_complement` | Tests reverse complement correctness (double-rc = original, API consistency). |
 | `revcomp_boundaries` | Tests reverse complement at SIMD threshold boundaries (32 bytes) and odd/even lengths. |
+| `into_variants` | Verifies `_into` functions match allocating equivalents. |
+| `quality_roundtrip` | Tests quality score encoding round-trip and SIMD/scalar equivalence. |
 
 ## Running Fuzz Tests
 

@@ -11,6 +11,12 @@ use simdna::dna_simd_encoder::{
     reverse_complement_encoded_into, reverse_complement_into,
 };
 
+// Import quality encoder functions
+use simdna::quality_encoder::{
+    PhredEncoding, bin_quality, decode_quality_scores, decode_quality_scores_into,
+    encode_quality_scores, encode_quality_scores_into, quality_stats,
+};
+
 /// Package version from Cargo.toml
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -588,6 +594,324 @@ fn bench_reverse_complement_encoded_into(c: &mut Criterion) {
     group.finish();
 }
 
+// ============================================================================
+// Quality Score Encoding Benchmarks
+// ============================================================================
+
+/// Generate a realistic Illumina-like quality string.
+/// Illumina reads typically have high quality in the middle, lower at ends.
+fn generate_quality_string(len: usize) -> Vec<u8> {
+    (0..len)
+        .map(|i| {
+            // Simulate Illumina quality profile: ramp up, plateau, ramp down
+            let pos_fraction = i as f64 / len as f64;
+            let q = if pos_fraction < 0.1 {
+                // First 10%: ramping up from Q20 to Q35
+                20.0 + (pos_fraction / 0.1) * 15.0
+            } else if pos_fraction < 0.8 {
+                // Middle 70%: high quality Q35-Q40
+                35.0 + ((pos_fraction - 0.1) / 0.7) * 5.0
+            } else {
+                // Last 20%: declining from Q40 to Q20
+                40.0 - ((pos_fraction - 0.8) / 0.2) * 20.0
+            };
+            (q as u8 + 33) as u8 // Convert to Phred+33 ASCII
+        })
+        .collect()
+}
+
+/// Generate uniform high-quality string (best-case for RLE compression)
+fn generate_uniform_quality_string(len: usize) -> Vec<u8> {
+    vec![b'I'; len] // Q40, all high quality
+}
+
+/// Scalar quality binning implementation (for comparison)
+fn bin_quality_scalar(quality: &[u8], binned: &mut [u8], offset: u8) {
+    for (i, &q) in quality.iter().enumerate() {
+        let phred = q.saturating_sub(offset);
+        binned[i] = match phred {
+            0..=9 => 0,
+            10..=19 => 1,
+            20..=29 => 2,
+            _ => 3,
+        };
+    }
+}
+
+/// Scalar RLE encoding (for comparison)
+fn encode_rle_scalar(binned: &[u8]) -> Vec<u8> {
+    if binned.is_empty() {
+        return Vec::new();
+    }
+
+    let mut output = Vec::with_capacity(binned.len() / 4);
+    let mut current_bin = binned[0];
+    let mut run_length = 1usize;
+
+    for &bin in &binned[1..] {
+        if bin == current_bin {
+            run_length += 1;
+        } else {
+            // Emit run
+            emit_run_scalar(&mut output, current_bin, run_length);
+            current_bin = bin;
+            run_length = 1;
+        }
+    }
+    // Emit final run
+    emit_run_scalar(&mut output, current_bin, run_length);
+
+    output
+}
+
+#[inline]
+fn emit_run_scalar(output: &mut Vec<u8>, bin: u8, length: usize) {
+    if length <= 63 {
+        output.push((bin << 6) | (length as u8));
+    } else {
+        output.push(0xFF);
+        output.push(bin);
+        output.push((length >> 8) as u8);
+        output.push(length as u8);
+    }
+}
+
+/// Full scalar encode pipeline for comparison
+fn encode_quality_scores_scalar(quality: &[u8]) -> Vec<u8> {
+    let mut binned = vec![0u8; quality.len()];
+    bin_quality_scalar(quality, &mut binned, 33);
+    encode_rle_scalar(&binned)
+}
+
+fn bench_quality_encode(c: &mut Criterion) {
+    let mut group = c.benchmark_group("quality_encode");
+
+    for size in [
+        15, 16, 17, 32, 33, 63, 64, 127, 128, 255, 256, 512, 1023, 1024, 2048, 4095, 4096, 8192,
+        9999, 10000,
+    ] {
+        let quality = generate_quality_string(size);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        // SIMD-accelerated encoding
+        group.bench_with_input(BenchmarkId::new("simd", size), &quality, |b, q| {
+            b.iter(|| encode_quality_scores(black_box(q), PhredEncoding::Phred33));
+        });
+
+        // Scalar baseline
+        group.bench_with_input(BenchmarkId::new("scalar", size), &quality, |b, q| {
+            b.iter(|| encode_quality_scores_scalar(black_box(q)));
+        });
+    }
+
+    group.finish();
+}
+
+fn bench_quality_decode(c: &mut Criterion) {
+    let mut group = c.benchmark_group("quality_decode");
+
+    for size in [
+        15, 16, 17, 32, 33, 63, 64, 127, 128, 255, 256, 512, 1023, 1024, 2048, 4095, 4096, 8192,
+        9999, 10000,
+    ] {
+        let quality = generate_quality_string(size);
+        let encoded = encode_quality_scores(&quality, PhredEncoding::Phred33);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        group.bench_with_input(BenchmarkId::new("simd", size), &encoded, |b, enc| {
+            b.iter(|| decode_quality_scores(black_box(enc), PhredEncoding::Phred33));
+        });
+    }
+
+    group.finish();
+}
+
+fn bench_quality_roundtrip(c: &mut Criterion) {
+    let mut group = c.benchmark_group("quality_roundtrip");
+
+    for size in [
+        15, 16, 17, 32, 33, 63, 64, 127, 128, 255, 256, 512, 1023, 1024, 2048, 4095, 4096, 8192,
+        9999, 10000,
+    ] {
+        let quality = generate_quality_string(size);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        group.bench_with_input(BenchmarkId::new("simd", size), &quality, |b, q| {
+            b.iter(|| {
+                let encoded = encode_quality_scores(black_box(q), PhredEncoding::Phred33);
+                decode_quality_scores(black_box(&encoded), PhredEncoding::Phred33)
+            });
+        });
+    }
+
+    group.finish();
+}
+
+fn bench_quality_binning(c: &mut Criterion) {
+    let mut group = c.benchmark_group("quality_binning");
+
+    for size in [
+        15, 16, 17, 32, 33, 63, 64, 127, 128, 255, 256, 512, 1023, 1024, 2048, 4095, 4096, 8192,
+        9999, 10000,
+    ] {
+        let quality = generate_quality_string(size);
+        let mut binned_simd = vec![0u8; size];
+        let mut binned_scalar = vec![0u8; size];
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        // SIMD binning
+        group.bench_with_input(BenchmarkId::new("simd", size), &quality, |b, q| {
+            b.iter(|| {
+                bin_quality(
+                    black_box(q),
+                    black_box(&mut binned_simd),
+                    PhredEncoding::Phred33,
+                )
+            });
+        });
+
+        // Scalar binning
+        group.bench_with_input(BenchmarkId::new("scalar", size), &quality, |b, q| {
+            b.iter(|| bin_quality_scalar(black_box(q), black_box(&mut binned_scalar), 33));
+        });
+    }
+
+    group.finish();
+}
+
+fn bench_quality_encode_into(c: &mut Criterion) {
+    let mut group = c.benchmark_group("quality_encode_into");
+
+    for size in [
+        15, 16, 17, 32, 33, 63, 64, 127, 128, 255, 256, 512, 1023, 1024, 2048, 4095, 4096, 8192,
+        9999, 10000,
+    ] {
+        let quality = generate_quality_string(size);
+        // Worst case: 4 bytes per score (if every score is a long run)
+        // Realistic: ~size/4 for good compression
+        let max_output_size = size * 4;
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        // Allocating version (baseline)
+        group.bench_with_input(BenchmarkId::new("allocating", size), &quality, |b, q| {
+            b.iter(|| encode_quality_scores(black_box(q), PhredEncoding::Phred33));
+        });
+
+        // _into version with pre-allocated buffer
+        group.bench_with_input(
+            BenchmarkId::new("into_preallocated", size),
+            &quality,
+            |b, q| {
+                let mut output = vec![0u8; max_output_size];
+                b.iter(|| {
+                    encode_quality_scores_into(
+                        black_box(q),
+                        PhredEncoding::Phred33,
+                        black_box(&mut output),
+                    )
+                    .unwrap()
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_quality_decode_into(c: &mut Criterion) {
+    let mut group = c.benchmark_group("quality_decode_into");
+
+    for size in [
+        15, 16, 17, 32, 33, 63, 64, 127, 128, 255, 256, 512, 1023, 1024, 2048, 4095, 4096, 8192,
+        9999, 10000,
+    ] {
+        let quality = generate_quality_string(size);
+        let encoded = encode_quality_scores(&quality, PhredEncoding::Phred33);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        // Allocating version (baseline)
+        group.bench_with_input(BenchmarkId::new("allocating", size), &encoded, |b, enc| {
+            b.iter(|| decode_quality_scores(black_box(enc), PhredEncoding::Phred33));
+        });
+
+        // _into version with pre-allocated buffer
+        group.bench_with_input(
+            BenchmarkId::new("into_preallocated", size),
+            &encoded,
+            |b, enc| {
+                let mut output = vec![0u8; size];
+                b.iter(|| {
+                    decode_quality_scores_into(
+                        black_box(enc),
+                        PhredEncoding::Phred33,
+                        black_box(&mut output),
+                    )
+                    .unwrap()
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_quality_stats(c: &mut Criterion) {
+    let mut group = c.benchmark_group("quality_stats");
+
+    for size in [
+        15, 16, 17, 32, 33, 63, 64, 127, 128, 255, 256, 512, 1023, 1024, 2048, 4095, 4096, 8192,
+        9999, 10000,
+    ] {
+        let quality = generate_quality_string(size);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        group.bench_with_input(BenchmarkId::new("compute", size), &quality, |b, q| {
+            b.iter(|| quality_stats(black_box(q), PhredEncoding::Phred33));
+        });
+    }
+
+    group.finish();
+}
+
+fn bench_quality_compression_ratio(c: &mut Criterion) {
+    let mut group = c.benchmark_group("quality_compression");
+
+    // Test different quality profiles
+    for size in [150, 250, 500, 1000, 10000] {
+        let realistic_quality = generate_quality_string(size);
+        let uniform_quality = generate_uniform_quality_string(size);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        // Realistic Illumina profile
+        group.bench_with_input(
+            BenchmarkId::new("realistic", size),
+            &realistic_quality,
+            |b, q| {
+                b.iter(|| encode_quality_scores(black_box(q), PhredEncoding::Phred33));
+            },
+        );
+
+        // Uniform high quality (best case)
+        group.bench_with_input(
+            BenchmarkId::new("uniform_high", size),
+            &uniform_quality,
+            |b, q| {
+                b.iter(|| encode_quality_scores(black_box(q), PhredEncoding::Phred33));
+            },
+        );
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_encode,
@@ -597,6 +921,14 @@ criterion_group!(
     bench_encode_into,
     bench_decode_into,
     bench_reverse_complement_into,
-    bench_reverse_complement_encoded_into
+    bench_reverse_complement_encoded_into,
+    bench_quality_encode,
+    bench_quality_decode,
+    bench_quality_roundtrip,
+    bench_quality_binning,
+    bench_quality_encode_into,
+    bench_quality_decode_into,
+    bench_quality_stats,
+    bench_quality_compression_ratio
 );
 criterion_main!(benches);

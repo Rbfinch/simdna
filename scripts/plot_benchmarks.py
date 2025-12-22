@@ -83,6 +83,14 @@ def plot_benchmarks(results: dict, output_file: str = "benchmark_plot.png"):
         "decode_into",
         "reverse_complement_into",
         "reverse_complement_encoded_into",
+        "quality_encode",
+        "quality_decode",
+        "quality_roundtrip",
+        "quality_binning",
+        "quality_encode_into",
+        "quality_decode_into",
+        "quality_stats",
+        "quality_compression",
     ]
 
     # Define colors and markers for different methods
@@ -94,7 +102,7 @@ def plot_benchmarks(results: dict, output_file: str = "benchmark_plot.png"):
         "scalar_2bit": {"color": "#e74c3c", "marker": "^", "label": "Scalar 2-bit"},
         "scalar_4bit": {"color": "#f39c12", "marker": "D", "label": "Scalar 4-bit"},
         # Reverse complement methods
-        "simd": {"color": "#3498db", "marker": "s", "label": "SIMD (ASCII)"},
+        "simd": {"color": "#3498db", "marker": "s", "label": "SIMD"},
         "simd_high_level": {"color": "#3498db", "marker": "s", "label": "SIMD (ASCII)"},
         "simd_encoded": {"color": "#9b59b6", "marker": "p", "label": "SIMD (Encoded)"},
         "scalar": {"color": "#e74c3c", "marker": "^", "label": "Scalar"},
@@ -105,15 +113,19 @@ def plot_benchmarks(results: dict, output_file: str = "benchmark_plot.png"):
             "marker": "o",
             "label": "Zero-alloc (_into)",
         },
+        # Quality encoding methods
+        "compute": {"color": "#9b59b6", "marker": "p", "label": "Compute"},
+        "realistic": {"color": "#3498db", "marker": "s", "label": "Realistic Profile"},
+        "uniform_high": {"color": "#2ecc71", "marker": "o", "label": "Uniform High-Q"},
     }
 
-    # Responsive sizing: 8 subplots for all benchmark groups
-    fig, axes = plt.subplots(8, 1, figsize=(10, 36))
+    # Responsive sizing: 16 subplots for all benchmark groups (8 DNA + 8 quality)
+    fig, axes = plt.subplots(len(operations), 1, figsize=(10, 4.5 * len(operations)))
     fig.suptitle(
-        "DNA Encoding/Decoding Benchmark Results",
+        "simdna Benchmark Results",
         fontsize=18,
         fontweight="bold",
-        y=0.98,
+        y=0.995,
     )
 
     for ax, operation in zip(axes, operations):
@@ -187,6 +199,14 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
         "decode_into",
         "reverse_complement_into",
         "reverse_complement_encoded_into",
+        "quality_encode",
+        "quality_decode",
+        "quality_roundtrip",
+        "quality_binning",
+        "quality_encode_into",
+        "quality_decode_into",
+        "quality_stats",
+        "quality_compression",
     ]
     titles = {
         "encode": "Encode",
@@ -197,6 +217,14 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
         "decode_into": "Decode (Alloc vs Zero-alloc)",
         "reverse_complement_into": "Reverse Complement (Alloc vs Zero-alloc)",
         "reverse_complement_encoded_into": "RC Encoded (Alloc vs Zero-alloc)",
+        "quality_encode": "Quality Encode",
+        "quality_decode": "Quality Decode",
+        "quality_roundtrip": "Quality Roundtrip",
+        "quality_binning": "Quality Binning (SIMD vs Scalar)",
+        "quality_encode_into": "Quality Encode (Alloc vs Zero-alloc)",
+        "quality_decode_into": "Quality Decode (Alloc vs Zero-alloc)",
+        "quality_stats": "Quality Statistics",
+        "quality_compression": "Quality Compression Profiles",
     }
 
     # Includes styles for both encode/decode/roundtrip and reverse_complement benchmarks
@@ -207,7 +235,7 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
         "scalar_2bit": {"color": "#e74c3c", "marker": "^", "label": "Scalar 2-bit"},
         "scalar_4bit": {"color": "#f39c12", "marker": "D", "label": "Scalar 4-bit"},
         # Reverse complement methods
-        "simd": {"color": "#3498db", "marker": "s", "label": "SIMD (ASCII)"},
+        "simd": {"color": "#3498db", "marker": "s", "label": "SIMD"},
         "simd_high_level": {"color": "#3498db", "marker": "s", "label": "SIMD (ASCII)"},
         "simd_encoded": {"color": "#9b59b6", "marker": "p", "label": "SIMD (Encoded)"},
         "scalar": {"color": "#e74c3c", "marker": "^", "label": "Scalar"},
@@ -218,13 +246,15 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
             "marker": "o",
             "label": "Zero-alloc (_into)",
         },
+        # Quality encoding methods
+        "compute": {"color": "#9b59b6", "marker": "p", "label": "Compute"},
+        "realistic": {"color": "#3498db", "marker": "s", "label": "Realistic Profile"},
+        "uniform_high": {"color": "#2ecc71", "marker": "o", "label": "Uniform High-Q"},
     }
 
-    # Responsive sizing: 8 subplots for all benchmark groups
-    fig, axes = plt.subplots(8, 1, figsize=(10, 36))
-    fig.suptitle(
-        "DNA Encoding/Decoding Throughput", fontsize=18, fontweight="bold", y=0.98
-    )
+    # Responsive sizing: subplots for all benchmark groups
+    fig, axes = plt.subplots(len(operations), 1, figsize=(10, 4.5 * len(operations)))
+    fig.suptitle("simdna Throughput", fontsize=18, fontweight="bold", y=0.995)
 
     for ax, operation in zip(axes, operations):
         op_data = results.get(operation, {})
@@ -329,6 +359,14 @@ def print_summary(results: dict):
         "decode_into",
         "reverse_complement_into",
         "reverse_complement_encoded_into",
+        "quality_encode",
+        "quality_decode",
+        "quality_roundtrip",
+        "quality_binning",
+        "quality_encode_into",
+        "quality_decode_into",
+        "quality_stats",
+        "quality_compression",
     ]:
         op_data = results.get(operation, {})
         if not op_data:

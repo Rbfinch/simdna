@@ -29,6 +29,7 @@ TARGETS=(
     "reverse_complement"
     "revcomp_boundaries"
     "into_variants"
+    "quality_roundtrip"
 )
 
 FAILED=()
