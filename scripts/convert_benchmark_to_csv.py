@@ -105,12 +105,22 @@ def write_csv(results: list[dict], output_file: Path):
 
 
 def main():
+    """
+    Convert benchmark output to CSV.
+
+    Usage:
+        convert_benchmark_to_csv.py [input_file] [output_file]
+
+    If no arguments provided, uses default paths in artefacts/ directory.
+    """
     script_dir = Path(__file__).parent
     artefacts_dir = script_dir.parent / "artefacts"
 
+    # Default paths (for backwards compatibility)
     input_file = artefacts_dir / "benchmark_output.txt"
     output_file = artefacts_dir / "benchmark_data.csv"
 
+    # Accept command-line arguments
     if len(sys.argv) > 1:
         input_file = Path(sys.argv[1])
     if len(sys.argv) > 2:

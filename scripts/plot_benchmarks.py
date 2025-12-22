@@ -8,11 +8,24 @@ Plot benchmark results from CSV file.
 This script parses the benchmark CSV file and creates
 box-and-whisker style plots showing performance across different
 sequence lengths and encoding methods.
+
+Usage:
+    plot_benchmarks.py [csv_file] [benchmark_plot] [throughput_plot]
+
+If no arguments provided, uses default paths in artefacts/ directory.
 """
 
 import csv
+import os
+import sys
 from pathlib import Path
 from collections import defaultdict
+
+# Use non-interactive backend when running from script
+if not sys.stdout.isatty():
+    import matplotlib
+
+    matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter, LogLocator
@@ -158,9 +171,7 @@ def plot_benchmarks(results: dict, output_file: str = "benchmark_plot.png"):
     plt.tight_layout(rect=[0, 0, 1, 0.97])
     plt.savefig(output_file, dpi=200, bbox_inches="tight", facecolor="white")
     print(f"Plot saved to {output_file}")
-
-    # Also show the plot
-    plt.show()
+    plt.close(fig)  # Close to free memory
 
 
 def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
@@ -300,7 +311,7 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
     plt.tight_layout(rect=[0, 0, 1, 0.97])
     plt.savefig(output_file, dpi=200, bbox_inches="tight", facecolor="white")
     print(f"Throughput plot saved to {output_file}")
-    plt.show()
+    plt.close(fig)  # Close to free memory
 
 
 def print_summary(results: dict):
@@ -343,10 +354,31 @@ def print_summary(results: dict):
 
 
 def main():
-    # Find the CSV file in artefacts folder
+    """
+    Generate benchmark plots from CSV data.
+
+    Usage:
+        plot_benchmarks.py [csv_file] [benchmark_plot] [throughput_plot]
+
+    If no arguments provided, uses default paths in artefacts/ directory.
+    """
+    import sys
+
     script_dir = Path(__file__).parent
     artefacts_dir = script_dir.parent / "artefacts"
+
+    # Default paths (for backwards compatibility)
     csv_file = artefacts_dir / "benchmark_data_optimised.csv"
+    benchmark_plot = artefacts_dir / "benchmark_plot.png"
+    throughput_plot = artefacts_dir / "throughput_plot.png"
+
+    # Accept command-line arguments
+    if len(sys.argv) > 1:
+        csv_file = Path(sys.argv[1])
+    if len(sys.argv) > 2:
+        benchmark_plot = Path(sys.argv[2])
+    if len(sys.argv) > 3:
+        throughput_plot = Path(sys.argv[3])
 
     if not csv_file.exists():
         print(f"Error: CSV file not found at {csv_file}")
@@ -363,9 +395,9 @@ def main():
     # Print summary
     print_summary(results)
 
-    # Create plots in artefacts folder
-    plot_benchmarks(results, str(artefacts_dir / "benchmark_plot.png"))
-    plot_throughput(results, str(artefacts_dir / "throughput_plot.png"))
+    # Create plots
+    plot_benchmarks(results, str(benchmark_plot))
+    plot_throughput(results, str(throughput_plot))
 
     return 0
 
