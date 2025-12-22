@@ -6,7 +6,11 @@
 Convert benchmark output text to CSV format.
 
 Parses the criterion benchmark text output and extracts timing data
-into a structured CSV file.
+into a structured CSV file. Supports all benchmark groups including:
+- encode, decode, roundtrip
+- reverse_complement
+- encode_into, decode_into
+- reverse_complement_into, reverse_complement_encoded_into
 """
 
 import re

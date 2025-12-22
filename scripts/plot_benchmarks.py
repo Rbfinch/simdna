@@ -61,7 +61,16 @@ def plot_benchmarks(results: dict, output_file: str = "benchmark_plot.png"):
     """
     Create box-and-whisker style plots for benchmark results.
     """
-    operations = ["encode", "decode", "roundtrip", "reverse_complement"]
+    operations = [
+        "encode",
+        "decode",
+        "roundtrip",
+        "reverse_complement",
+        "encode_into",
+        "decode_into",
+        "reverse_complement_into",
+        "reverse_complement_encoded_into",
+    ]
 
     # Define colors and markers for different methods
     # Includes styles for both encode/decode/roundtrip and reverse_complement benchmarks
@@ -76,10 +85,17 @@ def plot_benchmarks(results: dict, output_file: str = "benchmark_plot.png"):
         "simd_high_level": {"color": "#3498db", "marker": "s", "label": "SIMD (ASCII)"},
         "simd_encoded": {"color": "#9b59b6", "marker": "p", "label": "SIMD (Encoded)"},
         "scalar": {"color": "#e74c3c", "marker": "^", "label": "Scalar"},
+        # _into variants (allocation comparison)
+        "allocating": {"color": "#e74c3c", "marker": "^", "label": "Allocating"},
+        "into_preallocated": {
+            "color": "#2ecc71",
+            "marker": "o",
+            "label": "Zero-alloc (_into)",
+        },
     }
 
-    # Responsive sizing: 4 subplots for encode, decode, roundtrip, reverse_complement
-    fig, axes = plt.subplots(4, 1, figsize=(10, 18))
+    # Responsive sizing: 8 subplots for all benchmark groups
+    fig, axes = plt.subplots(8, 1, figsize=(10, 36))
     fig.suptitle(
         "DNA Encoding/Decoding Benchmark Results",
         fontsize=18,
@@ -151,12 +167,25 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
     """
     Create throughput plots (bases per second) for benchmark results.
     """
-    operations = ["encode", "decode", "roundtrip", "reverse_complement"]
+    operations = [
+        "encode",
+        "decode",
+        "roundtrip",
+        "reverse_complement",
+        "encode_into",
+        "decode_into",
+        "reverse_complement_into",
+        "reverse_complement_encoded_into",
+    ]
     titles = {
         "encode": "Encode",
         "decode": "Decode",
         "roundtrip": "Roundtrip (Total)",
         "reverse_complement": "Reverse Complement",
+        "encode_into": "Encode (Alloc vs Zero-alloc)",
+        "decode_into": "Decode (Alloc vs Zero-alloc)",
+        "reverse_complement_into": "Reverse Complement (Alloc vs Zero-alloc)",
+        "reverse_complement_encoded_into": "RC Encoded (Alloc vs Zero-alloc)",
     }
 
     # Includes styles for both encode/decode/roundtrip and reverse_complement benchmarks
@@ -171,10 +200,17 @@ def plot_throughput(results: dict, output_file: str = "throughput_plot.png"):
         "simd_high_level": {"color": "#3498db", "marker": "s", "label": "SIMD (ASCII)"},
         "simd_encoded": {"color": "#9b59b6", "marker": "p", "label": "SIMD (Encoded)"},
         "scalar": {"color": "#e74c3c", "marker": "^", "label": "Scalar"},
+        # _into variants (allocation comparison)
+        "allocating": {"color": "#e74c3c", "marker": "^", "label": "Allocating"},
+        "into_preallocated": {
+            "color": "#2ecc71",
+            "marker": "o",
+            "label": "Zero-alloc (_into)",
+        },
     }
 
-    # Responsive sizing: 4 subplots for encode, decode, roundtrip, reverse_complement
-    fig, axes = plt.subplots(4, 1, figsize=(10, 18))
+    # Responsive sizing: 8 subplots for all benchmark groups
+    fig, axes = plt.subplots(8, 1, figsize=(10, 36))
     fig.suptitle(
         "DNA Encoding/Decoding Throughput", fontsize=18, fontweight="bold", y=0.98
     )
@@ -273,7 +309,16 @@ def print_summary(results: dict):
     print("BENCHMARK SUMMARY")
     print("=" * 80)
 
-    for operation in ["encode", "decode", "roundtrip", "reverse_complement"]:
+    for operation in [
+        "encode",
+        "decode",
+        "roundtrip",
+        "reverse_complement",
+        "encode_into",
+        "decode_into",
+        "reverse_complement_into",
+        "reverse_complement_encoded_into",
+    ]:
         op_data = results.get(operation, {})
         if not op_data:
             continue

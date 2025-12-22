@@ -140,11 +140,100 @@
 // Allow unsafe operations in unsafe functions (Rust 2024 compatibility)
 #![allow(unsafe_op_in_unsafe_fn)]
 
+use std::fmt;
+
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
 #[cfg(target_arch = "aarch64")]
 use std::arch::aarch64::*;
+
+// ============================================================================
+// Error Types for Zero-Allocation APIs
+// ============================================================================
+
+/// Errors that can occur during buffer-based operations.
+///
+/// These errors are returned by the `_into` variants of encoding/decoding
+/// functions when the caller-provided buffer is insufficient.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BufferError {
+    /// Output buffer is too small for the operation.
+    BufferTooSmall {
+        /// Number of bytes required.
+        needed: usize,
+        /// Actual buffer size provided.
+        actual: usize,
+    },
+}
+
+impl fmt::Display for BufferError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BufferError::BufferTooSmall { needed, actual } => {
+                write!(f, "buffer too small: need {} bytes, got {}", needed, actual)
+            }
+        }
+    }
+}
+
+impl std::error::Error for BufferError {}
+
+// ============================================================================
+// Buffer Size Helper Functions
+// ============================================================================
+
+/// Returns the number of bytes required to encode a sequence of the given length.
+///
+/// This is useful for pre-allocating buffers before calling [`encode_dna_into`].
+///
+/// # Arguments
+///
+/// * `sequence_len` - The number of nucleotides in the input sequence.
+///
+/// # Returns
+///
+/// The number of bytes required in the output buffer.
+///
+/// # Example
+///
+/// ```rust
+/// use simdna::dna_simd_encoder::required_encoded_len;
+///
+/// assert_eq!(required_encoded_len(0), 0);
+/// assert_eq!(required_encoded_len(1), 1);
+/// assert_eq!(required_encoded_len(2), 1);
+/// assert_eq!(required_encoded_len(3), 2);
+/// assert_eq!(required_encoded_len(100), 50);
+/// ```
+#[inline]
+pub const fn required_encoded_len(sequence_len: usize) -> usize {
+    sequence_len.div_ceil(2)
+}
+
+/// Returns the number of bytes required to decode to a sequence of the given length.
+///
+/// This is useful for pre-allocating buffers before calling [`decode_dna_into`].
+///
+/// # Arguments
+///
+/// * `original_len` - The original number of nucleotides.
+///
+/// # Returns
+///
+/// The number of bytes required in the output buffer (equal to `original_len`).
+///
+/// # Example
+///
+/// ```rust
+/// use simdna::dna_simd_encoder::required_decoded_len;
+///
+/// assert_eq!(required_decoded_len(100), 100);
+/// ```
+#[inline]
+pub const fn required_decoded_len(original_len: usize) -> usize {
+    original_len
+}
 
 /// 4-bit encoding values for IUPAC nucleotide codes.
 ///
@@ -417,6 +506,98 @@ pub fn encode_dna_prefer_simd(sequence: &[u8]) -> Vec<u8> {
     output
 }
 
+/// Encodes a DNA sequence into a caller-provided buffer (zero-allocation).
+///
+/// This is the zero-allocation variant of [`encode_dna_prefer_simd`]. Instead of
+/// allocating and returning a `Vec<u8>`, it writes directly into a pre-allocated
+/// buffer provided by the caller.
+///
+/// # Arguments
+///
+/// * `sequence` - Input DNA/RNA sequence as ASCII bytes.
+/// * `output` - Pre-allocated output buffer. Must be at least
+///   [`required_encoded_len(sequence.len())`](required_encoded_len) bytes.
+///
+/// # Returns
+///
+/// On success, returns `Ok(bytes_written)` where `bytes_written` is the number
+/// of bytes written to `output`.
+///
+/// # Errors
+///
+/// Returns [`BufferError::BufferTooSmall`] if `output` is smaller than the
+/// required size.
+///
+/// # Performance
+///
+/// This function uses the same SIMD-accelerated implementation as
+/// [`encode_dna_prefer_simd`] but avoids heap allocation. This is particularly
+/// beneficial for:
+/// - High-throughput pipelines processing many sequences
+/// - Reusing pre-allocated buffers in loops
+/// - Stack-allocated buffers for small sequences
+///
+/// # Thread Safety
+///
+/// This function is thread-safe and can be called from multiple threads
+/// concurrently without synchronization.
+///
+/// # Example
+///
+/// ```rust
+/// use simdna::dna_simd_encoder::{encode_dna_into, required_encoded_len};
+///
+/// let sequence = b"ACGTACGT";
+/// let mut buffer = [0u8; 64];  // Stack-allocated buffer
+///
+/// let bytes_written = encode_dna_into(sequence, &mut buffer).unwrap();
+/// assert_eq!(bytes_written, 4);
+/// assert_eq!(&buffer[..bytes_written], &[0x12, 0x84, 0x12, 0x84]);
+/// ```
+///
+/// Reusing a buffer in a loop:
+/// ```rust
+/// use simdna::dna_simd_encoder::{encode_dna_into, required_encoded_len};
+///
+/// let sequences = [b"ACGT".as_slice(), b"GGCC", b"AATT"];
+/// let mut buffer = vec![0u8; 1024];  // Reusable buffer
+///
+/// for seq in &sequences {
+///     let bytes = encode_dna_into(seq, &mut buffer).unwrap();
+///     // Process &buffer[..bytes] ...
+/// }
+/// ```
+#[inline]
+pub fn encode_dna_into(sequence: &[u8], output: &mut [u8]) -> Result<usize, BufferError> {
+    let needed = required_encoded_len(sequence.len());
+
+    if output.len() < needed {
+        return Err(BufferError::BufferTooSmall {
+            needed,
+            actual: output.len(),
+        });
+    }
+
+    if sequence.is_empty() {
+        return Ok(0);
+    }
+
+    let len = sequence.len();
+
+    // Try SIMD implementations first, fall back to scalar
+    if len >= 32 {
+        let used_simd = encode_with_simd_if_available_direct(sequence, &mut output[..needed]);
+        if used_simd {
+            return Ok(needed);
+        }
+    }
+
+    // Fallback: use optimized scalar implementation
+    encode_scalar_optimized(sequence, &mut output[..needed]);
+
+    Ok(needed)
+}
+
 /// Attempts to encode using SIMD instructions if available.
 ///
 /// This is an internal helper function that dispatches to the appropriate
@@ -590,6 +771,90 @@ pub fn decode_dna_prefer_simd(encoded: &[u8], length: usize) -> Vec<u8> {
     }
 
     output
+}
+
+/// Decodes encoded DNA data into a caller-provided buffer (zero-allocation).
+///
+/// This is the zero-allocation variant of [`decode_dna_prefer_simd`]. Instead of
+/// allocating and returning a `Vec<u8>`, it writes directly into a pre-allocated
+/// buffer provided by the caller.
+///
+/// # Arguments
+///
+/// * `encoded` - 4-bit packed encoded sequence as produced by [`encode_dna_prefer_simd`]
+///   or [`encode_dna_into`].
+/// * `length` - Original sequence length in nucleotides.
+/// * `output` - Pre-allocated output buffer. Must be at least `length` bytes.
+///
+/// # Returns
+///
+/// On success, returns `Ok(bytes_written)` where `bytes_written` equals `length`.
+///
+/// # Errors
+///
+/// Returns [`BufferError::BufferTooSmall`] if `output` is smaller than `length`.
+///
+/// # Performance
+///
+/// This function uses the same SIMD-accelerated implementation as
+/// [`decode_dna_prefer_simd`] but avoids heap allocation.
+///
+/// # Thread Safety
+///
+/// This function is thread-safe and can be called from multiple threads
+/// concurrently without synchronization.
+///
+/// # Example
+///
+/// ```rust
+/// use simdna::dna_simd_encoder::{encode_dna_prefer_simd, decode_dna_into};
+///
+/// let encoded = encode_dna_prefer_simd(b"ACGT");
+/// let mut buffer = [0u8; 64];
+///
+/// let bytes_written = decode_dna_into(&encoded, 4, &mut buffer).unwrap();
+/// assert_eq!(bytes_written, 4);
+/// assert_eq!(&buffer[..bytes_written], b"ACGT");
+/// ```
+///
+/// Streaming decode with reusable buffer:
+/// ```rust
+/// use simdna::dna_simd_encoder::{encode_dna_prefer_simd, decode_dna_into};
+///
+/// let sequences = [b"ACGT".as_slice(), b"GGCC", b"AATT"];
+/// let mut decode_buffer = [0u8; 1024];
+///
+/// for seq in &sequences {
+///     let encoded = encode_dna_prefer_simd(seq);
+///     let len = decode_dna_into(&encoded, seq.len(), &mut decode_buffer).unwrap();
+///     assert_eq!(&decode_buffer[..len], seq.to_ascii_uppercase().as_slice());
+/// }
+/// ```
+#[inline]
+pub fn decode_dna_into(
+    encoded: &[u8],
+    length: usize,
+    output: &mut [u8],
+) -> Result<usize, BufferError> {
+    if output.len() < length {
+        return Err(BufferError::BufferTooSmall {
+            needed: length,
+            actual: output.len(),
+        });
+    }
+
+    if length == 0 {
+        return Ok(0);
+    }
+
+    // Try SIMD implementations first, fall back to scalar
+    let used_simd = decode_with_simd_if_available(encoded, &mut output[..length], length);
+
+    if !used_simd {
+        decode_scalar(encoded, &mut output[..length], length);
+    }
+
+    Ok(length)
 }
 
 /// Attempts to decode using SIMD instructions if available.
@@ -1511,6 +1776,95 @@ pub fn reverse_complement_encoded(encoded: &[u8], length: usize) -> Vec<u8> {
     output
 }
 
+/// Computes reverse complement of encoded DNA into a caller-provided buffer (zero-allocation).
+///
+/// This is the zero-allocation variant of [`reverse_complement_encoded`]. It writes
+/// directly into a pre-allocated buffer provided by the caller.
+///
+/// # Arguments
+///
+/// * `encoded` - 4-bit packed encoded sequence.
+/// * `length` - Original sequence length in nucleotides.
+/// * `output` - Pre-allocated output buffer. Must be at least `encoded.len()` bytes.
+///
+/// # Returns
+///
+/// On success, returns `Ok(bytes_written)` where `bytes_written` equals `encoded.len()`.
+///
+/// # Errors
+///
+/// Returns [`BufferError::BufferTooSmall`] if `output` is smaller than `encoded.len()`.
+///
+/// # Performance
+///
+/// Uses the same SIMD-accelerated implementation as [`reverse_complement_encoded`]
+/// but avoids heap allocation. This is particularly beneficial when processing
+/// many sequences with reusable buffers.
+///
+/// # Thread Safety
+///
+/// This function is thread-safe and can be called from multiple threads
+/// concurrently without synchronization.
+///
+/// # Example
+///
+/// ```rust
+/// use simdna::dna_simd_encoder::{
+///     encode_dna_prefer_simd, decode_dna_prefer_simd, reverse_complement_encoded_into
+/// };
+///
+/// let sequence = b"AACG";
+/// let encoded = encode_dna_prefer_simd(sequence);
+/// let mut rc_buffer = [0u8; 64];
+///
+/// let bytes = reverse_complement_encoded_into(&encoded, sequence.len(), &mut rc_buffer).unwrap();
+/// let decoded = decode_dna_prefer_simd(&rc_buffer[..bytes], sequence.len());
+/// assert_eq!(decoded, b"CGTT");
+/// ```
+#[inline]
+pub fn reverse_complement_encoded_into(
+    encoded: &[u8],
+    length: usize,
+    output: &mut [u8],
+) -> Result<usize, BufferError> {
+    if encoded.is_empty() {
+        return Ok(0);
+    }
+
+    let num_bytes = encoded.len();
+
+    if output.len() < num_bytes {
+        return Err(BufferError::BufferTooSmall {
+            needed: num_bytes,
+            actual: output.len(),
+        });
+    }
+
+    let is_odd_length = length % 2 == 1;
+    let out = &mut output[..num_bytes];
+
+    // For very small sequences, scalar is faster due to SIMD setup overhead
+    if num_bytes < SIMD_REVCOMP_THRESHOLD {
+        reverse_complement_scalar(encoded, out, length);
+        return Ok(num_bytes);
+    }
+
+    // Try SIMD implementations - works for both even and odd lengths
+    let used_simd = reverse_complement_with_simd_if_available(encoded, out, length);
+
+    if !used_simd {
+        reverse_complement_scalar(encoded, out, length);
+        return Ok(num_bytes);
+    }
+
+    // For odd-length sequences, apply nibble shift
+    if is_odd_length {
+        shift_nibbles_left(out);
+    }
+
+    Ok(num_bytes)
+}
+
 /// Shifts all nibbles in the buffer left by one position.
 /// The high nibble of byte[0] is discarded (it was padding).
 /// The low nibble of the last byte becomes 0 (new padding).
@@ -1854,6 +2208,101 @@ pub fn reverse_complement(sequence: &[u8]) -> Vec<u8> {
     let encoded = encode_dna_prefer_simd(sequence);
     let rc_encoded = reverse_complement_encoded(&encoded, sequence.len());
     decode_dna_prefer_simd(&rc_encoded, sequence.len())
+}
+
+/// Computes reverse complement of a DNA sequence into a caller-provided buffer (zero-allocation).
+///
+/// This is the zero-allocation variant of [`reverse_complement`]. It writes
+/// directly into a pre-allocated buffer provided by the caller.
+///
+/// # Arguments
+///
+/// * `sequence` - Input DNA/RNA sequence as ASCII bytes.
+/// * `output` - Pre-allocated output buffer. Must be at least `sequence.len()` bytes.
+///
+/// # Returns
+///
+/// On success, returns `Ok(bytes_written)` where `bytes_written` equals `sequence.len()`.
+///
+/// # Errors
+///
+/// Returns [`BufferError::BufferTooSmall`] if `output` is smaller than `sequence.len()`.
+///
+/// # Performance
+///
+/// For sequences up to 512 nucleotides, this function uses stack-allocated intermediate
+/// buffers, achieving true zero-heap-allocation. For larger sequences, it falls back
+/// to heap allocation internally but still writes to the caller-provided output buffer.
+///
+/// # Thread Safety
+///
+/// This function is thread-safe and can be called from multiple threads
+/// concurrently without synchronization.
+///
+/// # Example
+///
+/// ```rust
+/// use simdna::dna_simd_encoder::reverse_complement_into;
+///
+/// let sequence = b"AACG";
+/// let mut buffer = [0u8; 64];
+///
+/// let bytes = reverse_complement_into(sequence, &mut buffer).unwrap();
+/// assert_eq!(&buffer[..bytes], b"CGTT");
+/// ```
+///
+/// Stack-only processing for small sequences:
+/// ```rust
+/// use simdna::dna_simd_encoder::reverse_complement_into;
+///
+/// // All intermediate buffers fit on the stack for sequences <= 512bp
+/// let sequence = b"ACGTACGTACGTACGT";
+/// let mut output = [0u8; 16];
+/// reverse_complement_into(sequence, &mut output).unwrap();
+/// assert_eq!(&output, b"ACGTACGTACGTACGT"); // Palindromic
+/// ```
+#[inline]
+pub fn reverse_complement_into(sequence: &[u8], output: &mut [u8]) -> Result<usize, BufferError> {
+    let len = sequence.len();
+
+    if output.len() < len {
+        return Err(BufferError::BufferTooSmall {
+            needed: len,
+            actual: output.len(),
+        });
+    }
+
+    if len == 0 {
+        return Ok(0);
+    }
+
+    let encoded_len = required_encoded_len(len);
+
+    // For sequences up to 1KB (512 encoded bytes), use stack-allocated buffers
+    // This provides true zero-heap-allocation for common read lengths
+    if encoded_len <= 512 {
+        let mut encode_buf = [0u8; 512];
+        let mut rc_buf = [0u8; 512];
+
+        // Encode
+        encode_scalar_optimized(sequence, &mut encode_buf[..encoded_len]);
+
+        // Reverse complement encoded
+        let _ = reverse_complement_encoded_into(
+            &encode_buf[..encoded_len],
+            len,
+            &mut rc_buf[..encoded_len],
+        );
+
+        // Decode
+        decode_scalar(&rc_buf[..encoded_len], &mut output[..len], len);
+    } else {
+        // Fall back to heap for very long sequences
+        let rc = reverse_complement(sequence);
+        output[..len].copy_from_slice(&rc);
+    }
+
+    Ok(len)
 }
 
 // ============================================================================
@@ -3184,14 +3633,14 @@ mod tests {
         assert_eq!(rc.len(), 65);
 
         // Verify each position has correct complement
-        for i in 0..65 {
+        for (i, &rc_val) in rc.iter().enumerate() {
             let original_idx = 65 - 1 - i;
             let original = sequence[original_idx];
             let expected = complement_char(original);
             assert_eq!(
-                rc[i], expected,
+                rc_val, expected,
                 "Position {}: expected complement of {} to be {}, got {}",
-                i, original as char, expected as char, rc[i] as char
+                i, original as char, expected as char, rc_val as char
             );
         }
     }
@@ -3237,6 +3686,393 @@ mod tests {
             b'-' => b'-',
             b'.' => b'-',
             _ => b'-',
+        }
+    }
+
+    // ============================================================================
+    // Tests for Zero-Allocation _into Variants
+    // ============================================================================
+
+    /// Tests that required_encoded_len returns correct values.
+    #[test]
+    fn test_required_encoded_len() {
+        assert_eq!(required_encoded_len(0), 0);
+        assert_eq!(required_encoded_len(1), 1);
+        assert_eq!(required_encoded_len(2), 1);
+        assert_eq!(required_encoded_len(3), 2);
+        assert_eq!(required_encoded_len(4), 2);
+        assert_eq!(required_encoded_len(5), 3);
+        assert_eq!(required_encoded_len(100), 50);
+        assert_eq!(required_encoded_len(101), 51);
+    }
+
+    /// Tests that required_decoded_len returns correct values.
+    #[test]
+    fn test_required_decoded_len() {
+        assert_eq!(required_decoded_len(0), 0);
+        assert_eq!(required_decoded_len(1), 1);
+        assert_eq!(required_decoded_len(100), 100);
+        assert_eq!(required_decoded_len(1000), 1000);
+    }
+
+    /// Tests BufferError Display implementation.
+    #[test]
+    fn test_buffer_error_display() {
+        let err = BufferError::BufferTooSmall {
+            needed: 100,
+            actual: 50,
+        };
+        let msg = format!("{}", err);
+        assert!(msg.contains("100"));
+        assert!(msg.contains("50"));
+        assert!(msg.to_lowercase().contains("buffer"));
+    }
+
+    /// Tests encode_dna_into with valid buffer.
+    #[test]
+    fn test_encode_dna_into_basic() {
+        let sequence = b"ACGT";
+        let mut output = [0u8; 2];
+        let result = encode_dna_into(sequence, &mut output);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), 2);
+
+        // Verify it matches the allocating version
+        let expected = encode_dna_prefer_simd(sequence);
+        assert_eq!(&output[..], &expected[..]);
+    }
+
+    /// Tests encode_dna_into with exact-size buffer.
+    #[test]
+    fn test_encode_dna_into_exact_buffer() {
+        for len in [
+            1, 2, 3, 4, 5, 15, 16, 17, 32, 33, 64, 65, 100, 127, 128, 129,
+        ] {
+            let sequence: Vec<u8> = (0..len).map(|i| b"ACGT"[i % 4]).collect();
+            let needed = required_encoded_len(len);
+            let mut output = vec![0u8; needed];
+
+            let result = encode_dna_into(&sequence, &mut output);
+            assert!(result.is_ok(), "Failed for len={}", len);
+            assert_eq!(
+                result.unwrap(),
+                needed,
+                "Wrong bytes written for len={}",
+                len
+            );
+
+            let expected = encode_dna_prefer_simd(&sequence);
+            assert_eq!(&output[..], &expected[..], "Mismatch for len={}", len);
+        }
+    }
+
+    /// Tests encode_dna_into with buffer too small.
+    #[test]
+    fn test_encode_dna_into_buffer_too_small() {
+        let sequence = b"ACGTACGT"; // needs 4 bytes
+        let mut output = [0u8; 3]; // only 3 bytes
+
+        let result = encode_dna_into(sequence, &mut output);
+        assert!(result.is_err());
+
+        if let Err(BufferError::BufferTooSmall { needed, actual }) = result {
+            assert_eq!(needed, 4);
+            assert_eq!(actual, 3);
+        } else {
+            panic!("Expected BufferTooSmall error");
+        }
+    }
+
+    /// Tests encode_dna_into with empty input.
+    #[test]
+    fn test_encode_dna_into_empty() {
+        let sequence = b"";
+        let mut output = [];
+        let result = encode_dna_into(sequence, &mut output);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), 0);
+    }
+
+    /// Tests encode_dna_into with oversized buffer (should work fine).
+    #[test]
+    fn test_encode_dna_into_oversized_buffer() {
+        let sequence = b"ACGT";
+        let mut output = [0u8; 100];
+
+        let result = encode_dna_into(sequence, &mut output);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), 2);
+
+        let expected = encode_dna_prefer_simd(sequence);
+        assert_eq!(&output[..2], &expected[..]);
+    }
+
+    /// Tests decode_dna_into with valid buffer.
+    #[test]
+    fn test_decode_dna_into_basic() {
+        let sequence = b"ACGT";
+        let encoded = encode_dna_prefer_simd(sequence);
+        let mut output = [0u8; 4];
+
+        let result = decode_dna_into(&encoded, 4, &mut output);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), 4);
+        assert_eq!(&output[..], sequence);
+    }
+
+    /// Tests decode_dna_into roundtrip for various lengths.
+    #[test]
+    fn test_decode_dna_into_roundtrip() {
+        for len in [
+            1, 2, 3, 4, 5, 15, 16, 17, 32, 33, 64, 65, 100, 127, 128, 129, 256, 257,
+        ] {
+            let sequence: Vec<u8> = (0..len).map(|i| b"ACGT"[i % 4]).collect();
+            let encoded = encode_dna_prefer_simd(&sequence);
+            let mut output = vec![0u8; len];
+
+            let result = decode_dna_into(&encoded, len, &mut output);
+            assert!(result.is_ok(), "Failed for len={}", len);
+            assert_eq!(result.unwrap(), len, "Wrong bytes written for len={}", len);
+            assert_eq!(&output[..], &sequence[..], "Mismatch for len={}", len);
+        }
+    }
+
+    /// Tests decode_dna_into with buffer too small.
+    #[test]
+    fn test_decode_dna_into_buffer_too_small() {
+        let sequence = b"ACGTACGT";
+        let encoded = encode_dna_prefer_simd(sequence);
+        let mut output = [0u8; 7]; // needs 8
+
+        let result = decode_dna_into(&encoded, 8, &mut output);
+        assert!(result.is_err());
+
+        if let Err(BufferError::BufferTooSmall { needed, actual }) = result {
+            assert_eq!(needed, 8);
+            assert_eq!(actual, 7);
+        } else {
+            panic!("Expected BufferTooSmall error");
+        }
+    }
+
+    /// Tests decode_dna_into with empty input.
+    #[test]
+    fn test_decode_dna_into_empty() {
+        let encoded = [];
+        let mut output = [];
+
+        let result = decode_dna_into(&encoded, 0, &mut output);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), 0);
+    }
+
+    /// Tests decode_dna_into with IUPAC codes.
+    #[test]
+    fn test_decode_dna_into_iupac() {
+        let sequence = b"ACGTRYSWKMBDHVN-";
+        let encoded = encode_dna_prefer_simd(sequence);
+        let mut output = vec![0u8; sequence.len()];
+
+        let result = decode_dna_into(&encoded, sequence.len(), &mut output);
+        assert!(result.is_ok());
+        assert_eq!(&output[..], &sequence[..]);
+    }
+
+    /// Tests reverse_complement_encoded_into with valid buffer.
+    #[test]
+    fn test_reverse_complement_encoded_into_basic() {
+        let sequence = b"ACGT";
+        let encoded = encode_dna_prefer_simd(sequence);
+        let mut output = vec![0u8; encoded.len()];
+
+        let result = reverse_complement_encoded_into(&encoded, 4, &mut output);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), encoded.len());
+
+        // Verify against allocating version
+        let expected = reverse_complement_encoded(&encoded, 4);
+        assert_eq!(&output[..], &expected[..]);
+    }
+
+    /// Tests reverse_complement_encoded_into for various lengths.
+    #[test]
+    fn test_reverse_complement_encoded_into_various_lengths() {
+        for len in [
+            1, 2, 3, 4, 5, 15, 16, 17, 31, 32, 33, 64, 65, 100, 127, 128, 129,
+        ] {
+            let sequence: Vec<u8> = (0..len).map(|i| b"ACGT"[i % 4]).collect();
+            let encoded = encode_dna_prefer_simd(&sequence);
+            let mut output = vec![0u8; encoded.len()];
+
+            let result = reverse_complement_encoded_into(&encoded, len, &mut output);
+            assert!(result.is_ok(), "Failed for len={}", len);
+
+            let expected = reverse_complement_encoded(&encoded, len);
+            assert_eq!(&output[..], &expected[..], "Mismatch for len={}", len);
+        }
+    }
+
+    /// Tests reverse_complement_encoded_into with buffer too small.
+    #[test]
+    fn test_reverse_complement_encoded_into_buffer_too_small() {
+        let sequence = b"ACGTACGT";
+        let encoded = encode_dna_prefer_simd(sequence);
+        let mut output = vec![0u8; encoded.len() - 1];
+
+        let result = reverse_complement_encoded_into(&encoded, 8, &mut output);
+        assert!(result.is_err());
+
+        if let Err(BufferError::BufferTooSmall { needed, actual }) = result {
+            assert_eq!(needed, encoded.len());
+            assert_eq!(actual, encoded.len() - 1);
+        } else {
+            panic!("Expected BufferTooSmall error");
+        }
+    }
+
+    /// Tests reverse_complement_into with valid buffer (short sequence, stack path).
+    #[test]
+    fn test_reverse_complement_into_basic() {
+        let sequence = b"ACGT";
+        let mut output = [0u8; 4];
+
+        let result = reverse_complement_into(sequence, &mut output);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), 4);
+
+        // Expected: TGCA -> reversed and complemented -> ACGT
+        let expected = reverse_complement(sequence);
+        assert_eq!(&output[..], &expected[..]);
+    }
+
+    /// Tests reverse_complement_into roundtrip for various lengths.
+    #[test]
+    fn test_reverse_complement_into_various_lengths() {
+        for len in [
+            1, 2, 3, 4, 5, 15, 16, 17, 31, 32, 33, 64, 65, 100, 127, 128, 129, 256, 257, 512,
+        ] {
+            let sequence: Vec<u8> = (0..len).map(|i| b"ACGTRYSWKMBDHVN"[i % 15]).collect();
+            let mut output = vec![0u8; len];
+
+            let result = reverse_complement_into(&sequence, &mut output);
+            assert!(result.is_ok(), "Failed for len={}", len);
+            assert_eq!(result.unwrap(), len, "Wrong bytes written for len={}", len);
+
+            let expected = reverse_complement(&sequence);
+            assert_eq!(&output[..], &expected[..], "Mismatch for len={}", len);
+        }
+    }
+
+    /// Tests reverse_complement_into with buffer too small.
+    #[test]
+    fn test_reverse_complement_into_buffer_too_small() {
+        let sequence = b"ACGTACGT";
+        let mut output = [0u8; 7];
+
+        let result = reverse_complement_into(sequence, &mut output);
+        assert!(result.is_err());
+
+        if let Err(BufferError::BufferTooSmall { needed, actual }) = result {
+            assert_eq!(needed, 8);
+            assert_eq!(actual, 7);
+        } else {
+            panic!("Expected BufferTooSmall error");
+        }
+    }
+
+    /// Tests reverse_complement_into with empty input.
+    #[test]
+    fn test_reverse_complement_into_empty() {
+        let sequence = b"";
+        let mut output = [];
+
+        let result = reverse_complement_into(sequence, &mut output);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), 0);
+    }
+
+    /// Tests reverse_complement_into stack path (sequences <= 512 bp).
+    #[test]
+    fn test_reverse_complement_into_stack_path() {
+        // Test at stack buffer boundary
+        for len in [256, 400, 512] {
+            let sequence: Vec<u8> = (0..len).map(|i| b"ACGT"[i % 4]).collect();
+            let mut output = vec![0u8; len];
+
+            let result = reverse_complement_into(&sequence, &mut output);
+            assert!(result.is_ok(), "Stack path failed for len={}", len);
+
+            let expected = reverse_complement(&sequence);
+            assert_eq!(
+                &output[..],
+                &expected[..],
+                "Stack path mismatch for len={}",
+                len
+            );
+        }
+    }
+
+    /// Tests reverse_complement_into heap fallback (sequences > 512 bp).
+    #[test]
+    fn test_reverse_complement_into_heap_fallback() {
+        for len in [513, 600, 1000, 2000] {
+            let sequence: Vec<u8> = (0..len).map(|i| b"ACGT"[i % 4]).collect();
+            let mut output = vec![0u8; len];
+
+            let result = reverse_complement_into(&sequence, &mut output);
+            assert!(result.is_ok(), "Heap fallback failed for len={}", len);
+
+            let expected = reverse_complement(&sequence);
+            assert_eq!(
+                &output[..],
+                &expected[..],
+                "Heap fallback mismatch for len={}",
+                len
+            );
+        }
+    }
+
+    /// Tests that _into variants produce identical results to allocating variants.
+    #[test]
+    fn test_into_variants_match_allocating_variants() {
+        for len in [1, 16, 17, 32, 33, 64, 65, 100, 128, 256, 512, 513, 1000] {
+            let sequence: Vec<u8> = (0..len).map(|i| b"ACGTRYSWKMBDHVN"[i % 15]).collect();
+
+            // Test encode
+            let encoded_alloc = encode_dna_prefer_simd(&sequence);
+            let mut encoded_into = vec![0u8; required_encoded_len(len)];
+            encode_dna_into(&sequence, &mut encoded_into).unwrap();
+            assert_eq!(
+                encoded_alloc, encoded_into,
+                "Encode mismatch at len={}",
+                len
+            );
+
+            // Test decode
+            let decoded_alloc = decode_dna_prefer_simd(&encoded_alloc, len);
+            let mut decoded_into = vec![0u8; required_decoded_len(len)];
+            decode_dna_into(&encoded_alloc, len, &mut decoded_into).unwrap();
+            assert_eq!(
+                decoded_alloc, decoded_into,
+                "Decode mismatch at len={}",
+                len
+            );
+
+            // Test reverse_complement_encoded
+            let rc_enc_alloc = reverse_complement_encoded(&encoded_alloc, len);
+            let mut rc_enc_into = vec![0u8; encoded_alloc.len()];
+            reverse_complement_encoded_into(&encoded_alloc, len, &mut rc_enc_into).unwrap();
+            assert_eq!(
+                rc_enc_alloc, rc_enc_into,
+                "RC encoded mismatch at len={}",
+                len
+            );
+
+            // Test reverse_complement
+            let rc_alloc = reverse_complement(&sequence);
+            let mut rc_into = vec![0u8; len];
+            reverse_complement_into(&sequence, &mut rc_into).unwrap();
+            assert_eq!(rc_alloc, rc_into, "RC mismatch at len={}", len);
         }
     }
 }

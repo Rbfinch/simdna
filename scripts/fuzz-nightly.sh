@@ -28,6 +28,7 @@ TARGETS=(
     "bit_rotation"
     "reverse_complement"
     "revcomp_boundaries"
+    "into_variants"
 )
 
 FAILED=()

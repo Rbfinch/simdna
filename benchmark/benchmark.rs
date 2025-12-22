@@ -6,7 +6,9 @@ use std::hint::black_box;
 
 // Import SIMD-accelerated functions from the main crate
 use simdna::dna_simd_encoder::{
-    decode_dna_prefer_simd, encode_dna_prefer_simd, reverse_complement, reverse_complement_encoded,
+    decode_dna_into, decode_dna_prefer_simd, encode_dna_into, encode_dna_prefer_simd,
+    required_decoded_len, required_encoded_len, reverse_complement, reverse_complement_encoded,
+    reverse_complement_encoded_into, reverse_complement_into,
 };
 
 /// Package version from Cargo.toml
@@ -440,11 +442,161 @@ fn bench_reverse_complement(c: &mut Criterion) {
     group.finish();
 }
 
+// ============================================================================
+// Zero-Allocation _into Variants Benchmarks
+// ============================================================================
+
+fn bench_encode_into(c: &mut Criterion) {
+    let mut group = c.benchmark_group("encode_into");
+
+    for size in [
+        15, 16, 17, 32, 33, 63, 64, 127, 128, 255, 256, 512, 1023, 1024, 2048, 4095, 4096, 8192,
+        9999, 10000,
+    ] {
+        let sequence = generate_dna_sequence(size);
+        let needed = required_encoded_len(size);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        // Benchmark allocating version (baseline)
+        group.bench_with_input(BenchmarkId::new("allocating", size), &sequence, |b, seq| {
+            b.iter(|| encode_dna_prefer_simd(black_box(seq)));
+        });
+
+        // Benchmark _into version with pre-allocated buffer
+        group.bench_with_input(
+            BenchmarkId::new("into_preallocated", size),
+            &sequence,
+            |b, seq| {
+                let mut output = vec![0u8; needed];
+                b.iter(|| encode_dna_into(black_box(seq), black_box(&mut output)).unwrap());
+            },
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_decode_into(c: &mut Criterion) {
+    let mut group = c.benchmark_group("decode_into");
+
+    for size in [
+        15, 16, 17, 32, 33, 63, 64, 127, 128, 255, 256, 512, 1023, 1024, 2048, 4095, 4096, 8192,
+        9999, 10000,
+    ] {
+        let sequence = generate_dna_sequence(size);
+        let encoded = encode_dna_prefer_simd(&sequence);
+        let needed = required_decoded_len(size);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        // Benchmark allocating version (baseline)
+        group.bench_with_input(
+            BenchmarkId::new("allocating", size),
+            &(&encoded, size),
+            |b, (enc, len)| {
+                b.iter(|| decode_dna_prefer_simd(black_box(enc), black_box(*len)));
+            },
+        );
+
+        // Benchmark _into version with pre-allocated buffer
+        group.bench_with_input(
+            BenchmarkId::new("into_preallocated", size),
+            &(&encoded, size),
+            |b, (enc, len)| {
+                let mut output = vec![0u8; needed];
+                b.iter(|| {
+                    decode_dna_into(black_box(enc), black_box(*len), black_box(&mut output))
+                        .unwrap()
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_reverse_complement_into(c: &mut Criterion) {
+    let mut group = c.benchmark_group("reverse_complement_into");
+
+    for size in [
+        15, 16, 17, 32, 33, 63, 64, 127, 128, 255, 256, 512, 1023, 1024, 2048, 4095, 4096, 8192,
+        9999, 10000,
+    ] {
+        let sequence = generate_dna_sequence(size);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        // Benchmark allocating version (baseline)
+        group.bench_with_input(BenchmarkId::new("allocating", size), &sequence, |b, seq| {
+            b.iter(|| reverse_complement(black_box(seq)));
+        });
+
+        // Benchmark _into version with pre-allocated buffer
+        group.bench_with_input(
+            BenchmarkId::new("into_preallocated", size),
+            &sequence,
+            |b, seq| {
+                let mut output = vec![0u8; size];
+                b.iter(|| reverse_complement_into(black_box(seq), black_box(&mut output)).unwrap());
+            },
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_reverse_complement_encoded_into(c: &mut Criterion) {
+    let mut group = c.benchmark_group("reverse_complement_encoded_into");
+
+    for size in [
+        15, 16, 17, 32, 33, 63, 64, 127, 128, 255, 256, 512, 1023, 1024, 2048, 4095, 4096, 8192,
+        9999, 10000,
+    ] {
+        let sequence = generate_dna_sequence(size);
+        let encoded = encode_dna_prefer_simd(&sequence);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        // Benchmark allocating version (baseline)
+        group.bench_with_input(
+            BenchmarkId::new("allocating", size),
+            &(&encoded, size),
+            |b, (enc, len)| {
+                b.iter(|| reverse_complement_encoded(black_box(enc), black_box(*len)));
+            },
+        );
+
+        // Benchmark _into version with pre-allocated buffer
+        group.bench_with_input(
+            BenchmarkId::new("into_preallocated", size),
+            &(&encoded, size),
+            |b, (enc, len)| {
+                let mut output = vec![0u8; enc.len()];
+                b.iter(|| {
+                    reverse_complement_encoded_into(
+                        black_box(enc),
+                        black_box(*len),
+                        black_box(&mut output),
+                    )
+                    .unwrap()
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_encode,
     bench_decode,
     bench_roundtrip,
-    bench_reverse_complement
+    bench_reverse_complement,
+    bench_encode_into,
+    bench_decode_into,
+    bench_reverse_complement_into,
+    bench_reverse_complement_encoded_into
 );
 criterion_main!(benches);

@@ -76,3 +76,11 @@ path = "fuzz_targets/revcomp_boundaries.rs"
 test = false
 doc = false
 bench = false
+
+# Zero-allocation _into variant testing
+[[bin]]
+name = "into_variants"
+path = "fuzz_targets/into_variants.rs"
+test = false
+doc = false
+bench = false

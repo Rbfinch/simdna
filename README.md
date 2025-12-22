@@ -22,6 +22,7 @@
 - [Usage](#usage)
 - [Reverse Complement](#reverse-complement)
   - [IUPAC Ambiguity Code Complements](#iupac-ambiguity-code-complements)
+- [Zero-Allocation API](#zero-allocation-api)
 - [Input Handling](#input-handling)
 - [Integration](#integration)
   - [Working with seq\_io](#working-with-seq_io)
@@ -33,6 +34,7 @@
 - [Testing](#testing)
   - [Unit Tests](#unit-tests)
   - [Fuzz Testing](#fuzz-testing)
+- [Examples](#examples)
 - [Contributing](#contributing)
 - [Changelog](#changelog)
 - [Citation](#citation)
@@ -48,6 +50,7 @@
 - **Prefetch hints** for improved cache utilization on large sequences
 - **Automatic fallback** to optimized scalar implementation
 - **Thread-safe** pure functions with no global state
+- **Zero-allocation API** via `_into` variants for high-throughput pipelines
 - **2:1 compression** ratio compared to ASCII representation
 - **RNA support** via U (Uracil) mapping to T
 
@@ -57,7 +60,7 @@ Add simdna to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-simdna = "1.0.2"
+simdna = "1.0.3"
 ```
 
 Or install via cargo:
@@ -177,6 +180,51 @@ assert_eq!(reverse_complement(b"R"), b"Y");
 // Self-complementary codes: S (G|C), W (A|T), N (any)
 assert_eq!(reverse_complement(b"SWN"), b"NWS");
 ```
+
+## Zero-Allocation API
+
+For high-throughput applications, simdna provides `_into` variants that write to caller-provided buffers, avoiding heap allocations:
+
+```rust
+use simdna::dna_simd_encoder::{
+    encode_dna_into, decode_dna_into, reverse_complement_into,
+    reverse_complement_encoded_into, required_encoded_len, BufferError,
+};
+
+// Pre-allocate buffers once, reuse across many sequences
+let sequence = b"ACGTACGT";
+let mut encoded_buf = [0u8; 64];
+let mut decoded_buf = [0u8; 128];
+let mut rc_buf = [0u8; 128];
+
+// Encode into pre-allocated buffer
+let enc_len = encode_dna_into(sequence, &mut encoded_buf).unwrap();
+assert_eq!(enc_len, 4);  // 8 nucleotides → 4 bytes
+
+// Decode into pre-allocated buffer
+let dec_len = decode_dna_into(&encoded_buf[..enc_len], 8, &mut decoded_buf).unwrap();
+assert_eq!(&decoded_buf[..dec_len], b"ACGTACGT");
+
+// Reverse complement into pre-allocated buffer
+let rc_len = reverse_complement_into(sequence, &mut rc_buf).unwrap();
+assert_eq!(&rc_buf[..rc_len], b"ACGTACGT");  // Palindromic
+
+// Error handling for undersized buffers
+let mut small_buf = [0u8; 1];
+match encode_dna_into(sequence, &mut small_buf) {
+    Err(BufferError::BufferTooSmall { needed, actual }) => {
+        println!("Need {} bytes, got {}", needed, actual);
+    }
+    _ => {}
+}
+```
+
+Buffer sizing helpers:
+
+- `required_encoded_len(n)` — bytes needed to encode `n` nucleotides
+- `required_decoded_len(n)` — bytes needed to decode `n` nucleotides (equals `n`)
+
+See `examples/examples.rs` for comprehensive usage patterns including buffer reuse in loops.
 
 ## Input Handling
 
@@ -310,12 +358,32 @@ simdna uses [`cargo-fuzz`](https://github.com/rust-fuzz/cargo-fuzz) for property
 | `simd_scalar_equivalence` | Verifies SIMD and scalar implementations produce identical results |
 | `bit_rotation` | Verifies bit rotation complement properties (involution, consistency) |
 | `reverse_complement` | Tests reverse complement correctness (double-rc = original) |
+| `revcomp_boundaries` | Tests reverse complement at length boundaries (0-64, powers of 2) |
+| `into_variants` | Verifies `_into` functions match allocating equivalents |
 
 Run fuzz tests with:
 
 ```bash
 cargo +nightly fuzz run <target> -- -max_total_time=60
 ```
+
+## Examples
+
+The `examples/examples.rs` file demonstrates all library functions with practical usage patterns:
+
+```bash
+cargo run --example examples
+```
+
+The examples cover:
+
+- **Basic encoding/decoding**: Using `encode_dna_prefer_simd` and `decode_dna_prefer_simd`
+- **IUPAC ambiguity codes**: Full support for all 16 standard codes
+- **RNA sequences**: Seamless U→T mapping
+- **Reverse complement**: High-level and low-level APIs
+- **Zero-allocation variants**: `encode_dna_into`, `decode_dna_into`, `reverse_complement_into`, `reverse_complement_encoded_into`
+- **Low-level utilities**: `char_to_4bit`, `fourbit_to_char`, `complement_4bit`, `complement_packed_byte`
+- **Practical bioinformatics patterns**: Buffer reuse, primer design, compressed storage, streaming processing
 
 ## Contributing
 
