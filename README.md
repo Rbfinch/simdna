@@ -75,41 +75,41 @@ simdna supports the complete IUPAC nucleotide alphabet with a bit-rotation-compa
 
 ### Standard Nucleotides
 
-| Code | Meaning              | Value | Complement |
-|------|----------------------|-------|------------|
-| A    | Adenine              | 0x1   | T (0x4)    |
-| C    | Cytosine             | 0x2   | G (0x8)    |
-| G    | Guanine              | 0x8   | C (0x2)    |
-| T    | Thymine              | 0x4   | A (0x1)    |
-| U    | Uracil (RNA → T)     | 0x4   | A (0x1)    |
+| Code | Meaning          | Value | Complement |
+|------|------------------|-------|------------|
+| A    | Adenine          | 0x1   | T (0x4)    |
+| C    | Cytosine         | 0x2   | G (0x8)    |
+| G    | Guanine          | 0x8   | C (0x2)    |
+| T    | Thymine          | 0x4   | A (0x1)    |
+| U    | Uracil (RNA → T) | 0x4   | A (0x1)    |
 
 ### Two-Base Ambiguity Codes
 
-| Code | Meaning              | Value | Complement |
-|------|----------------------|-------|------------|
-| R    | A or G (purine)      | 0x9   | Y (0x6)    |
-| Y    | C or T (pyrimidine)  | 0x6   | R (0x9)    |
-| S    | G or C (strong)      | 0xA   | S (0xA)    |
-| W    | A or T (weak)        | 0x5   | W (0x5)    |
-| K    | G or T (keto)        | 0xC   | M (0x3)    |
-| M    | A or C (amino)       | 0x3   | K (0xC)    |
+| Code | Meaning             | Value | Complement |
+|------|---------------------|-------|------------|
+| R    | A or G (purine)     | 0x9   | Y (0x6)    |
+| Y    | C or T (pyrimidine) | 0x6   | R (0x9)    |
+| S    | G or C (strong)     | 0xA   | S (0xA)    |
+| W    | A or T (weak)       | 0x5   | W (0x5)    |
+| K    | G or T (keto)       | 0xC   | M (0x3)    |
+| M    | A or C (amino)      | 0x3   | K (0xC)    |
 
 ### Three-Base Ambiguity Codes
 
-| Code | Meaning              | Value | Complement |
-|------|----------------------|-------|------------|
-| B    | C, G, or T (not A)   | 0xE   | V (0xB)    |
-| D    | A, G, or T (not C)   | 0xD   | H (0x7)    |
-| H    | A, C, or T (not G)   | 0x7   | D (0xD)    |
-| V    | A, C, or G (not T)   | 0xB   | B (0xE)    |
+| Code | Meaning            | Value | Complement |
+|------|--------------------|-------|------------|
+| B    | C, G, or T (not A) | 0xE   | V (0xB)    |
+| D    | A, G, or T (not C) | 0xD   | H (0x7)    |
+| H    | A, C, or T (not G) | 0x7   | D (0xD)    |
+| V    | A, C, or G (not T) | 0xB   | B (0xE)    |
 
 ### Wildcards and Gaps
 
-| Code | Meaning              | Value | Complement |
-|------|----------------------|-------|------------|
-| N    | Any base             | 0xF   | N (0xF)    |
-| -    | Gap / deletion       | 0x0   | - (0x0)    |
-| .    | Gap (alternative)    | 0x0   | - (0x0)    |
+| Code | Meaning           | Value | Complement |
+|------|-------------------|-------|------------|
+| N    | Any base          | 0xF   | N (0xF)    |
+| -    | Gap / deletion    | 0x0   | - (0x0)    |
+| .    | Gap (alternative) | 0x0   | - (0x0)    |
 
 ### Bit Rotation Property
 
@@ -349,17 +349,17 @@ The unit tests cover:
 
 simdna uses [`cargo-fuzz`](https://github.com/rust-fuzz/cargo-fuzz) for property-based fuzz testing to discover edge cases and potential bugs. The following fuzz targets are available:
 
-| Target | Description |
-|--------|-------------|
-| `roundtrip` | Verifies encode→decode produces consistent output |
-| `valid_iupac` | Tests encoding of valid IUPAC sequences |
-| `decode_robust` | Tests decoder resilience to arbitrary byte sequences |
-| `boundaries` | Tests sequence length boundary conditions |
-| `simd_scalar_equivalence` | Verifies SIMD and scalar implementations produce identical results |
-| `bit_rotation` | Verifies bit rotation complement properties (involution, consistency) |
-| `reverse_complement` | Tests reverse complement correctness (double-rc = original) |
-| `revcomp_boundaries` | Tests reverse complement at length boundaries (0-64, powers of 2) |
-| `into_variants` | Verifies `_into` functions match allocating equivalents |
+| Target                    | Description                                                           |
+|---------------------------|-----------------------------------------------------------------------|
+| `roundtrip`               | Verifies encode→decode produces consistent output                     |
+| `valid_iupac`             | Tests encoding of valid IUPAC sequences                               |
+| `decode_robust`           | Tests decoder resilience to arbitrary byte sequences                  |
+| `boundaries`              | Tests sequence length boundary conditions                             |
+| `simd_scalar_equivalence` | Verifies SIMD and scalar implementations produce identical results    |
+| `bit_rotation`            | Verifies bit rotation complement properties (involution, consistency) |
+| `reverse_complement`      | Tests reverse complement correctness (double-rc = original)           |
+| `revcomp_boundaries`      | Tests reverse complement at length boundaries (0-64, powers of 2)     |
+| `into_variants`           | Verifies `_into` functions match allocating equivalents               |
 
 Run fuzz tests with:
 
