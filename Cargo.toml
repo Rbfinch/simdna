@@ -19,6 +19,7 @@ path = "src/lib.rs"
 [dev-dependencies]
 criterion = { version = "0.8.1", features = ["html_reports"] }
 chrono = "0.4"
+seq_io = "0.3"
 
 [[bench]]
 name = "benchmark"

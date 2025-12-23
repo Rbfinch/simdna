@@ -282,7 +282,7 @@ pub struct BinnedRun {
 }
 
 /// Maximum run length that fits in the short format (6 bits).
-const MAX_SHORT_RUN: u16 = 63;
+const MAX_SHORT_RUN: u16 = 62; // Must be < 63 to avoid collision with LONG_RUN_ESCAPE (0xFF)
 
 /// Escape byte indicating a long run follows.
 const LONG_RUN_ESCAPE: u8 = 0xFF;
@@ -1354,23 +1354,36 @@ mod tests {
 
     #[test]
     fn test_rle_max_short_run() {
-        let binned = vec![1u8; 63]; // Exactly max short run
+        let binned = vec![1u8; 62]; // Exactly max short run (62 to avoid 0xFF collision)
         let mut output = Vec::new();
         encode_rle(&binned, &mut output);
 
         assert_eq!(output.len(), 1);
-        assert_eq!(output[0], (1 << 6) | 63);
+        assert_eq!(output[0], (1 << 6) | 62);
     }
 
     #[test]
     fn test_rle_just_over_short_run() {
-        let binned = vec![1u8; 64]; // Just over max short run
+        let binned = vec![1u8; 63]; // Just over max short run
         let mut output = Vec::new();
         encode_rle(&binned, &mut output);
 
         // Should use long format
         assert_eq!(output[0], LONG_RUN_ESCAPE);
-        assert_eq!(decode_rle_length(&output), 64);
+        assert_eq!(decode_rle_length(&output), 63);
+    }
+
+    #[test]
+    fn test_rle_bin3_length63_no_collision() {
+        // This test verifies that bin=3 with length=63 doesn't create a 0xFF collision
+        // Previously, (3 << 6) | 63 = 255 = 0xFF = LONG_RUN_ESCAPE which caused decoding errors
+        let binned = vec![3u8; 63];
+        let mut output = Vec::new();
+        encode_rle(&binned, &mut output);
+
+        // With MAX_SHORT_RUN=62, this should use long format (not produce 0xFF short format)
+        assert_eq!(output[0], LONG_RUN_ESCAPE);
+        assert_eq!(decode_rle_length(&output), 63);
     }
 
     // ========================================================================
