@@ -1,0 +1,80 @@
+    Finished `bench` profile [optimized] target(s) in 0.11s
+     Running benchmark/benchmark.rs (target/release/deps/benchmark-765209daba026d3f)
+
+╔════════════════════════════════════════════════════════════╗
+║ simdna benchmark v1.0.3                                     ║
+║ Run date: 2025-12-23 04:09:42 UTC                              ║
+║ Platform: aarch64                                           ║
+╚════════════════════════════════════════════════════════════╝
+
+Benchmarking quality_encode/simd/15
+Benchmarking quality_encode/simd/15: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/15: Collecting 100 samples in estimated 5.0003 s (76M iterations)
+Benchmarking quality_encode/simd/15: Analyzing
+quality_encode/simd/15  time:   [65.093 ns 65.485 ns 66.128 ns]
+                        thrpt:  [216.32 MiB/s 218.45 MiB/s 219.77 MiB/s]
+                 change:
+                        time:   [+0.0624% +0.4546% +1.0939%] (p = 0.06 > 0.05)
+                        thrpt:  [−1.0820% −0.4526% −0.0623%]
+                        No change in performance detected.
+Found 10 outliers among 100 measurements (10.00%)
+  5 (5.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode/scalar/15
+Benchmarking quality_encode/scalar/15: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/15: Collecting 100 samples in estimated 5.0001 s (87M iterations)
+Benchmarking quality_encode/scalar/15: Analyzing
+quality_encode/scalar/15
+                        time:   [56.819 ns 56.935 ns 57.074 ns]
+                        thrpt:  [250.64 MiB/s 251.26 MiB/s 251.76 MiB/s]
+                 change:
+                        time:   [−1.6624% −0.6219% −0.0044%] (p = 0.18 > 0.05)
+                        thrpt:  [+0.0044% +0.6258% +1.6905%]
+                        No change in performance detected.
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_encode/simd/16
+Benchmarking quality_encode/simd/16: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/16: Collecting 100 samples in estimated 5.0003 s (76M iterations)
+Benchmarking quality_encode/simd/16: Analyzing
+quality_encode/simd/16  time:   [65.368 ns 65.490 ns 65.649 ns]
+                        thrpt:  [232.43 MiB/s 232.99 MiB/s 233.43 MiB/s]
+                 change:
+                        time:   [−0.1366% +0.1214% +0.4041%] (p = 0.37 > 0.05)
+                        thrpt:  [−0.4025% −0.1212% +0.1367%]
+                        No change in performance detected.
+Found 8 outliers among 100 measurements (8.00%)
+  2 (2.00%) low mild
+  2 (2.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_encode/scalar/16
+Benchmarking quality_encode/scalar/16: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/16: Collecting 100 samples in estimated 5.0002 s (100M iterations)
+Benchmarking quality_encode/scalar/16: Analyzing
+quality_encode/scalar/16
+                        time:   [50.216 ns 50.406 ns 50.788 ns]
+                        thrpt:  [300.44 MiB/s 302.72 MiB/s 303.86 MiB/s]
+                 change:
+                        time:   [+0.1260% +0.8624% +2.5237%] (p = 0.11 > 0.05)
+                        thrpt:  [−2.4615% −0.8551% −0.1259%]
+                        No change in performance detected.
+Found 8 outliers among 100 measurements (8.00%)
+  4 (4.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_encode/simd/17
+Benchmarking quality_encode/simd/17: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/17: Collecting 100 samples in estimated 5.0002 s (72M iterations)
+Benchmarking quality_encode/simd/17: Analyzing
+quality_encode/simd/17  time:   [69.094 ns 69.196 ns 69.332 ns]
+                        thrpt:  [233.84 MiB/s 234.30 MiB/s 234.64 MiB/s]
+                 change:
+                        time:   [−1.1256% −0.0613% +1.5680%] (p = 0.95 > 0.05)
+                        thrpt:  [−1.5438% +0.0613% +1.1384%]
+                        No change in performance detected.
+Found 8 outliers among 100 measurements (8.00%)
+  4 (4.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_encode/scalar/17
+Benchmarking quality_encode/scalar/17: Warming up for 3.0000 s

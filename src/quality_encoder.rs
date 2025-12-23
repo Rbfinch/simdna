@@ -617,8 +617,38 @@ unsafe fn bin_x86_sse2(quality: &[u8], binned: &mut [u8], encoding: PhredEncodin
         i += 32;
     }
 
-    // Process remaining 16-byte chunk if any
-    if i + 16 <= len {
+    // Handle remaining bytes after 32-byte main loop.
+    // Remaining bytes = len - i, where i is a multiple of 32.
+    //
+    // Cases:
+    // - 0 bytes remain: done
+    // - 1-15 bytes remain: overlapped 16-byte block from end (recomputes some)
+    // - 16 bytes remain: single 16-byte block
+    // - 17-31 bytes remain: 16-byte block + overlapped 16-byte block
+    let remaining = len - i;
+
+    if remaining == 0 {
+        // Nothing to do
+    } else if remaining <= 16 {
+        // 1-16 bytes remain: single overlapped (or exact) 16-byte block from end
+        // For remaining == 16, this is exact; for 1-15, it recomputes some bytes
+        let final_offset = len - 16;
+        let q = _mm_loadu_si128(quality.as_ptr().add(final_offset) as *const __m128i);
+        let phred = _mm_subs_epu8(q, offset_vec);
+        let ge_10 = _mm_cmpeq_epi8(_mm_max_epu8(phred, q10), phred);
+        let ge_20 = _mm_cmpeq_epi8(_mm_max_epu8(phred, q20), phred);
+        let ge_30 = _mm_cmpeq_epi8(_mm_max_epu8(phred, q30), phred);
+        let result = _mm_add_epi8(
+            _mm_add_epi8(_mm_and_si128(ge_10, one), _mm_and_si128(ge_20, one)),
+            _mm_and_si128(ge_30, one),
+        );
+        _mm_storeu_si128(
+            binned.as_mut_ptr().add(final_offset) as *mut __m128i,
+            result,
+        );
+    } else {
+        // 17-31 bytes remain: need 16-byte block + overlapped 16-byte block
+        // First, process aligned 16-byte block at position i
         let q = _mm_loadu_si128(quality.as_ptr().add(i) as *const __m128i);
         let phred = _mm_subs_epu8(q, offset_vec);
         let ge_10 = _mm_cmpeq_epi8(_mm_max_epu8(phred, q10), phred);
@@ -629,13 +659,22 @@ unsafe fn bin_x86_sse2(quality: &[u8], binned: &mut [u8], encoding: PhredEncodin
             _mm_and_si128(ge_30, one),
         );
         _mm_storeu_si128(binned.as_mut_ptr().add(i) as *mut __m128i, result);
-        i += 16;
-    }
 
-    // Handle remainder with scalar
-    for j in i..len {
-        let phred = quality[j].saturating_sub(offset);
-        binned[j] = phred_to_bin(phred);
+        // Then, overlapped 16-byte block from end for remaining 1-15 bytes
+        let final_offset = len - 16;
+        let q2 = _mm_loadu_si128(quality.as_ptr().add(final_offset) as *const __m128i);
+        let phred2 = _mm_subs_epu8(q2, offset_vec);
+        let ge_10_2 = _mm_cmpeq_epi8(_mm_max_epu8(phred2, q10), phred2);
+        let ge_20_2 = _mm_cmpeq_epi8(_mm_max_epu8(phred2, q20), phred2);
+        let ge_30_2 = _mm_cmpeq_epi8(_mm_max_epu8(phred2, q30), phred2);
+        let result2 = _mm_add_epi8(
+            _mm_add_epi8(_mm_and_si128(ge_10_2, one), _mm_and_si128(ge_20_2, one)),
+            _mm_and_si128(ge_30_2, one),
+        );
+        _mm_storeu_si128(
+            binned.as_mut_ptr().add(final_offset) as *mut __m128i,
+            result2,
+        );
     }
 }
 
@@ -708,8 +747,35 @@ unsafe fn bin_arm_neon(quality: &[u8], binned: &mut [u8], encoding: PhredEncodin
         i += 32;
     }
 
-    // Process remaining 16-byte chunk if any
-    if i + 16 <= len {
+    // Handle remaining bytes after 32-byte main loop.
+    // Remaining bytes = len - i, where i is a multiple of 32.
+    //
+    // Cases:
+    // - 0 bytes remain: done
+    // - 1-15 bytes remain: overlapped 16-byte block from end (recomputes some)
+    // - 16 bytes remain: single 16-byte block
+    // - 17-31 bytes remain: 16-byte block + overlapped 16-byte block
+    let remaining = len - i;
+
+    if remaining == 0 {
+        // Nothing to do
+    } else if remaining <= 16 {
+        // 1-16 bytes remain: single overlapped (or exact) 16-byte block from end
+        // For remaining == 16, this is exact; for 1-15, it recomputes some bytes
+        let final_offset = len - 16;
+        let q = vld1q_u8(quality.as_ptr().add(final_offset));
+        let phred = vqsubq_u8(q, offset_vec);
+        let ge_10 = vcgeq_u8(phred, q10);
+        let ge_20 = vcgeq_u8(phred, q20);
+        let ge_30 = vcgeq_u8(phred, q30);
+        let result = vaddq_u8(
+            vaddq_u8(vandq_u8(ge_10, one), vandq_u8(ge_20, one)),
+            vandq_u8(ge_30, one),
+        );
+        vst1q_u8(binned.as_mut_ptr().add(final_offset), result);
+    } else {
+        // 17-31 bytes remain: need 16-byte block + overlapped 16-byte block
+        // First, process aligned 16-byte block at position i
         let q = vld1q_u8(quality.as_ptr().add(i));
         let phred = vqsubq_u8(q, offset_vec);
         let ge_10 = vcgeq_u8(phred, q10);
@@ -720,13 +786,19 @@ unsafe fn bin_arm_neon(quality: &[u8], binned: &mut [u8], encoding: PhredEncodin
             vandq_u8(ge_30, one),
         );
         vst1q_u8(binned.as_mut_ptr().add(i), result);
-        i += 16;
-    }
 
-    // Handle remainder with scalar
-    for j in i..len {
-        let phred = quality[j].saturating_sub(offset);
-        binned[j] = phred_to_bin(phred);
+        // Then, overlapped 16-byte block from end for remaining 1-15 bytes
+        let final_offset = len - 16;
+        let q2 = vld1q_u8(quality.as_ptr().add(final_offset));
+        let phred2 = vqsubq_u8(q2, offset_vec);
+        let ge_10_2 = vcgeq_u8(phred2, q10);
+        let ge_20_2 = vcgeq_u8(phred2, q20);
+        let ge_30_2 = vcgeq_u8(phred2, q30);
+        let result2 = vaddq_u8(
+            vaddq_u8(vandq_u8(ge_10_2, one), vandq_u8(ge_20_2, one)),
+            vandq_u8(ge_30_2, one),
+        );
+        vst1q_u8(binned.as_mut_ptr().add(final_offset), result2);
     }
 }
 
