@@ -288,37 +288,12 @@ const MAX_SHORT_RUN: u16 = 63;
 const LONG_RUN_ESCAPE: u8 = 0xFF;
 
 // ============================================================================
-// Prefetch Hints
+// SIMD Configuration
 // ============================================================================
 
-/// Prefetch distance in bytes (2 cache lines ahead).
-const PREFETCH_DISTANCE: usize = 128;
-
-/// Prefetch data into L1 cache for upcoming reads.
-#[cfg(target_arch = "x86_64")]
-#[inline(always)]
-unsafe fn prefetch_read(ptr: *const u8) {
-    #[cfg(target_feature = "sse")]
-    {
-        _mm_prefetch::<{ _MM_HINT_T0 }>(ptr as *const i8);
-    }
-}
-
-#[cfg(target_arch = "aarch64")]
-#[inline(always)]
-unsafe fn prefetch_read(ptr: *const u8) {
-    std::arch::asm!(
-        "prfm pldl1keep, [{ptr}]",
-        ptr = in(reg) ptr,
-        options(nostack, preserves_flags)
-    );
-}
-
-#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
-#[inline(always)]
-fn prefetch_read(_ptr: *const u8) {
-    // No-op on unsupported platforms
-}
+/// Minimum input size to use SIMD processing.
+/// Below this threshold, scalar is faster due to setup overhead.
+const SIMD_THRESHOLD: usize = 32;
 
 // ============================================================================
 // Buffer Size Helpers
@@ -530,8 +505,14 @@ fn bin_quality_scores(quality: &[u8], binned: &mut [u8], encoding: PhredEncoding
 }
 
 /// Attempts to use SIMD binning if available.
+/// Falls back to scalar for small inputs where SIMD overhead dominates.
 #[inline]
 fn bin_with_simd_if_available(quality: &[u8], binned: &mut [u8], encoding: PhredEncoding) -> bool {
+    // For small inputs, scalar is faster due to SIMD setup overhead
+    if quality.len() < SIMD_THRESHOLD {
+        return false;
+    }
+
     #[cfg(target_arch = "x86_64")]
     {
         if is_x86_feature_detected!("sse2") {
@@ -579,8 +560,7 @@ fn bin_scalar(quality: &[u8], binned: &mut [u8], encoding: PhredEncoding) {
 
 /// SSE2-accelerated quality score binning for x86_64.
 ///
-/// Processes 16 quality scores at a time using SIMD comparisons.
-/// Uses prefetching for improved cache performance on large inputs.
+/// Processes 32 quality scores at a time (2 vectors) for better ILP.
 ///
 /// # Safety
 ///
@@ -598,47 +578,57 @@ unsafe fn bin_x86_sse2(quality: &[u8], binned: &mut [u8], encoding: PhredEncodin
     let q30 = _mm_set1_epi8(30);
     let one = _mm_set1_epi8(1);
 
-    let simd_len = (len / 16) * 16;
+    // Process 32 bytes at a time for better ILP
+    let simd_len_32 = (len / 32) * 32;
     let mut i = 0;
 
-    // Process 16 bytes at a time
-    while i < simd_len {
-        // Prefetch ahead
-        if i + PREFETCH_DISTANCE < len {
-            prefetch_read(quality.as_ptr().add(i + PREFETCH_DISTANCE));
-        }
+    while i < simd_len_32 {
+        // Load 32 quality scores (2 vectors)
+        let q0 = _mm_loadu_si128(quality.as_ptr().add(i) as *const __m128i);
+        let q1 = _mm_loadu_si128(quality.as_ptr().add(i + 16) as *const __m128i);
 
-        // Load 16 quality scores
+        // Convert to Phred (subtract offset with saturation)
+        let phred0 = _mm_subs_epu8(q0, offset_vec);
+        let phred1 = _mm_subs_epu8(q1, offset_vec);
+
+        // Create masks for each threshold
+        // For unsigned comparison: a >= b iff max(a, b) == a
+        let ge_10_0 = _mm_cmpeq_epi8(_mm_max_epu8(phred0, q10), phred0);
+        let ge_10_1 = _mm_cmpeq_epi8(_mm_max_epu8(phred1, q10), phred1);
+        let ge_20_0 = _mm_cmpeq_epi8(_mm_max_epu8(phred0, q20), phred0);
+        let ge_20_1 = _mm_cmpeq_epi8(_mm_max_epu8(phred1, q20), phred1);
+        let ge_30_0 = _mm_cmpeq_epi8(_mm_max_epu8(phred0, q30), phred0);
+        let ge_30_1 = _mm_cmpeq_epi8(_mm_max_epu8(phred1, q30), phred1);
+
+        // Convert masks (0xFF → 0x01) and sum
+        let result0 = _mm_add_epi8(
+            _mm_add_epi8(_mm_and_si128(ge_10_0, one), _mm_and_si128(ge_20_0, one)),
+            _mm_and_si128(ge_30_0, one),
+        );
+        let result1 = _mm_add_epi8(
+            _mm_add_epi8(_mm_and_si128(ge_10_1, one), _mm_and_si128(ge_20_1, one)),
+            _mm_and_si128(ge_30_1, one),
+        );
+
+        // Store results
+        _mm_storeu_si128(binned.as_mut_ptr().add(i) as *mut __m128i, result0);
+        _mm_storeu_si128(binned.as_mut_ptr().add(i + 16) as *mut __m128i, result1);
+
+        i += 32;
+    }
+
+    // Process remaining 16-byte chunk if any
+    if i + 16 <= len {
         let q = _mm_loadu_si128(quality.as_ptr().add(i) as *const __m128i);
-
-        // Convert to Phred (subtract offset)
-        // Note: We use saturating subtraction behavior via unsigned comparison
         let phred = _mm_subs_epu8(q, offset_vec);
-
-        // Create masks for each threshold using unsigned comparison trick
-        // For unsigned comparison: a >= b iff (a - b) doesn't underflow
-        // We compute: if phred >= threshold, bin increases
-
-        // phred >= 10? (bin at least 1)
         let ge_10 = _mm_cmpeq_epi8(_mm_max_epu8(phred, q10), phred);
-        // phred >= 20? (bin at least 2)
         let ge_20 = _mm_cmpeq_epi8(_mm_max_epu8(phred, q20), phred);
-        // phred >= 30? (bin 3)
         let ge_30 = _mm_cmpeq_epi8(_mm_max_epu8(phred, q30), phred);
-
-        // Bin = (ge_10 & 1) + (ge_20 & 1) + (ge_30 & 1)
-        // Each mask is 0xFF when true, 0x00 when false
-        // AND with 1 gives 0x01 or 0x00
-        let bin_ge_10 = _mm_and_si128(ge_10, one);
-        let bin_ge_20 = _mm_and_si128(ge_20, one);
-        let bin_ge_30 = _mm_and_si128(ge_30, one);
-
-        // Sum the contributions
-        let result = _mm_add_epi8(_mm_add_epi8(bin_ge_10, bin_ge_20), bin_ge_30);
-
-        // Store result
+        let result = _mm_add_epi8(
+            _mm_add_epi8(_mm_and_si128(ge_10, one), _mm_and_si128(ge_20, one)),
+            _mm_and_si128(ge_30, one),
+        );
         _mm_storeu_si128(binned.as_mut_ptr().add(i) as *mut __m128i, result);
-
         i += 16;
     }
 
@@ -655,8 +645,11 @@ unsafe fn bin_x86_sse2(quality: &[u8], binned: &mut [u8], encoding: PhredEncodin
 
 /// NEON-accelerated quality score binning for ARM64.
 ///
-/// Processes 16 quality scores at a time using SIMD comparisons.
-/// Uses prefetching for improved cache performance on large inputs.
+/// Uses an optimized arithmetic approach that computes bins with fewer operations:
+/// bin = saturating((phred + 236) / 10) - 23, clamped to [0, 3]
+///
+/// But we use the threshold-count approach with better ILP by processing
+/// 32 bytes per iteration using two vector registers.
 ///
 /// # Safety
 ///
@@ -674,39 +667,59 @@ unsafe fn bin_arm_neon(quality: &[u8], binned: &mut [u8], encoding: PhredEncodin
     let q30 = vdupq_n_u8(30);
     let one = vdupq_n_u8(1);
 
-    let simd_len = (len / 16) * 16;
+    // Process 32 bytes at a time for better ILP
+    let simd_len_32 = (len / 32) * 32;
     let mut i = 0;
 
-    // Process 16 bytes at a time
-    while i < simd_len {
-        // Prefetch ahead
-        if i + PREFETCH_DISTANCE < len {
-            prefetch_read(quality.as_ptr().add(i + PREFETCH_DISTANCE));
-        }
-
-        // Load 16 quality scores
-        let q = vld1q_u8(quality.as_ptr().add(i));
+    while i < simd_len_32 {
+        // Load 32 quality scores (2 vectors)
+        let q0 = vld1q_u8(quality.as_ptr().add(i));
+        let q1 = vld1q_u8(quality.as_ptr().add(i + 16));
 
         // Convert to Phred (subtract offset with saturation)
-        let phred = vqsubq_u8(q, offset_vec);
+        let phred0 = vqsubq_u8(q0, offset_vec);
+        let phred1 = vqsubq_u8(q1, offset_vec);
 
         // Create masks for each threshold using unsigned comparison
         // vcgeq_u8 returns 0xFF when >= threshold, 0x00 otherwise
+        // Process both vectors in parallel for better ILP
+        let ge_10_0 = vcgeq_u8(phred0, q10);
+        let ge_10_1 = vcgeq_u8(phred1, q10);
+        let ge_20_0 = vcgeq_u8(phred0, q20);
+        let ge_20_1 = vcgeq_u8(phred1, q20);
+        let ge_30_0 = vcgeq_u8(phred0, q30);
+        let ge_30_1 = vcgeq_u8(phred1, q30);
+
+        // Convert masks (0xFF → 0x01) and sum
+        // bin = (phred >= 10) + (phred >= 20) + (phred >= 30)
+        let result0 = vaddq_u8(
+            vaddq_u8(vandq_u8(ge_10_0, one), vandq_u8(ge_20_0, one)),
+            vandq_u8(ge_30_0, one),
+        );
+        let result1 = vaddq_u8(
+            vaddq_u8(vandq_u8(ge_10_1, one), vandq_u8(ge_20_1, one)),
+            vandq_u8(ge_30_1, one),
+        );
+
+        // Store results
+        vst1q_u8(binned.as_mut_ptr().add(i), result0);
+        vst1q_u8(binned.as_mut_ptr().add(i + 16), result1);
+
+        i += 32;
+    }
+
+    // Process remaining 16-byte chunk if any
+    if i + 16 <= len {
+        let q = vld1q_u8(quality.as_ptr().add(i));
+        let phred = vqsubq_u8(q, offset_vec);
         let ge_10 = vcgeq_u8(phred, q10);
         let ge_20 = vcgeq_u8(phred, q20);
         let ge_30 = vcgeq_u8(phred, q30);
-
-        // AND with 1 to get 0x01 or 0x00
-        let bin_ge_10 = vandq_u8(ge_10, one);
-        let bin_ge_20 = vandq_u8(ge_20, one);
-        let bin_ge_30 = vandq_u8(ge_30, one);
-
-        // Sum the contributions: bin = 0 + (>=10) + (>=20) + (>=30)
-        let result = vaddq_u8(vaddq_u8(bin_ge_10, bin_ge_20), bin_ge_30);
-
-        // Store result
+        let result = vaddq_u8(
+            vaddq_u8(vandq_u8(ge_10, one), vandq_u8(ge_20, one)),
+            vandq_u8(ge_30, one),
+        );
         vst1q_u8(binned.as_mut_ptr().add(i), result);
-
         i += 16;
     }
 
@@ -721,6 +734,137 @@ unsafe fn bin_arm_neon(quality: &[u8], binned: &mut [u8], encoding: PhredEncodin
 // RLE Implementation
 // ============================================================================
 
+/// Counts how many bytes starting at `ptr` match `target`.
+/// Uses SIMD when available for fast run length detection.
+///
+/// # Safety
+/// Caller must ensure ptr..ptr+max_len is valid to read.
+#[inline]
+fn count_matching_bytes(data: &[u8], start: usize, target: u8) -> usize {
+    let remaining = data.len() - start;
+    if remaining == 0 {
+        return 0;
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    {
+        // Use SIMD for run counting on ARM
+        unsafe { count_matching_neon(&data[start..], target) }
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("sse2") {
+            unsafe { count_matching_sse2(&data[start..], target) }
+        } else {
+            count_matching_scalar(&data[start..], target)
+        }
+    }
+
+    #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+    {
+        count_matching_scalar(&data[start..], target)
+    }
+}
+
+/// Scalar fallback for counting matching bytes.
+#[inline]
+fn count_matching_scalar(data: &[u8], target: u8) -> usize {
+    let mut count = 0;
+    for &b in data {
+        if b != target {
+            break;
+        }
+        count += 1;
+    }
+    count
+}
+
+/// NEON-accelerated matching byte counter.
+#[cfg(target_arch = "aarch64")]
+#[target_feature(enable = "neon")]
+unsafe fn count_matching_neon(data: &[u8], target: u8) -> usize {
+    let len = data.len();
+    if len < 16 {
+        return count_matching_scalar(data, target);
+    }
+
+    let target_vec = vdupq_n_u8(target);
+    let mut count = 0;
+
+    // Process 16 bytes at a time
+    while count + 16 <= len {
+        let chunk = vld1q_u8(data.as_ptr().add(count));
+        let cmp = vceqq_u8(chunk, target_vec);
+
+        // Get the comparison result as a bitmask
+        // Each lane that matches has 0xFF, mismatches have 0x00
+        // We need to find the first non-match
+
+        // Use horizontal operations to check if all match
+        let min_val = vminvq_u8(cmp);
+        if min_val == 0xFF {
+            // All 16 bytes match
+            count += 16;
+        } else {
+            // Find first non-matching byte
+            // Store comparison result and scan
+            let mut cmp_bytes = [0u8; 16];
+            vst1q_u8(cmp_bytes.as_mut_ptr(), cmp);
+            for (i, &b) in cmp_bytes.iter().enumerate() {
+                if b == 0 {
+                    return count + i;
+                }
+            }
+            return count + 16;
+        }
+    }
+
+    // Handle remainder
+    while count < len && data[count] == target {
+        count += 1;
+    }
+
+    count
+}
+
+/// SSE2-accelerated matching byte counter.
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "sse2")]
+unsafe fn count_matching_sse2(data: &[u8], target: u8) -> usize {
+    let len = data.len();
+    if len < 16 {
+        return count_matching_scalar(data, target);
+    }
+
+    let target_vec = _mm_set1_epi8(target as i8);
+    let mut count = 0;
+
+    // Process 16 bytes at a time
+    while count + 16 <= len {
+        let chunk = _mm_loadu_si128(data.as_ptr().add(count) as *const __m128i);
+        let cmp = _mm_cmpeq_epi8(chunk, target_vec);
+        let mask = _mm_movemask_epi8(cmp) as u32;
+
+        if mask == 0xFFFF {
+            // All 16 bytes match
+            count += 16;
+        } else {
+            // Find first non-matching byte (first 0 bit)
+            // Invert mask so matching bytes become 0, then find first 1
+            let first_mismatch = (!mask).trailing_zeros() as usize;
+            return count + first_mismatch;
+        }
+    }
+
+    // Handle remainder
+    while count < len && data[count] == target {
+        count += 1;
+    }
+
+    count
+}
+
 /// Run-length encodes binned quality scores.
 ///
 /// # Packing Format
@@ -734,15 +878,10 @@ fn encode_rle(binned: &[u8], output: &mut Vec<u8>) {
     let mut pos = 0;
     while pos < binned.len() {
         let bin = binned[pos];
-        let mut run_len: u16 = 1;
 
-        // Count consecutive identical bins
-        while pos + (run_len as usize) < binned.len()
-            && binned[pos + (run_len as usize)] == bin
-            && run_len < u16::MAX
-        {
-            run_len += 1;
-        }
+        // Use SIMD-accelerated run counting
+        let run_len = count_matching_bytes(binned, pos, bin).min(u16::MAX as usize) as u16;
+        let run_len = run_len.max(1); // At least 1
 
         // Pack the run
         if run_len <= MAX_SHORT_RUN {
@@ -771,15 +910,10 @@ fn encode_rle_into(binned: &[u8], output: &mut [u8]) -> Result<usize, QualityErr
 
     while pos < binned.len() {
         let bin = binned[pos];
-        let mut run_len: u16 = 1;
 
-        // Count consecutive identical bins
-        while pos + (run_len as usize) < binned.len()
-            && binned[pos + (run_len as usize)] == bin
-            && run_len < u16::MAX
-        {
-            run_len += 1;
-        }
+        // Use SIMD-accelerated run counting
+        let run_len = count_matching_bytes(binned, pos, bin).min(u16::MAX as usize) as u16;
+        let run_len = run_len.max(1); // At least 1
 
         // Pack the run
         if run_len <= MAX_SHORT_RUN {

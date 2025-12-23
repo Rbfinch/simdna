@@ -615,7 +615,7 @@ fn generate_quality_string(len: usize) -> Vec<u8> {
                 // Last 20%: declining from Q40 to Q20
                 40.0 - ((pos_fraction - 0.8) / 0.2) * 20.0
             };
-            (q as u8 + 33) as u8 // Convert to Phred+33 ASCII
+            q as u8 + 33 // Convert to Phred+33 ASCII
         })
         .collect()
 }

@@ -1,0 +1,2652 @@
+   Compiling simdna v1.0.3 (/Users/nicholascrosbie/Documents/repos/bioinf-projects/simdna)
+    Finished `bench` profile [optimized] target(s) in 18.05s
+     Running benchmark/benchmark.rs (target/release/deps/benchmark-765209daba026d3f)
+
+╔════════════════════════════════════════════════════════════╗
+║ simdna benchmark v1.0.3                                     ║
+║ Run date: 2025-12-22 22:45:21 UTC                              ║
+║ Platform: aarch64                                           ║
+╚════════════════════════════════════════════════════════════╝
+
+Benchmarking quality_encode/simd/15
+Benchmarking quality_encode/simd/15: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/15: Collecting 100 samples in estimated 5.0001 s (77M iterations)
+Benchmarking quality_encode/simd/15: Analyzing
+quality_encode/simd/15  time:   [64.937 ns 64.993 ns 65.050 ns]
+                        thrpt:  [219.91 MiB/s 220.10 MiB/s 220.29 MiB/s]
+                 change:
+                        time:   [+15.336% +15.685% +16.020%] (p = 0.00 < 0.05)
+                        thrpt:  [−13.808% −13.558% −13.297%]
+                        Performance has regressed.
+Found 10 outliers among 100 measurements (10.00%)
+  3 (3.00%) low mild
+  3 (3.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_encode/scalar/15
+Benchmarking quality_encode/scalar/15: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/15: Collecting 100 samples in estimated 5.0002 s (93M iterations)
+Benchmarking quality_encode/scalar/15: Analyzing
+quality_encode/scalar/15
+                        time:   [53.367 ns 53.397 ns 53.437 ns]
+                        thrpt:  [267.70 MiB/s 267.90 MiB/s 268.05 MiB/s]
+                 change:
+                        time:   [−5.8988% −5.7144% −5.5540%] (p = 0.00 < 0.05)
+                        thrpt:  [+5.8806% +6.0607% +6.2686%]
+                        Performance has improved.
+Found 10 outliers among 100 measurements (10.00%)
+  5 (5.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode/simd/16
+Benchmarking quality_encode/simd/16: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/16: Collecting 100 samples in estimated 5.0002 s (76M iterations)
+Benchmarking quality_encode/simd/16: Analyzing
+quality_encode/simd/16  time:   [65.421 ns 65.540 ns 65.687 ns]
+                        thrpt:  [232.30 MiB/s 232.82 MiB/s 233.24 MiB/s]
+                 change:
+                        time:   [+24.573% +24.849% +25.111%] (p = 0.00 < 0.05)
+                        thrpt:  [−20.071% −19.903% −19.725%]
+                        Performance has regressed.
+Found 9 outliers among 100 measurements (9.00%)
+  3 (3.00%) low mild
+  5 (5.00%) high mild
+  1 (1.00%) high severe
+Benchmarking quality_encode/scalar/16
+Benchmarking quality_encode/scalar/16: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/16: Collecting 100 samples in estimated 5.0002 s (106M iterations)
+Benchmarking quality_encode/scalar/16: Analyzing
+quality_encode/scalar/16
+                        time:   [47.226 ns 47.827 ns 48.709 ns]
+                        thrpt:  [313.26 MiB/s 319.04 MiB/s 323.10 MiB/s]
+                 change:
+                        time:   [−5.5805% −5.0155% −4.1417%] (p = 0.00 < 0.05)
+                        thrpt:  [+4.3206% +5.2803% +5.9103%]
+                        Performance has improved.
+Found 17 outliers among 100 measurements (17.00%)
+  9 (9.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_encode/simd/17
+Benchmarking quality_encode/simd/17: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/17: Collecting 100 samples in estimated 5.0002 s (72M iterations)
+Benchmarking quality_encode/simd/17: Analyzing
+quality_encode/simd/17  time:   [69.103 ns 69.146 ns 69.207 ns]
+                        thrpt:  [234.26 MiB/s 234.47 MiB/s 234.61 MiB/s]
+                 change:
+                        time:   [+23.415% +24.165% +24.682%] (p = 0.00 < 0.05)
+                        thrpt:  [−19.796% −19.462% −18.972%]
+                        Performance has regressed.
+Found 13 outliers among 100 measurements (13.00%)
+  6 (6.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_encode/scalar/17
+Benchmarking quality_encode/scalar/17: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/17: Collecting 100 samples in estimated 5.0001 s (97M iterations)
+Benchmarking quality_encode/scalar/17: Analyzing
+quality_encode/scalar/17
+                        time:   [51.499 ns 51.544 ns 51.594 ns]
+                        thrpt:  [314.23 MiB/s 314.54 MiB/s 314.81 MiB/s]
+                 change:
+                        time:   [−6.6402% −6.4892% −6.3356%] (p = 0.00 < 0.05)
+                        thrpt:  [+6.7642% +6.9395% +7.1125%]
+                        Performance has improved.
+Found 11 outliers among 100 measurements (11.00%)
+  3 (3.00%) low mild
+  6 (6.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_encode/simd/32
+Benchmarking quality_encode/simd/32: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/32: Collecting 100 samples in estimated 5.0003 s (87M iterations)
+Benchmarking quality_encode/simd/32: Analyzing
+quality_encode/simd/32  time:   [57.611 ns 57.638 ns 57.672 ns]
+                        thrpt:  [529.16 MiB/s 529.47 MiB/s 529.72 MiB/s]
+                 change:
+                        time:   [−8.2067% −8.0207% −7.8467%] (p = 0.00 < 0.05)
+                        thrpt:  [+8.5149% +8.7201% +8.9404%]
+                        Performance has improved.
+Found 14 outliers among 100 measurements (14.00%)
+  5 (5.00%) high mild
+  9 (9.00%) high severe
+Benchmarking quality_encode/scalar/32
+Benchmarking quality_encode/scalar/32: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/32: Collecting 100 samples in estimated 5.0001 s (88M iterations)
+Benchmarking quality_encode/scalar/32: Analyzing
+quality_encode/scalar/32
+                        time:   [56.633 ns 56.661 ns 56.695 ns]
+                        thrpt:  [538.28 MiB/s 538.60 MiB/s 538.86 MiB/s]
+                 change:
+                        time:   [−6.5114% −6.3551% −6.2083%] (p = 0.00 < 0.05)
+                        thrpt:  [+6.6193% +6.7864% +6.9649%]
+                        Performance has improved.
+Found 11 outliers among 100 measurements (11.00%)
+  5 (5.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_encode/simd/33
+Benchmarking quality_encode/simd/33: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/33: Collecting 100 samples in estimated 5.0001 s (84M iterations)
+Benchmarking quality_encode/simd/33: Analyzing
+quality_encode/simd/33  time:   [59.664 ns 59.839 ns 60.182 ns]
+                        thrpt:  [522.94 MiB/s 525.93 MiB/s 527.48 MiB/s]
+                 change:
+                        time:   [−6.2784% −5.4110% −3.9014%] (p = 0.00 < 0.05)
+                        thrpt:  [+4.0598% +5.7205% +6.6990%]
+                        Performance has improved.
+Found 12 outliers among 100 measurements (12.00%)
+  3 (3.00%) high mild
+  9 (9.00%) high severe
+Benchmarking quality_encode/scalar/33
+Benchmarking quality_encode/scalar/33: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/33: Collecting 100 samples in estimated 5.0001 s (85M iterations)
+Benchmarking quality_encode/scalar/33: Analyzing
+quality_encode/scalar/33
+                        time:   [58.381 ns 58.416 ns 58.452 ns]
+                        thrpt:  [538.41 MiB/s 538.74 MiB/s 539.06 MiB/s]
+                 change:
+                        time:   [−5.0307% −4.9038% −4.7819%] (p = 0.00 < 0.05)
+                        thrpt:  [+5.0220% +5.1567% +5.2972%]
+                        Performance has improved.
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_encode/simd/63
+Benchmarking quality_encode/simd/63: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/63: Collecting 100 samples in estimated 5.0002 s (78M iterations)
+Benchmarking quality_encode/simd/63: Analyzing
+quality_encode/simd/63  time:   [64.290 ns 64.340 ns 64.398 ns]
+                        thrpt:  [932.97 MiB/s 933.81 MiB/s 934.54 MiB/s]
+                 change:
+                        time:   [−23.800% −23.618% −23.425%] (p = 0.00 < 0.05)
+                        thrpt:  [+30.591% +30.921% +31.234%]
+                        Performance has improved.
+Found 15 outliers among 100 measurements (15.00%)
+  4 (4.00%) high mild
+  11 (11.00%) high severe
+Benchmarking quality_encode/scalar/63
+Benchmarking quality_encode/scalar/63: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/63: Collecting 100 samples in estimated 5.0004 s (63M iterations)
+Benchmarking quality_encode/scalar/63: Analyzing
+quality_encode/scalar/63
+                        time:   [79.630 ns 79.675 ns 79.728 ns]
+                        thrpt:  [753.58 MiB/s 754.08 MiB/s 754.51 MiB/s]
+                 change:
+                        time:   [−1.2592% −1.1096% −0.9708%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.9803% +1.1221% +1.2753%]
+                        Change within noise threshold.
+Found 11 outliers among 100 measurements (11.00%)
+  7 (7.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_encode/simd/64
+Benchmarking quality_encode/simd/64: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/64: Collecting 100 samples in estimated 5.0000 s (84M iterations)
+Benchmarking quality_encode/simd/64: Analyzing
+quality_encode/simd/64  time:   [59.135 ns 59.197 ns 59.265 ns]
+                        thrpt:  [1.0057 GiB/s 1.0069 GiB/s 1.0079 GiB/s]
+                 change:
+                        time:   [−26.427% −26.257% −26.081%] (p = 0.00 < 0.05)
+                        thrpt:  [+35.283% +35.606% +35.920%]
+                        Performance has improved.
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) low mild
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+Benchmarking quality_encode/scalar/64
+Benchmarking quality_encode/scalar/64: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/64: Collecting 100 samples in estimated 5.0001 s (69M iterations)
+Benchmarking quality_encode/scalar/64: Analyzing
+quality_encode/scalar/64
+                        time:   [72.642 ns 72.685 ns 72.736 ns]
+                        thrpt:  [839.13 MiB/s 839.72 MiB/s 840.21 MiB/s]
+                 change:
+                        time:   [−1.6879% −1.4725% −1.2810%] (p = 0.00 < 0.05)
+                        thrpt:  [+1.2977% +1.4945% +1.7169%]
+                        Performance has improved.
+Found 10 outliers among 100 measurements (10.00%)
+  4 (4.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_encode/simd/127
+Benchmarking quality_encode/simd/127: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/127: Collecting 100 samples in estimated 5.0003 s (68M iterations)
+Benchmarking quality_encode/simd/127: Analyzing
+quality_encode/simd/127 time:   [73.480 ns 73.622 ns 73.860 ns]
+                        thrpt:  [1.6014 GiB/s 1.6066 GiB/s 1.6097 GiB/s]
+                 change:
+                        time:   [−42.210% −41.424% −40.341%] (p = 0.00 < 0.05)
+                        thrpt:  [+67.620% +70.720% +73.041%]
+                        Performance has improved.
+Found 14 outliers among 100 measurements (14.00%)
+  5 (5.00%) high mild
+  9 (9.00%) high severe
+Benchmarking quality_encode/scalar/127
+Benchmarking quality_encode/scalar/127: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/127: Collecting 100 samples in estimated 5.0002 s (39M iterations)
+Benchmarking quality_encode/scalar/127: Analyzing
+quality_encode/scalar/127
+                        time:   [127.18 ns 127.30 ns 127.46 ns]
+                        thrpt:  [950.27 MiB/s 951.43 MiB/s 952.29 MiB/s]
+                 change:
+                        time:   [+3.1012% +3.2839% +3.4540%] (p = 0.00 < 0.05)
+                        thrpt:  [−3.3387% −3.1794% −3.0079%]
+                        Performance has regressed.
+Found 12 outliers among 100 measurements (12.00%)
+  2 (2.00%) low mild
+  2 (2.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_encode/simd/128
+Benchmarking quality_encode/simd/128: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/128: Collecting 100 samples in estimated 5.0003 s (74M iterations)
+Benchmarking quality_encode/simd/128: Analyzing
+quality_encode/simd/128 time:   [67.399 ns 67.430 ns 67.468 ns]
+                        thrpt:  [1.7669 GiB/s 1.7679 GiB/s 1.7687 GiB/s]
+                 change:
+                        time:   [−45.264% −44.944% −44.741%] (p = 0.00 < 0.05)
+                        thrpt:  [+80.965% +81.633% +82.694%]
+                        Performance has improved.
+Found 16 outliers among 100 measurements (16.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+  10 (10.00%) high severe
+Benchmarking quality_encode/scalar/128
+Benchmarking quality_encode/scalar/128: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/128: Collecting 100 samples in estimated 5.0003 s (41M iterations)
+Benchmarking quality_encode/scalar/128: Analyzing
+quality_encode/scalar/128
+                        time:   [121.07 ns 121.14 ns 121.22 ns]
+                        thrpt:  [1007.0 MiB/s 1007.7 MiB/s 1008.3 MiB/s]
+                 change:
+                        time:   [+3.3859% +3.5644% +3.7609%] (p = 0.00 < 0.05)
+                        thrpt:  [−3.6246% −3.4417% −3.2751%]
+                        Performance has regressed.
+Found 11 outliers among 100 measurements (11.00%)
+  4 (4.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_encode/simd/255
+Benchmarking quality_encode/simd/255: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/255: Collecting 100 samples in estimated 5.0004 s (63M iterations)
+Benchmarking quality_encode/simd/255: Analyzing
+quality_encode/simd/255 time:   [79.640 ns 79.690 ns 79.745 ns]
+                        thrpt:  [2.9781 GiB/s 2.9801 GiB/s 2.9820 GiB/s]
+                 change:
+                        time:   [−58.857% −58.777% −58.710%] (p = 0.00 < 0.05)
+                        thrpt:  [+142.19% +142.58% +143.05%]
+                        Performance has improved.
+Found 10 outliers among 100 measurements (10.00%)
+  1 (1.00%) low mild
+  6 (6.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_encode/scalar/255
+Benchmarking quality_encode/scalar/255: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/255: Collecting 100 samples in estimated 5.0001 s (27M iterations)
+Benchmarking quality_encode/scalar/255: Analyzing
+quality_encode/scalar/255
+                        time:   [185.18 ns 185.29 ns 185.43 ns]
+                        thrpt:  [1.2808 GiB/s 1.2817 GiB/s 1.2825 GiB/s]
+                 change:
+                        time:   [−0.0215% +0.1922% +0.3893%] (p = 0.06 > 0.05)
+                        thrpt:  [−0.3878% −0.1918% +0.0215%]
+                        No change in performance detected.
+Found 8 outliers among 100 measurements (8.00%)
+  5 (5.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_encode/simd/256
+Benchmarking quality_encode/simd/256: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/256: Collecting 100 samples in estimated 5.0001 s (68M iterations)
+Benchmarking quality_encode/simd/256: Analyzing
+quality_encode/simd/256 time:   [73.437 ns 73.752 ns 74.252 ns]
+                        thrpt:  [3.2109 GiB/s 3.2327 GiB/s 3.2466 GiB/s]
+                 change:
+                        time:   [−61.150% −60.901% −60.526%] (p = 0.00 < 0.05)
+                        thrpt:  [+153.33% +155.76% +157.40%]
+                        Performance has improved.
+Found 9 outliers among 100 measurements (9.00%)
+  3 (3.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_encode/scalar/256
+Benchmarking quality_encode/scalar/256: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/256: Collecting 100 samples in estimated 5.0001 s (28M iterations)
+Benchmarking quality_encode/scalar/256: Analyzing
+quality_encode/scalar/256
+                        time:   [178.83 ns 179.90 ns 181.58 ns]
+                        thrpt:  [1.3130 GiB/s 1.3253 GiB/s 1.3332 GiB/s]
+                 change:
+                        time:   [+0.2316% +1.1549% +2.2759%] (p = 0.02 < 0.05)
+                        thrpt:  [−2.2253% −1.1417% −0.2310%]
+                        Change within noise threshold.
+Found 7 outliers among 100 measurements (7.00%)
+  1 (1.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_encode/simd/512
+Benchmarking quality_encode/simd/512: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/512: Collecting 100 samples in estimated 5.0001 s (57M iterations)
+Benchmarking quality_encode/simd/512: Analyzing
+quality_encode/simd/512 time:   [87.855 ns 87.909 ns 87.982 ns]
+                        thrpt:  [5.4197 GiB/s 5.4242 GiB/s 5.4276 GiB/s]
+                 change:
+                        time:   [−72.652% −72.587% −72.525%] (p = 0.00 < 0.05)
+                        thrpt:  [+263.96% +264.79% +265.65%]
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  1 (1.00%) high mild
+  12 (12.00%) high severe
+Benchmarking quality_encode/scalar/512
+Benchmarking quality_encode/scalar/512: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/512: Collecting 100 samples in estimated 5.0000 s (17M iterations)
+Benchmarking quality_encode/scalar/512: Analyzing
+quality_encode/scalar/512
+                        time:   [298.93 ns 299.12 ns 299.35 ns]
+                        thrpt:  [1.5929 GiB/s 1.5941 GiB/s 1.5952 GiB/s]
+                 change:
+                        time:   [+0.0913% +0.2757% +0.4679%] (p = 0.00 < 0.05)
+                        thrpt:  [−0.4658% −0.2750% −0.0912%]
+                        Change within noise threshold.
+Found 12 outliers among 100 measurements (12.00%)
+  1 (1.00%) low mild
+  4 (4.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_encode/simd/1023
+Benchmarking quality_encode/simd/1023: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/1023: Collecting 100 samples in estimated 5.0002 s (40M iterations)
+Benchmarking quality_encode/simd/1023: Analyzing
+quality_encode/simd/1023
+                        time:   [124.96 ns 125.04 ns 125.13 ns]
+                        thrpt:  [7.6138 GiB/s 7.6197 GiB/s 7.6245 GiB/s]
+                 change:
+                        time:   [−79.079% −79.042% −79.007%] (p = 0.00 < 0.05)
+                        thrpt:  [+376.35% +377.14% +378.00%]
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  7 (7.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_encode/scalar/1023
+Benchmarking quality_encode/scalar/1023: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/1023: Collecting 100 samples in estimated 5.0023 s (8.9M iterations)
+Benchmarking quality_encode/scalar/1023: Analyzing
+quality_encode/scalar/1023
+                        time:   [563.26 ns 563.56 ns 563.96 ns]
+                        thrpt:  [1.6894 GiB/s 1.6906 GiB/s 1.6915 GiB/s]
+                 change:
+                        time:   [+0.2777% +0.4637% +0.6436%] (p = 0.00 < 0.05)
+                        thrpt:  [−0.6394% −0.4616% −0.2769%]
+                        Change within noise threshold.
+Found 13 outliers among 100 measurements (13.00%)
+  1 (1.00%) low mild
+  6 (6.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_encode/simd/1024
+Benchmarking quality_encode/simd/1024: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/1024: Collecting 100 samples in estimated 5.0006 s (42M iterations)
+Benchmarking quality_encode/simd/1024: Analyzing
+quality_encode/simd/1024
+                        time:   [118.59 ns 119.17 ns 120.26 ns]
+                        thrpt:  [7.9301 GiB/s 8.0023 GiB/s 8.0415 GiB/s]
+                 change:
+                        time:   [−79.992% −79.877% −79.703%] (p = 0.00 < 0.05)
+                        thrpt:  [+392.68% +396.95% +399.81%]
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  1 (1.00%) low mild
+  6 (6.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_encode/scalar/1024
+Benchmarking quality_encode/scalar/1024: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/1024: Collecting 100 samples in estimated 5.0017 s (8.9M iterations)
+Benchmarking quality_encode/scalar/1024: Analyzing
+quality_encode/scalar/1024
+                        time:   [557.93 ns 558.27 ns 558.71 ns]
+                        thrpt:  [1.7069 GiB/s 1.7083 GiB/s 1.7093 GiB/s]
+                 change:
+                        time:   [+0.2227% +0.4371% +0.6059%] (p = 0.00 < 0.05)
+                        thrpt:  [−0.6023% −0.4352% −0.2222%]
+                        Change within noise threshold.
+Found 8 outliers among 100 measurements (8.00%)
+  3 (3.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode/simd/2048
+Benchmarking quality_encode/simd/2048: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/2048: Collecting 100 samples in estimated 5.0003 s (24M iterations)
+Benchmarking quality_encode/simd/2048: Analyzing
+quality_encode/simd/2048
+                        time:   [205.84 ns 206.01 ns 206.21 ns]
+                        thrpt:  [9.2497 GiB/s 9.2587 GiB/s 9.2660 GiB/s]
+                 change:
+                        time:   [−82.306% −82.265% −82.222%] (p = 0.00 < 0.05)
+                        thrpt:  [+462.48% +463.84% +465.15%]
+                        Performance has improved.
+Found 11 outliers among 100 measurements (11.00%)
+  5 (5.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_encode/scalar/2048
+Benchmarking quality_encode/scalar/2048: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/2048: Collecting 100 samples in estimated 5.0040 s (4.6M iterations)
+Benchmarking quality_encode/scalar/2048: Analyzing
+quality_encode/scalar/2048
+                        time:   [1.0750 µs 1.0767 µs 1.0789 µs]
+                        thrpt:  [1.7679 GiB/s 1.7715 GiB/s 1.7743 GiB/s]
+                 change:
+                        time:   [−0.0991% +0.1025% +0.3214%] (p = 0.35 > 0.05)
+                        thrpt:  [−0.3204% −0.1024% +0.0992%]
+                        No change in performance detected.
+Found 14 outliers among 100 measurements (14.00%)
+  2 (2.00%) low mild
+  3 (3.00%) high mild
+  9 (9.00%) high severe
+Benchmarking quality_encode/simd/4095
+Benchmarking quality_encode/simd/4095: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/4095: Collecting 100 samples in estimated 5.0017 s (14M iterations)
+Benchmarking quality_encode/simd/4095: Analyzing
+quality_encode/simd/4095
+                        time:   [363.46 ns 363.78 ns 364.20 ns]
+                        thrpt:  [10.472 GiB/s 10.484 GiB/s 10.493 GiB/s]
+                 change:
+                        time:   [−83.804% −83.780% −83.756%] (p = 0.00 < 0.05)
+                        thrpt:  [+515.61% +516.52% +517.43%]
+                        Performance has improved.
+Found 8 outliers among 100 measurements (8.00%)
+  5 (5.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_encode/scalar/4095
+Benchmarking quality_encode/scalar/4095: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/4095: Collecting 100 samples in estimated 5.0094 s (2.4M iterations)
+Benchmarking quality_encode/scalar/4095: Analyzing
+quality_encode/scalar/4095
+                        time:   [2.0956 µs 2.0977 µs 2.1003 µs]
+                        thrpt:  [1.8158 GiB/s 1.8181 GiB/s 1.8199 GiB/s]
+                 change:
+                        time:   [−0.0153% +0.1613% +0.3330%] (p = 0.07 > 0.05)
+                        thrpt:  [−0.3319% −0.1610% +0.0153%]
+                        No change in performance detected.
+Found 8 outliers among 100 measurements (8.00%)
+  2 (2.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_encode/simd/4096
+Benchmarking quality_encode/simd/4096: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/4096: Collecting 100 samples in estimated 5.0001 s (14M iterations)
+Benchmarking quality_encode/simd/4096: Analyzing
+quality_encode/simd/4096
+                        time:   [358.49 ns 358.66 ns 358.85 ns]
+                        thrpt:  [10.630 GiB/s 10.636 GiB/s 10.641 GiB/s]
+                 change:
+                        time:   [−83.998% −83.962% −83.932%] (p = 0.00 < 0.05)
+                        thrpt:  [+522.36% +523.52% +524.94%]
+                        Performance has improved.
+Found 12 outliers among 100 measurements (12.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_encode/scalar/4096
+Benchmarking quality_encode/scalar/4096: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/4096: Collecting 100 samples in estimated 5.0105 s (2.4M iterations)
+Benchmarking quality_encode/scalar/4096: Analyzing
+quality_encode/scalar/4096
+                        time:   [2.0897 µs 2.1033 µs 2.1254 µs]
+                        thrpt:  [1.7948 GiB/s 1.8137 GiB/s 1.8255 GiB/s]
+                 change:
+                        time:   [+0.1776% +0.5209% +0.9741%] (p = 0.01 < 0.05)
+                        thrpt:  [−0.9647% −0.5182% −0.1773%]
+                        Change within noise threshold.
+Found 12 outliers among 100 measurements (12.00%)
+  7 (7.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode/simd/8192
+Benchmarking quality_encode/simd/8192: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/8192: Collecting 100 samples in estimated 5.0011 s (7.8M iterations)
+Benchmarking quality_encode/simd/8192: Analyzing
+quality_encode/simd/8192
+                        time:   [636.43 ns 639.59 ns 645.44 ns]
+                        thrpt:  [11.820 GiB/s 11.929 GiB/s 11.988 GiB/s]
+                 change:
+                        time:   [−85.484% −85.408% −85.255%] (p = 0.00 < 0.05)
+                        thrpt:  [+578.20% +585.31% +588.91%]
+                        Performance has improved.
+Found 16 outliers among 100 measurements (16.00%)
+  1 (1.00%) low severe
+  2 (2.00%) low mild
+  3 (3.00%) high mild
+  10 (10.00%) high severe
+Benchmarking quality_encode/scalar/8192
+Benchmarking quality_encode/scalar/8192: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/8192: Collecting 100 samples in estimated 5.0127 s (1.2M iterations)
+Benchmarking quality_encode/scalar/8192: Analyzing
+quality_encode/scalar/8192
+                        time:   [4.0647 µs 4.0672 µs 4.0702 µs]
+                        thrpt:  [1.8744 GiB/s 1.8759 GiB/s 1.8770 GiB/s]
+                 change:
+                        time:   [−2.5931% −0.6350% +0.4487%] (p = 0.68 > 0.05)
+                        thrpt:  [−0.4467% +0.6391% +2.6621%]
+                        No change in performance detected.
+Found 13 outliers among 100 measurements (13.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_encode/simd/9999
+Benchmarking quality_encode/simd/9999: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/9999: Collecting 100 samples in estimated 5.0035 s (6.4M iterations)
+Benchmarking quality_encode/simd/9999: Analyzing
+quality_encode/simd/9999
+                        time:   [766.91 ns 767.59 ns 768.37 ns]
+                        thrpt:  [12.119 GiB/s 12.132 GiB/s 12.143 GiB/s]
+                 change:
+                        time:   [−85.660% −85.627% −85.594%] (p = 0.00 < 0.05)
+                        thrpt:  [+594.15% +595.73% +597.35%]
+                        Performance has improved.
+Found 7 outliers among 100 measurements (7.00%)
+  5 (5.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_encode/scalar/9999
+Benchmarking quality_encode/scalar/9999: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/9999: Collecting 100 samples in estimated 5.0240 s (1.0M iterations)
+Benchmarking quality_encode/scalar/9999: Analyzing
+quality_encode/scalar/9999
+                        time:   [4.9451 µs 4.9656 µs 5.0052 µs]
+                        thrpt:  [1.8605 GiB/s 1.8754 GiB/s 1.8831 GiB/s]
+                 change:
+                        time:   [+0.2618% +0.5524% +0.9571%] (p = 0.00 < 0.05)
+                        thrpt:  [−0.9481% −0.5494% −0.2611%]
+                        Change within noise threshold.
+Found 8 outliers among 100 measurements (8.00%)
+  2 (2.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_encode/simd/10000
+Benchmarking quality_encode/simd/10000: Warming up for 3.0000 s
+Benchmarking quality_encode/simd/10000: Collecting 100 samples in estimated 5.0022 s (6.6M iterations)
+Benchmarking quality_encode/simd/10000: Analyzing
+quality_encode/simd/10000
+                        time:   [760.56 ns 760.93 ns 761.42 ns]
+                        thrpt:  [12.231 GiB/s 12.239 GiB/s 12.245 GiB/s]
+                 change:
+                        time:   [−85.729% −85.701% −85.675%] (p = 0.00 < 0.05)
+                        thrpt:  [+598.06% +599.33% +600.71%]
+                        Performance has improved.
+Found 15 outliers among 100 measurements (15.00%)
+  2 (2.00%) low mild
+  5 (5.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_encode/scalar/10000
+Benchmarking quality_encode/scalar/10000: Warming up for 3.0000 s
+Benchmarking quality_encode/scalar/10000: Collecting 100 samples in estimated 5.0165 s (1.0M iterations)
+Benchmarking quality_encode/scalar/10000: Analyzing
+quality_encode/scalar/10000
+                        time:   [4.9386 µs 4.9679 µs 5.0270 µs]
+                        thrpt:  [1.8526 GiB/s 1.8747 GiB/s 1.8858 GiB/s]
+                 change:
+                        time:   [+0.3405% +0.6857% +1.1606%] (p = 0.00 < 0.05)
+                        thrpt:  [−1.1473% −0.6810% −0.3393%]
+                        Change within noise threshold.
+Found 13 outliers among 100 measurements (13.00%)
+  3 (3.00%) high mild
+  10 (10.00%) high severe
+
+Benchmarking quality_decode/simd/15
+Benchmarking quality_decode/simd/15: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/15: Collecting 100 samples in estimated 5.0000 s (154M iterations)
+Benchmarking quality_decode/simd/15: Analyzing
+quality_decode/simd/15  time:   [32.410 ns 32.622 ns 33.015 ns]
+                        thrpt:  [433.28 MiB/s 438.52 MiB/s 441.39 MiB/s]
+Found 15 outliers among 100 measurements (15.00%)
+  1 (1.00%) low mild
+  4 (4.00%) high mild
+  10 (10.00%) high severe
+Benchmarking quality_decode/simd/16
+Benchmarking quality_decode/simd/16: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/16: Collecting 100 samples in estimated 5.0002 s (150M iterations)
+Benchmarking quality_decode/simd/16: Analyzing
+quality_decode/simd/16  time:   [33.317 ns 33.337 ns 33.363 ns]
+                        thrpt:  [457.36 MiB/s 457.72 MiB/s 457.99 MiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  4 (4.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_decode/simd/17
+Benchmarking quality_decode/simd/17: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/17: Collecting 100 samples in estimated 5.0000 s (132M iterations)
+Benchmarking quality_decode/simd/17: Analyzing
+quality_decode/simd/17  time:   [37.691 ns 37.741 ns 37.805 ns]
+                        thrpt:  [428.84 MiB/s 429.57 MiB/s 430.14 MiB/s]
+Found 14 outliers among 100 measurements (14.00%)
+  3 (3.00%) high mild
+  11 (11.00%) high severe
+Benchmarking quality_decode/simd/32
+Benchmarking quality_decode/simd/32: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/32: Collecting 100 samples in estimated 5.0000 s (129M iterations)
+Benchmarking quality_decode/simd/32: Analyzing
+quality_decode/simd/32  time:   [38.623 ns 38.646 ns 38.674 ns]
+                        thrpt:  [789.10 MiB/s 789.68 MiB/s 790.14 MiB/s]
+Found 13 outliers among 100 measurements (13.00%)
+  5 (5.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_decode/simd/33
+Benchmarking quality_decode/simd/33: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/33: Collecting 100 samples in estimated 5.0001 s (123M iterations)
+Benchmarking quality_decode/simd/33: Analyzing
+quality_decode/simd/33  time:   [40.477 ns 40.776 ns 41.403 ns]
+                        thrpt:  [760.12 MiB/s 771.80 MiB/s 777.52 MiB/s]
+Found 17 outliers among 100 measurements (17.00%)
+  11 (11.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_decode/simd/63
+Benchmarking quality_decode/simd/63: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/63: Collecting 100 samples in estimated 5.0000 s (124M iterations)
+Benchmarking quality_decode/simd/63: Analyzing
+quality_decode/simd/63  time:   [40.188 ns 40.555 ns 41.111 ns]
+                        thrpt:  [1.4272 GiB/s 1.4468 GiB/s 1.4600 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  3 (3.00%) high mild
+  9 (9.00%) high severe
+Benchmarking quality_decode/simd/64
+Benchmarking quality_decode/simd/64: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/64: Collecting 100 samples in estimated 5.0002 s (123M iterations)
+Benchmarking quality_decode/simd/64: Analyzing
+quality_decode/simd/64  time:   [40.501 ns 40.549 ns 40.608 ns]
+                        thrpt:  [1.4678 GiB/s 1.4699 GiB/s 1.4717 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  3 (3.00%) high mild
+  9 (9.00%) high severe
+Benchmarking quality_decode/simd/127
+Benchmarking quality_decode/simd/127: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/127: Collecting 100 samples in estimated 5.0001 s (132M iterations)
+Benchmarking quality_decode/simd/127: Analyzing
+quality_decode/simd/127 time:   [37.860 ns 37.932 ns 38.007 ns]
+                        thrpt:  [3.1120 GiB/s 3.1182 GiB/s 3.1241 GiB/s]
+Found 4 outliers among 100 measurements (4.00%)
+  4 (4.00%) high mild
+Benchmarking quality_decode/simd/128
+Benchmarking quality_decode/simd/128: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/128: Collecting 100 samples in estimated 5.0002 s (132M iterations)
+Benchmarking quality_decode/simd/128: Analyzing
+quality_decode/simd/128 time:   [37.844 ns 37.905 ns 37.971 ns]
+                        thrpt:  [3.1395 GiB/s 3.1450 GiB/s 3.1500 GiB/s]
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high mild
+Benchmarking quality_decode/simd/255
+Benchmarking quality_decode/simd/255: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/255: Collecting 100 samples in estimated 5.0000 s (132M iterations)
+Benchmarking quality_decode/simd/255: Analyzing
+quality_decode/simd/255 time:   [37.900 ns 37.969 ns 38.039 ns]
+                        thrpt:  [6.2433 GiB/s 6.2548 GiB/s 6.2661 GiB/s]
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+Benchmarking quality_decode/simd/256
+Benchmarking quality_decode/simd/256: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/256: Collecting 100 samples in estimated 5.0000 s (133M iterations)
+Benchmarking quality_decode/simd/256: Analyzing
+quality_decode/simd/256 time:   [37.694 ns 37.929 ns 38.295 ns]
+                        thrpt:  [6.2259 GiB/s 6.2859 GiB/s 6.3251 GiB/s]
+Found 7 outliers among 100 measurements (7.00%)
+  5 (5.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_decode/simd/512
+Benchmarking quality_decode/simd/512: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/512: Collecting 100 samples in estimated 5.0002 s (106M iterations)
+Benchmarking quality_decode/simd/512: Analyzing
+quality_decode/simd/512 time:   [47.106 ns 47.433 ns 47.920 ns]
+                        thrpt:  [9.9506 GiB/s 10.053 GiB/s 10.123 GiB/s]
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high severe
+Benchmarking quality_decode/simd/1023
+Benchmarking quality_decode/simd/1023: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/1023: Collecting 100 samples in estimated 5.0001 s (99M iterations)
+Benchmarking quality_decode/simd/1023: Analyzing
+quality_decode/simd/1023
+                        time:   [50.371 ns 50.468 ns 50.590 ns]
+                        thrpt:  [18.833 GiB/s 18.878 GiB/s 18.914 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  11 (11.00%) high mild
+  1 (1.00%) high severe
+Benchmarking quality_decode/simd/1024
+Benchmarking quality_decode/simd/1024: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/1024: Collecting 100 samples in estimated 5.0002 s (100M iterations)
+Benchmarking quality_decode/simd/1024: Analyzing
+quality_decode/simd/1024
+                        time:   [50.192 ns 50.224 ns 50.269 ns]
+                        thrpt:  [18.971 GiB/s 18.988 GiB/s 19.001 GiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  1 (1.00%) low mild
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_decode/simd/2048
+Benchmarking quality_decode/simd/2048: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/2048: Collecting 100 samples in estimated 5.0004 s (66M iterations)
+Benchmarking quality_decode/simd/2048: Analyzing
+quality_decode/simd/2048
+                        time:   [75.568 ns 75.682 ns 75.854 ns]
+                        thrpt:  [25.145 GiB/s 25.202 GiB/s 25.240 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  1 (1.00%) low mild
+  3 (3.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_decode/simd/4095
+Benchmarking quality_decode/simd/4095: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/4095: Collecting 100 samples in estimated 5.0002 s (43M iterations)
+Benchmarking quality_decode/simd/4095: Analyzing
+quality_decode/simd/4095
+                        time:   [116.35 ns 116.64 ns 117.05 ns]
+                        thrpt:  [32.581 GiB/s 32.697 GiB/s 32.778 GiB/s]
+Found 15 outliers among 100 measurements (15.00%)
+  8 (8.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_decode/simd/4096
+Benchmarking quality_decode/simd/4096: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/4096: Collecting 100 samples in estimated 5.0002 s (43M iterations)
+Benchmarking quality_decode/simd/4096: Analyzing
+quality_decode/simd/4096
+                        time:   [116.57 ns 117.14 ns 117.86 ns]
+                        thrpt:  [32.367 GiB/s 32.564 GiB/s 32.724 GiB/s]
+Found 13 outliers among 100 measurements (13.00%)
+  3 (3.00%) high mild
+  10 (10.00%) high severe
+Benchmarking quality_decode/simd/8192
+Benchmarking quality_decode/simd/8192: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/8192: Collecting 100 samples in estimated 5.0000 s (23M iterations)
+Benchmarking quality_decode/simd/8192: Analyzing
+quality_decode/simd/8192
+                        time:   [213.33 ns 216.58 ns 221.24 ns]
+                        thrpt:  [34.485 GiB/s 35.227 GiB/s 35.763 GiB/s]
+Found 15 outliers among 100 measurements (15.00%)
+  6 (6.00%) high mild
+  9 (9.00%) high severe
+Benchmarking quality_decode/simd/9999
+Benchmarking quality_decode/simd/9999: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/9999: Collecting 100 samples in estimated 5.0007 s (19M iterations)
+Benchmarking quality_decode/simd/9999: Analyzing
+quality_decode/simd/9999
+                        time:   [255.36 ns 260.31 ns 266.08 ns]
+                        thrpt:  [34.998 GiB/s 35.774 GiB/s 36.467 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  6 (6.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_decode/simd/10000
+Benchmarking quality_decode/simd/10000: Warming up for 3.0000 s
+Benchmarking quality_decode/simd/10000: Collecting 100 samples in estimated 5.0007 s (20M iterations)
+Benchmarking quality_decode/simd/10000: Analyzing
+quality_decode/simd/10000
+                        time:   [253.15 ns 257.55 ns 262.74 ns]
+                        thrpt:  [35.446 GiB/s 36.161 GiB/s 36.789 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  5 (5.00%) high mild
+  4 (4.00%) high severe
+
+Benchmarking quality_roundtrip/simd/15
+Benchmarking quality_roundtrip/simd/15: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/15: Collecting 100 samples in estimated 5.0003 s (49M iterations)
+Benchmarking quality_roundtrip/simd/15: Analyzing
+quality_roundtrip/simd/15
+                        time:   [101.91 ns 102.02 ns 102.15 ns]
+                        thrpt:  [140.05 MiB/s 140.22 MiB/s 140.38 MiB/s]
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) low mild
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking quality_roundtrip/simd/16
+Benchmarking quality_roundtrip/simd/16: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/16: Collecting 100 samples in estimated 5.0001 s (49M iterations)
+Benchmarking quality_roundtrip/simd/16: Analyzing
+quality_roundtrip/simd/16
+                        time:   [101.67 ns 101.76 ns 101.86 ns]
+                        thrpt:  [149.81 MiB/s 149.95 MiB/s 150.08 MiB/s]
+Found 7 outliers among 100 measurements (7.00%)
+  3 (3.00%) low mild
+  2 (2.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_roundtrip/simd/17
+Benchmarking quality_roundtrip/simd/17: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/17: Collecting 100 samples in estimated 5.0000 s (47M iterations)
+Benchmarking quality_roundtrip/simd/17: Analyzing
+quality_roundtrip/simd/17
+                        time:   [106.80 ns 106.86 ns 106.95 ns]
+                        thrpt:  [151.59 MiB/s 151.71 MiB/s 151.80 MiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  1 (1.00%) low mild
+  7 (7.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_roundtrip/simd/32
+Benchmarking quality_roundtrip/simd/32: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/32: Collecting 100 samples in estimated 5.0003 s (52M iterations)
+Benchmarking quality_roundtrip/simd/32: Analyzing
+quality_roundtrip/simd/32
+                        time:   [96.346 ns 96.977 ns 98.217 ns]
+                        thrpt:  [310.72 MiB/s 314.69 MiB/s 316.75 MiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  4 (4.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_roundtrip/simd/33
+Benchmarking quality_roundtrip/simd/33: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/33: Collecting 100 samples in estimated 5.0004 s (50M iterations)
+Benchmarking quality_roundtrip/simd/33: Analyzing
+quality_roundtrip/simd/33
+                        time:   [99.759 ns 100.42 ns 101.64 ns]
+                        thrpt:  [309.62 MiB/s 313.41 MiB/s 315.47 MiB/s]
+Found 15 outliers among 100 measurements (15.00%)
+  6 (6.00%) high mild
+  9 (9.00%) high severe
+Benchmarking quality_roundtrip/simd/63
+Benchmarking quality_roundtrip/simd/63: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/63: Collecting 100 samples in estimated 5.0002 s (48M iterations)
+Benchmarking quality_roundtrip/simd/63: Analyzing
+quality_roundtrip/simd/63
+                        time:   [103.83 ns 104.47 ns 105.59 ns]
+                        thrpt:  [569.00 MiB/s 575.10 MiB/s 578.66 MiB/s]
+Found 7 outliers among 100 measurements (7.00%)
+  2 (2.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_roundtrip/simd/64
+Benchmarking quality_roundtrip/simd/64: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/64: Collecting 100 samples in estimated 5.0005 s (51M iterations)
+Benchmarking quality_roundtrip/simd/64: Analyzing
+quality_roundtrip/simd/64
+                        time:   [98.644 ns 98.745 ns 98.867 ns]
+                        thrpt:  [617.34 MiB/s 618.11 MiB/s 618.74 MiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  6 (6.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_roundtrip/simd/127
+Benchmarking quality_roundtrip/simd/127: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/127: Collecting 100 samples in estimated 5.0000 s (45M iterations)
+Benchmarking quality_roundtrip/simd/127: Analyzing
+quality_roundtrip/simd/127
+                        time:   [111.21 ns 111.28 ns 111.36 ns]
+                        thrpt:  [1.0621 GiB/s 1.0629 GiB/s 1.0636 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  1 (1.00%) low mild
+  7 (7.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_roundtrip/simd/128
+Benchmarking quality_roundtrip/simd/128: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/128: Collecting 100 samples in estimated 5.0004 s (48M iterations)
+Benchmarking quality_roundtrip/simd/128: Analyzing
+quality_roundtrip/simd/128
+                        time:   [105.12 ns 105.18 ns 105.25 ns]
+                        thrpt:  [1.1326 GiB/s 1.1334 GiB/s 1.1340 GiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  1 (1.00%) low mild
+  7 (7.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_roundtrip/simd/255
+Benchmarking quality_roundtrip/simd/255: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/255: Collecting 100 samples in estimated 5.0002 s (42M iterations)
+Benchmarking quality_roundtrip/simd/255: Analyzing
+quality_roundtrip/simd/255
+                        time:   [118.62 ns 118.70 ns 118.79 ns]
+                        thrpt:  [1.9993 GiB/s 2.0007 GiB/s 2.0020 GiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  6 (6.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_roundtrip/simd/256
+Benchmarking quality_roundtrip/simd/256: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/256: Collecting 100 samples in estimated 5.0002 s (44M iterations)
+Benchmarking quality_roundtrip/simd/256: Analyzing
+quality_roundtrip/simd/256
+                        time:   [112.19 ns 112.58 ns 113.32 ns]
+                        thrpt:  [2.1039 GiB/s 2.1179 GiB/s 2.1252 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  1 (1.00%) low mild
+  6 (6.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_roundtrip/simd/512
+Benchmarking quality_roundtrip/simd/512: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/512: Collecting 100 samples in estimated 5.0001 s (36M iterations)
+Benchmarking quality_roundtrip/simd/512: Analyzing
+quality_roundtrip/simd/512
+                        time:   [135.87 ns 135.97 ns 136.07 ns]
+                        thrpt:  [3.5044 GiB/s 3.5070 GiB/s 3.5094 GiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  3 (3.00%) low mild
+  6 (6.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_roundtrip/simd/1023
+Benchmarking quality_roundtrip/simd/1023: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/1023: Collecting 100 samples in estimated 5.0008 s (29M iterations)
+Benchmarking quality_roundtrip/simd/1023: Analyzing
+quality_roundtrip/simd/1023
+                        time:   [172.54 ns 172.64 ns 172.76 ns]
+                        thrpt:  [5.5149 GiB/s 5.5185 GiB/s 5.5219 GiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_roundtrip/simd/1024
+Benchmarking quality_roundtrip/simd/1024: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/1024: Collecting 100 samples in estimated 5.0003 s (30M iterations)
+Benchmarking quality_roundtrip/simd/1024: Analyzing
+quality_roundtrip/simd/1024
+                        time:   [166.29 ns 166.49 ns 166.76 ns]
+                        thrpt:  [5.7188 GiB/s 5.7280 GiB/s 5.7349 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  4 (4.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_roundtrip/simd/2048
+Benchmarking quality_roundtrip/simd/2048: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/2048: Collecting 100 samples in estimated 5.0001 s (18M iterations)
+Benchmarking quality_roundtrip/simd/2048: Analyzing
+quality_roundtrip/simd/2048
+                        time:   [281.23 ns 281.42 ns 281.66 ns]
+                        thrpt:  [6.7719 GiB/s 6.7776 GiB/s 6.7822 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  2 (2.00%) low mild
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_roundtrip/simd/4095
+Benchmarking quality_roundtrip/simd/4095: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/4095: Collecting 100 samples in estimated 5.0000 s (10M iterations)
+Benchmarking quality_roundtrip/simd/4095: Analyzing
+quality_roundtrip/simd/4095
+                        time:   [478.77 ns 481.16 ns 484.09 ns]
+                        thrpt:  [7.8782 GiB/s 7.9262 GiB/s 7.9657 GiB/s]
+Found 18 outliers among 100 measurements (18.00%)
+  2 (2.00%) high mild
+  16 (16.00%) high severe
+Benchmarking quality_roundtrip/simd/4096
+Benchmarking quality_roundtrip/simd/4096: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/4096: Collecting 100 samples in estimated 5.0020 s (11M iterations)
+Benchmarking quality_roundtrip/simd/4096: Analyzing
+quality_roundtrip/simd/4096
+                        time:   [472.35 ns 474.40 ns 477.16 ns]
+                        thrpt:  [7.9945 GiB/s 8.0412 GiB/s 8.0761 GiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  3 (3.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_roundtrip/simd/8192
+Benchmarking quality_roundtrip/simd/8192: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/8192: Collecting 100 samples in estimated 5.0009 s (5.7M iterations)
+Benchmarking quality_roundtrip/simd/8192: Analyzing
+quality_roundtrip/simd/8192
+                        time:   [867.45 ns 877.63 ns 889.75 ns]
+                        thrpt:  [8.5747 GiB/s 8.6932 GiB/s 8.7952 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  4 (4.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_roundtrip/simd/9999
+Benchmarking quality_roundtrip/simd/9999: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/9999: Collecting 100 samples in estimated 5.0031 s (4.8M iterations)
+Benchmarking quality_roundtrip/simd/9999: Analyzing
+quality_roundtrip/simd/9999
+                        time:   [1.0312 µs 1.0470 µs 1.0684 µs]
+                        thrpt:  [8.7162 GiB/s 8.8943 GiB/s 9.0308 GiB/s]
+Found 4 outliers among 100 measurements (4.00%)
+  2 (2.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_roundtrip/simd/10000
+Benchmarking quality_roundtrip/simd/10000: Warming up for 3.0000 s
+Benchmarking quality_roundtrip/simd/10000: Collecting 100 samples in estimated 5.0035 s (4.9M iterations)
+Benchmarking quality_roundtrip/simd/10000: Analyzing
+quality_roundtrip/simd/10000
+                        time:   [1.0209 µs 1.0227 µs 1.0244 µs]
+                        thrpt:  [9.0915 GiB/s 9.1069 GiB/s 9.1226 GiB/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+
+Benchmarking quality_binning/simd/15
+Benchmarking quality_binning/simd/15: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/15: Collecting 100 samples in estimated 5.0000 s (404M iterations)
+Benchmarking quality_binning/simd/15: Analyzing
+quality_binning/simd/15 time:   [12.370 ns 12.377 ns 12.383 ns]
+                        thrpt:  [1.1281 GiB/s 1.1287 GiB/s 1.1293 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  3 (3.00%) low mild
+  6 (6.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_binning/scalar/15
+Benchmarking quality_binning/scalar/15: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/15: Collecting 100 samples in estimated 5.0000 s (344M iterations)
+Benchmarking quality_binning/scalar/15: Analyzing
+quality_binning/scalar/15
+                        time:   [14.498 ns 14.506 ns 14.514 ns]
+                        thrpt:  [985.60 MiB/s 986.13 MiB/s 986.68 MiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  2 (2.00%) low mild
+  4 (4.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_binning/simd/16
+Benchmarking quality_binning/simd/16: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/16: Collecting 100 samples in estimated 5.0000 s (403M iterations)
+Benchmarking quality_binning/simd/16: Analyzing
+quality_binning/simd/16 time:   [12.380 ns 12.386 ns 12.394 ns]
+                        thrpt:  [1.2023 GiB/s 1.2030 GiB/s 1.2036 GiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  7 (7.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_binning/scalar/16
+Benchmarking quality_binning/scalar/16: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/16: Collecting 100 samples in estimated 5.0000 s (322M iterations)
+Benchmarking quality_binning/scalar/16: Analyzing
+quality_binning/scalar/16
+                        time:   [15.433 ns 15.600 ns 15.845 ns]
+                        thrpt:  [963.02 MiB/s 978.15 MiB/s 988.71 MiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  2 (2.00%) low severe
+  2 (2.00%) low mild
+  1 (1.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_binning/simd/17
+Benchmarking quality_binning/simd/17: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/17: Collecting 100 samples in estimated 5.0000 s (363M iterations)
+Benchmarking quality_binning/simd/17: Analyzing
+quality_binning/simd/17 time:   [13.769 ns 13.784 ns 13.798 ns]
+                        thrpt:  [1.1475 GiB/s 1.1486 GiB/s 1.1499 GiB/s]
+Found 4 outliers among 100 measurements (4.00%)
+  3 (3.00%) low mild
+  1 (1.00%) high mild
+Benchmarking quality_binning/scalar/17
+Benchmarking quality_binning/scalar/17: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/17: Collecting 100 samples in estimated 5.0000 s (2.2B iterations)
+Benchmarking quality_binning/scalar/17: Analyzing
+quality_binning/scalar/17
+                        time:   [2.2199 ns 2.2216 ns 2.2237 ns]
+                        thrpt:  [7.1199 GiB/s 7.1268 GiB/s 7.1321 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  2 (2.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_binning/simd/32
+Benchmarking quality_binning/simd/32: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/32: Collecting 100 samples in estimated 5.0000 s (2.3B iterations)
+Benchmarking quality_binning/simd/32: Analyzing
+quality_binning/simd/32 time:   [2.1817 ns 2.1855 ns 2.1905 ns]
+                        thrpt:  [13.605 GiB/s 13.636 GiB/s 13.660 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  6 (6.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_binning/scalar/32
+Benchmarking quality_binning/scalar/32: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/32: Collecting 100 samples in estimated 5.0000 s (279M iterations)
+Benchmarking quality_binning/scalar/32: Analyzing
+quality_binning/scalar/32
+                        time:   [17.923 ns 17.937 ns 17.952 ns]
+                        thrpt:  [1.6601 GiB/s 1.6615 GiB/s 1.6628 GiB/s]
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) low mild
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking quality_binning/simd/33
+Benchmarking quality_binning/simd/33: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/33: Collecting 100 samples in estimated 5.0000 s (1.5B iterations)
+Benchmarking quality_binning/simd/33: Analyzing
+quality_binning/simd/33 time:   [3.3096 ns 3.3124 ns 3.3160 ns]
+                        thrpt:  [9.2683 GiB/s 9.2784 GiB/s 9.2861 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  2 (2.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_binning/scalar/33
+Benchmarking quality_binning/scalar/33: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/33: Collecting 100 samples in estimated 5.0000 s (1.8B iterations)
+Benchmarking quality_binning/scalar/33: Analyzing
+quality_binning/scalar/33
+                        time:   [2.7274 ns 2.7499 ns 2.7947 ns]
+                        thrpt:  [10.997 GiB/s 11.176 GiB/s 11.269 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  5 (5.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_binning/simd/63
+Benchmarking quality_binning/simd/63: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/63: Collecting 100 samples in estimated 5.0000 s (537M iterations)
+Benchmarking quality_binning/simd/63: Analyzing
+quality_binning/simd/63 time:   [9.3128 ns 9.3763 ns 9.4949 ns]
+                        thrpt:  [6.1794 GiB/s 6.2576 GiB/s 6.3003 GiB/s]
+Found 7 outliers among 100 measurements (7.00%)
+  2 (2.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_binning/scalar/63
+Benchmarking quality_binning/scalar/63: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/63: Collecting 100 samples in estimated 5.0000 s (293M iterations)
+Benchmarking quality_binning/scalar/63: Analyzing
+quality_binning/scalar/63
+                        time:   [17.032 ns 17.042 ns 17.053 ns]
+                        thrpt:  [3.4406 GiB/s 3.4429 GiB/s 3.4448 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  1 (1.00%) low mild
+  3 (3.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_binning/simd/64
+Benchmarking quality_binning/simd/64: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/64: Collecting 100 samples in estimated 5.0000 s (1.5B iterations)
+Benchmarking quality_binning/simd/64: Analyzing
+quality_binning/simd/64 time:   [3.3529 ns 3.3608 ns 3.3687 ns]
+                        thrpt:  [17.694 GiB/s 17.735 GiB/s 17.777 GiB/s]
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) low severe
+  4 (4.00%) low mild
+  1 (1.00%) high mild
+Benchmarking quality_binning/scalar/64
+Benchmarking quality_binning/scalar/64: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/64: Collecting 100 samples in estimated 5.0000 s (279M iterations)
+Benchmarking quality_binning/scalar/64: Analyzing
+quality_binning/scalar/64
+                        time:   [17.930 ns 17.945 ns 17.966 ns]
+                        thrpt:  [3.3176 GiB/s 3.3215 GiB/s 3.3244 GiB/s]
+Found 7 outliers among 100 measurements (7.00%)
+  2 (2.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_binning/simd/127
+Benchmarking quality_binning/simd/127: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/127: Collecting 100 samples in estimated 5.0001 s (455M iterations)
+Benchmarking quality_binning/simd/127: Analyzing
+quality_binning/simd/127
+                        time:   [10.965 ns 10.971 ns 10.979 ns]
+                        thrpt:  [10.774 GiB/s 10.781 GiB/s 10.787 GiB/s]
+Found 13 outliers among 100 measurements (13.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_binning/scalar/127
+Benchmarking quality_binning/scalar/127: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/127: Collecting 100 samples in estimated 5.0000 s (276M iterations)
+Benchmarking quality_binning/scalar/127: Analyzing
+quality_binning/scalar/127
+                        time:   [17.992 ns 18.193 ns 18.488 ns]
+                        thrpt:  [6.3975 GiB/s 6.5012 GiB/s 6.5739 GiB/s]
+Found 13 outliers among 100 measurements (13.00%)
+  5 (5.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_binning/simd/128
+Benchmarking quality_binning/simd/128: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/128: Collecting 100 samples in estimated 5.0000 s (907M iterations)
+Benchmarking quality_binning/simd/128: Analyzing
+quality_binning/simd/128
+                        time:   [5.5037 ns 5.5106 ns 5.5200 ns]
+                        thrpt:  [21.596 GiB/s 21.633 GiB/s 21.660 GiB/s]
+Found 15 outliers among 100 measurements (15.00%)
+  3 (3.00%) high mild
+  12 (12.00%) high severe
+Benchmarking quality_binning/scalar/128
+Benchmarking quality_binning/scalar/128: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/128: Collecting 100 samples in estimated 5.0000 s (264M iterations)
+Benchmarking quality_binning/scalar/128: Analyzing
+quality_binning/scalar/128
+                        time:   [18.911 ns 18.920 ns 18.933 ns]
+                        thrpt:  [6.2965 GiB/s 6.3006 GiB/s 6.3037 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  4 (4.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_binning/simd/255
+Benchmarking quality_binning/simd/255: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/255: Collecting 100 samples in estimated 5.0000 s (326M iterations)
+Benchmarking quality_binning/simd/255: Analyzing
+quality_binning/simd/255
+                        time:   [15.328 ns 15.340 ns 15.357 ns]
+                        thrpt:  [15.465 GiB/s 15.481 GiB/s 15.494 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  3 (3.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_binning/scalar/255
+Benchmarking quality_binning/scalar/255: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/255: Collecting 100 samples in estimated 5.0001 s (211M iterations)
+Benchmarking quality_binning/scalar/255: Analyzing
+quality_binning/scalar/255
+                        time:   [23.626 ns 23.641 ns 23.660 ns]
+                        thrpt:  [10.038 GiB/s 10.046 GiB/s 10.052 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  4 (4.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_binning/simd/256
+Benchmarking quality_binning/simd/256: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/256: Collecting 100 samples in estimated 5.0000 s (504M iterations)
+Benchmarking quality_binning/simd/256: Analyzing
+quality_binning/simd/256
+                        time:   [9.7161 ns 9.7216 ns 9.7287 ns]
+                        thrpt:  [24.507 GiB/s 24.525 GiB/s 24.539 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  3 (3.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_binning/scalar/256
+Benchmarking quality_binning/scalar/256: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/256: Collecting 100 samples in estimated 5.0000 s (201M iterations)
+Benchmarking quality_binning/scalar/256: Analyzing
+quality_binning/scalar/256
+                        time:   [24.642 ns 24.662 ns 24.686 ns]
+                        thrpt:  [9.6581 GiB/s 9.6675 GiB/s 9.6753 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  3 (3.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_binning/simd/512
+Benchmarking quality_binning/simd/512: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/512: Collecting 100 samples in estimated 5.0000 s (271M iterations)
+Benchmarking quality_binning/simd/512: Analyzing
+quality_binning/simd/512
+                        time:   [18.459 ns 18.635 ns 18.871 ns]
+                        thrpt:  [25.269 GiB/s 25.589 GiB/s 25.832 GiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  2 (2.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_binning/scalar/512
+Benchmarking quality_binning/scalar/512: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/512: Collecting 100 samples in estimated 5.0000 s (139M iterations)
+Benchmarking quality_binning/scalar/512: Analyzing
+quality_binning/scalar/512
+                        time:   [35.797 ns 35.820 ns 35.852 ns]
+                        thrpt:  [13.300 GiB/s 13.312 GiB/s 13.320 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  1 (1.00%) low mild
+  6 (6.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_binning/simd/1023
+Benchmarking quality_binning/simd/1023: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/1023: Collecting 100 samples in estimated 5.0001 s (120M iterations)
+Benchmarking quality_binning/simd/1023: Analyzing
+quality_binning/simd/1023
+                        time:   [41.652 ns 41.722 ns 41.818 ns]
+                        thrpt:  [22.783 GiB/s 22.836 GiB/s 22.874 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  2 (2.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_binning/scalar/1023
+Benchmarking quality_binning/scalar/1023: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/1023: Collecting 100 samples in estimated 5.0001 s (87M iterations)
+Benchmarking quality_binning/scalar/1023: Analyzing
+quality_binning/scalar/1023
+                        time:   [57.349 ns 57.391 ns 57.450 ns]
+                        thrpt:  [16.584 GiB/s 16.601 GiB/s 16.613 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  3 (3.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_binning/simd/1024
+Benchmarking quality_binning/simd/1024: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/1024: Collecting 100 samples in estimated 5.0000 s (139M iterations)
+Benchmarking quality_binning/simd/1024: Analyzing
+quality_binning/simd/1024
+                        time:   [35.910 ns 35.945 ns 35.990 ns]
+                        thrpt:  [26.498 GiB/s 26.532 GiB/s 26.557 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  2 (2.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_binning/scalar/1024
+Benchmarking quality_binning/scalar/1024: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/1024: Collecting 100 samples in estimated 5.0001 s (85M iterations)
+Benchmarking quality_binning/scalar/1024: Analyzing
+quality_binning/scalar/1024
+                        time:   [58.221 ns 58.265 ns 58.321 ns]
+                        thrpt:  [16.352 GiB/s 16.368 GiB/s 16.380 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  3 (3.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_binning/simd/2048
+Benchmarking quality_binning/simd/2048: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/2048: Collecting 100 samples in estimated 5.0003 s (70M iterations)
+Benchmarking quality_binning/simd/2048: Analyzing
+quality_binning/simd/2048
+                        time:   [71.132 ns 72.041 ns 73.394 ns]
+                        thrpt:  [25.988 GiB/s 26.476 GiB/s 26.814 GiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  5 (5.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_binning/scalar/2048
+Benchmarking quality_binning/scalar/2048: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/2048: Collecting 100 samples in estimated 5.0001 s (47M iterations)
+Benchmarking quality_binning/scalar/2048: Analyzing
+quality_binning/scalar/2048
+                        time:   [107.10 ns 107.14 ns 107.20 ns]
+                        thrpt:  [17.793 GiB/s 17.802 GiB/s 17.809 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  1 (1.00%) low mild
+  6 (6.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_binning/simd/4095
+Benchmarking quality_binning/simd/4095: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/4095: Collecting 100 samples in estimated 5.0004 s (33M iterations)
+Benchmarking quality_binning/simd/4095: Analyzing
+quality_binning/simd/4095
+                        time:   [150.01 ns 150.08 ns 150.15 ns]
+                        thrpt:  [25.399 GiB/s 25.412 GiB/s 25.424 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  2 (2.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_binning/scalar/4095
+Benchmarking quality_binning/scalar/4095: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/4095: Collecting 100 samples in estimated 5.0006 s (25M iterations)
+Benchmarking quality_binning/scalar/4095: Analyzing
+quality_binning/scalar/4095
+                        time:   [196.16 ns 196.30 ns 196.46 ns]
+                        thrpt:  [19.412 GiB/s 19.429 GiB/s 19.442 GiB/s]
+Found 7 outliers among 100 measurements (7.00%)
+  3 (3.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_binning/simd/4096
+Benchmarking quality_binning/simd/4096: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/4096: Collecting 100 samples in estimated 5.0004 s (34M iterations)
+Benchmarking quality_binning/simd/4096: Analyzing
+quality_binning/simd/4096
+                        time:   [145.64 ns 145.90 ns 146.22 ns]
+                        thrpt:  [26.089 GiB/s 26.146 GiB/s 26.193 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  2 (2.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_binning/scalar/4096
+Benchmarking quality_binning/scalar/4096: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/4096: Collecting 100 samples in estimated 5.0004 s (25M iterations)
+Benchmarking quality_binning/scalar/4096: Analyzing
+quality_binning/scalar/4096
+                        time:   [197.01 ns 197.38 ns 197.90 ns]
+                        thrpt:  [19.276 GiB/s 19.327 GiB/s 19.363 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  4 (4.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_binning/simd/8192
+Benchmarking quality_binning/simd/8192: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/8192: Collecting 100 samples in estimated 5.0013 s (17M iterations)
+Benchmarking quality_binning/simd/8192: Analyzing
+quality_binning/simd/8192
+                        time:   [285.91 ns 286.09 ns 286.31 ns]
+                        thrpt:  [26.647 GiB/s 26.668 GiB/s 26.684 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  6 (6.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_binning/scalar/8192
+Benchmarking quality_binning/scalar/8192: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/8192: Collecting 100 samples in estimated 5.0015 s (13M iterations)
+Benchmarking quality_binning/scalar/8192: Analyzing
+quality_binning/scalar/8192
+                        time:   [376.67 ns 376.94 ns 377.30 ns]
+                        thrpt:  [20.221 GiB/s 20.240 GiB/s 20.255 GiB/s]
+Found 13 outliers among 100 measurements (13.00%)
+  1 (1.00%) high mild
+  12 (12.00%) high severe
+Benchmarking quality_binning/simd/9999
+Benchmarking quality_binning/simd/9999: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/9999: Collecting 100 samples in estimated 5.0010 s (14M iterations)
+Benchmarking quality_binning/simd/9999: Analyzing
+quality_binning/simd/9999
+                        time:   [352.68 ns 352.95 ns 353.29 ns]
+                        thrpt:  [26.358 GiB/s 26.384 GiB/s 26.404 GiB/s]
+Found 7 outliers among 100 measurements (7.00%)
+  1 (1.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_binning/scalar/9999
+Benchmarking quality_binning/scalar/9999: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/9999: Collecting 100 samples in estimated 5.0014 s (11M iterations)
+Benchmarking quality_binning/scalar/9999: Analyzing
+quality_binning/scalar/9999
+                        time:   [455.28 ns 455.59 ns 455.94 ns]
+                        thrpt:  [20.424 GiB/s 20.440 GiB/s 20.454 GiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  6 (6.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_binning/simd/10000
+Benchmarking quality_binning/simd/10000: Warming up for 3.0000 s
+Benchmarking quality_binning/simd/10000: Collecting 100 samples in estimated 5.0004 s (14M iterations)
+Benchmarking quality_binning/simd/10000: Analyzing
+quality_binning/simd/10000
+                        time:   [347.58 ns 347.76 ns 347.98 ns]
+                        thrpt:  [26.763 GiB/s 26.780 GiB/s 26.794 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  4 (4.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_binning/scalar/10000
+Benchmarking quality_binning/scalar/10000: Warming up for 3.0000 s
+Benchmarking quality_binning/scalar/10000: Collecting 100 samples in estimated 5.0007 s (11M iterations)
+Benchmarking quality_binning/scalar/10000: Analyzing
+quality_binning/scalar/10000
+                        time:   [455.29 ns 456.97 ns 460.30 ns]
+                        thrpt:  [20.233 GiB/s 20.380 GiB/s 20.456 GiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  3 (3.00%) high mild
+  8 (8.00%) high severe
+
+Benchmarking quality_encode_into/allocating/15
+Benchmarking quality_encode_into/allocating/15: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/15: Collecting 100 samples in estimated 5.0001 s (76M iterations)
+Benchmarking quality_encode_into/allocating/15: Analyzing
+quality_encode_into/allocating/15
+                        time:   [65.027 ns 65.085 ns 65.144 ns]
+                        thrpt:  [219.59 MiB/s 219.79 MiB/s 219.99 MiB/s]
+                 change:
+                        time:   [+14.605% +14.952% +15.259%] (p = 0.00 < 0.05)
+                        thrpt:  [−13.239% −13.007% −12.744%]
+                        Performance has regressed.
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) low mild
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/15
+Benchmarking quality_encode_into/into_preallocated/15: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/15: Collecting 100 samples in estimated 5.0001 s (122M iterations)
+Benchmarking quality_encode_into/into_preallocated/15: Analyzing
+quality_encode_into/into_preallocated/15
+                        time:   [41.023 ns 41.046 ns 41.077 ns]
+                        thrpt:  [348.25 MiB/s 348.51 MiB/s 348.71 MiB/s]
+                 change:
+                        time:   [−3.3507% −3.2237% −3.0960%] (p = 0.00 < 0.05)
+                        thrpt:  [+3.1949% +3.3311% +3.4669%]
+                        Performance has improved.
+Found 11 outliers among 100 measurements (11.00%)
+  4 (4.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_encode_into/allocating/16
+Benchmarking quality_encode_into/allocating/16: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/16: Collecting 100 samples in estimated 5.0002 s (76M iterations)
+Benchmarking quality_encode_into/allocating/16: Analyzing
+quality_encode_into/allocating/16
+                        time:   [65.402 ns 65.462 ns 65.522 ns]
+                        thrpt:  [232.88 MiB/s 233.09 MiB/s 233.31 MiB/s]
+                 change:
+                        time:   [+22.773% +23.141% +23.466%] (p = 0.00 < 0.05)
+                        thrpt:  [−19.006% −18.792% −18.549%]
+                        Performance has regressed.
+Found 6 outliers among 100 measurements (6.00%)
+  2 (2.00%) low mild
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/16
+Benchmarking quality_encode_into/into_preallocated/16: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/16: Collecting 100 samples in estimated 5.0002 s (121M iterations)
+Benchmarking quality_encode_into/into_preallocated/16: Analyzing
+quality_encode_into/into_preallocated/16
+                        time:   [41.296 ns 41.320 ns 41.350 ns]
+                        thrpt:  [369.01 MiB/s 369.28 MiB/s 369.50 MiB/s]
+                 change:
+                        time:   [+19.684% +19.980% +20.263%] (p = 0.00 < 0.05)
+                        thrpt:  [−16.849% −16.652% −16.447%]
+                        Performance has regressed.
+Found 8 outliers among 100 measurements (8.00%)
+  5 (5.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_encode_into/allocating/17
+Benchmarking quality_encode_into/allocating/17: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/17: Collecting 100 samples in estimated 5.0003 s (72M iterations)
+Benchmarking quality_encode_into/allocating/17: Analyzing
+quality_encode_into/allocating/17
+                        time:   [69.135 ns 69.181 ns 69.239 ns]
+                        thrpt:  [234.15 MiB/s 234.35 MiB/s 234.50 MiB/s]
+                 change:
+                        time:   [+24.330% +24.673% +24.961%] (p = 0.00 < 0.05)
+                        thrpt:  [−19.975% −19.790% −19.569%]
+                        Performance has regressed.
+Found 8 outliers among 100 measurements (8.00%)
+  4 (4.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/17
+Benchmarking quality_encode_into/into_preallocated/17: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/17: Collecting 100 samples in estimated 5.0002 s (108M iterations)
+Benchmarking quality_encode_into/into_preallocated/17: Analyzing
+quality_encode_into/into_preallocated/17
+                        time:   [46.104 ns 46.218 ns 46.397 ns]
+                        thrpt:  [349.43 MiB/s 350.78 MiB/s 351.65 MiB/s]
+                 change:
+                        time:   [+37.569% +38.760% +40.786%] (p = 0.00 < 0.05)
+                        thrpt:  [−28.970% −27.933% −27.309%]
+                        Performance has regressed.
+Found 12 outliers among 100 measurements (12.00%)
+  4 (4.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_encode_into/allocating/32
+Benchmarking quality_encode_into/allocating/32: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/32: Collecting 100 samples in estimated 5.0002 s (86M iterations)
+Benchmarking quality_encode_into/allocating/32: Analyzing
+quality_encode_into/allocating/32
+                        time:   [57.642 ns 57.699 ns 57.763 ns]
+                        thrpt:  [528.32 MiB/s 528.91 MiB/s 529.43 MiB/s]
+                 change:
+                        time:   [−8.2253% −8.0017% −7.8104%] (p = 0.00 < 0.05)
+                        thrpt:  [+8.4721% +8.6977% +8.9625%]
+                        Performance has improved.
+Found 9 outliers among 100 measurements (9.00%)
+  4 (4.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/32
+Benchmarking quality_encode_into/into_preallocated/32: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/32: Collecting 100 samples in estimated 5.0001 s (144M iterations)
+Benchmarking quality_encode_into/into_preallocated/32: Analyzing
+quality_encode_into/into_preallocated/32
+                        time:   [34.636 ns 34.682 ns 34.736 ns]
+                        thrpt:  [878.56 MiB/s 879.92 MiB/s 881.10 MiB/s]
+                 change:
+                        time:   [−16.524% −16.341% −16.141%] (p = 0.00 < 0.05)
+                        thrpt:  [+19.248% +19.533% +19.794%]
+                        Performance has improved.
+Found 16 outliers among 100 measurements (16.00%)
+  4 (4.00%) high mild
+  12 (12.00%) high severe
+Benchmarking quality_encode_into/allocating/33
+Benchmarking quality_encode_into/allocating/33: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/33: Collecting 100 samples in estimated 5.0000 s (84M iterations)
+Benchmarking quality_encode_into/allocating/33: Analyzing
+quality_encode_into/allocating/33
+                        time:   [59.686 ns 59.727 ns 59.780 ns]
+                        thrpt:  [526.45 MiB/s 526.92 MiB/s 527.28 MiB/s]
+                 change:
+                        time:   [−6.5235% −6.3008% −6.1134%] (p = 0.00 < 0.05)
+                        thrpt:  [+6.5115% +6.7245% +6.9787%]
+                        Performance has improved.
+Found 10 outliers among 100 measurements (10.00%)
+  5 (5.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/33
+Benchmarking quality_encode_into/into_preallocated/33: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/33: Collecting 100 samples in estimated 5.0001 s (139M iterations)
+Benchmarking quality_encode_into/into_preallocated/33: Analyzing
+quality_encode_into/into_preallocated/33
+                        time:   [35.997 ns 36.020 ns 36.051 ns]
+                        thrpt:  [872.97 MiB/s 873.71 MiB/s 874.27 MiB/s]
+                 change:
+                        time:   [−18.390% −18.267% −18.148%] (p = 0.00 < 0.05)
+                        thrpt:  [+22.172% +22.350% +22.534%]
+                        Performance has improved.
+Found 7 outliers among 100 measurements (7.00%)
+  2 (2.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode_into/allocating/63
+Benchmarking quality_encode_into/allocating/63: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/63: Collecting 100 samples in estimated 5.0001 s (78M iterations)
+Benchmarking quality_encode_into/allocating/63: Analyzing
+quality_encode_into/allocating/63
+                        time:   [64.312 ns 64.381 ns 64.459 ns]
+                        thrpt:  [932.10 MiB/s 933.22 MiB/s 934.22 MiB/s]
+                 change:
+                        time:   [−24.155% −23.934% −23.728%] (p = 0.00 < 0.05)
+                        thrpt:  [+31.109% +31.464% +31.848%]
+                        Performance has improved.
+Found 5 outliers among 100 measurements (5.00%)
+  3 (3.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/63
+Benchmarking quality_encode_into/into_preallocated/63: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/63: Collecting 100 samples in estimated 5.0001 s (123M iterations)
+Benchmarking quality_encode_into/into_preallocated/63: Analyzing
+quality_encode_into/into_preallocated/63
+                        time:   [40.407 ns 40.547 ns 40.748 ns]
+                        thrpt:  [1.4399 GiB/s 1.4470 GiB/s 1.4521 GiB/s]
+                 change:
+                        time:   [−34.450% −33.869% −32.823%] (p = 0.00 < 0.05)
+                        thrpt:  [+48.860% +51.216% +52.555%]
+                        Performance has improved.
+Found 25 outliers among 100 measurements (25.00%)
+  13 (13.00%) low mild
+  5 (5.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_encode_into/allocating/64
+Benchmarking quality_encode_into/allocating/64: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/64: Collecting 100 samples in estimated 5.0001 s (84M iterations)
+Benchmarking quality_encode_into/allocating/64: Analyzing
+quality_encode_into/allocating/64
+                        time:   [59.099 ns 59.175 ns 59.258 ns]
+                        thrpt:  [1.0059 GiB/s 1.0073 GiB/s 1.0086 GiB/s]
+                 change:
+                        time:   [−26.283% −26.142% −25.998%] (p = 0.00 < 0.05)
+                        thrpt:  [+35.132% +35.395% +35.654%]
+                        Performance has improved.
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/64
+Benchmarking quality_encode_into/into_preallocated/64: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/64: Collecting 100 samples in estimated 5.0001 s (146M iterations)
+Benchmarking quality_encode_into/into_preallocated/64: Analyzing
+quality_encode_into/into_preallocated/64
+                        time:   [34.226 ns 34.251 ns 34.282 ns]
+                        thrpt:  [1.7387 GiB/s 1.7403 GiB/s 1.7415 GiB/s]
+                 change:
+                        time:   [−41.938% −41.789% −41.655%] (p = 0.00 < 0.05)
+                        thrpt:  [+71.395% +71.789% +72.229%]
+                        Performance has improved.
+Found 9 outliers among 100 measurements (9.00%)
+  4 (4.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode_into/allocating/127
+Benchmarking quality_encode_into/allocating/127: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/127: Collecting 100 samples in estimated 5.0003 s (68M iterations)
+Benchmarking quality_encode_into/allocating/127: Analyzing
+quality_encode_into/allocating/127
+                        time:   [73.499 ns 73.550 ns 73.612 ns]
+                        thrpt:  [1.6068 GiB/s 1.6081 GiB/s 1.6092 GiB/s]
+                 change:
+                        time:   [−42.168% −42.069% −41.980%] (p = 0.00 < 0.05)
+                        thrpt:  [+72.355% +72.619% +72.913%]
+                        Performance has improved.
+Found 10 outliers among 100 measurements (10.00%)
+  2 (2.00%) low mild
+  2 (2.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/127
+Benchmarking quality_encode_into/into_preallocated/127: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/127: Collecting 100 samples in estimated 5.0001 s (107M iterations)
+Benchmarking quality_encode_into/into_preallocated/127: Analyzing
+quality_encode_into/into_preallocated/127
+                        time:   [46.410 ns 46.446 ns 46.494 ns]
+                        thrpt:  [2.5439 GiB/s 2.5465 GiB/s 2.5485 GiB/s]
+                 change:
+                        time:   [−52.779% −52.693% −52.616%] (p = 0.00 < 0.05)
+                        thrpt:  [+111.04% +111.39% +111.77%]
+                        Performance has improved.
+Found 8 outliers among 100 measurements (8.00%)
+  5 (5.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_encode_into/allocating/128
+Benchmarking quality_encode_into/allocating/128: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/128: Collecting 100 samples in estimated 5.0001 s (74M iterations)
+Benchmarking quality_encode_into/allocating/128: Analyzing
+quality_encode_into/allocating/128
+                        time:   [67.410 ns 67.447 ns 67.491 ns]
+                        thrpt:  [1.7663 GiB/s 1.7675 GiB/s 1.7684 GiB/s]
+                 change:
+                        time:   [−44.861% −44.781% −44.704%] (p = 0.00 < 0.05)
+                        thrpt:  [+80.845% +81.096% +81.361%]
+                        Performance has improved.
+Found 12 outliers among 100 measurements (12.00%)
+  1 (1.00%) low mild
+  6 (6.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/128
+Benchmarking quality_encode_into/into_preallocated/128: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/128: Collecting 100 samples in estimated 5.0000 s (117M iterations)
+Benchmarking quality_encode_into/into_preallocated/128: Analyzing
+quality_encode_into/into_preallocated/128
+                        time:   [42.525 ns 42.656 ns 42.910 ns]
+                        thrpt:  [2.7781 GiB/s 2.7946 GiB/s 2.8033 GiB/s]
+                 change:
+                        time:   [−55.468% −55.179% −54.678%] (p = 0.00 < 0.05)
+                        thrpt:  [+120.64% +123.11% +124.56%]
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  5 (5.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_encode_into/allocating/255
+Benchmarking quality_encode_into/allocating/255: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/255: Collecting 100 samples in estimated 5.0001 s (62M iterations)
+Benchmarking quality_encode_into/allocating/255: Analyzing
+quality_encode_into/allocating/255
+                        time:   [79.650 ns 79.699 ns 79.753 ns]
+                        thrpt:  [2.9778 GiB/s 2.9798 GiB/s 2.9816 GiB/s]
+                 change:
+                        time:   [−58.811% −58.748% −58.691%] (p = 0.00 < 0.05)
+                        thrpt:  [+142.08% +142.41% +142.78%]
+                        Performance has improved.
+Found 11 outliers among 100 measurements (11.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/255
+Benchmarking quality_encode_into/into_preallocated/255: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/255: Collecting 100 samples in estimated 5.0002 s (99M iterations)
+Benchmarking quality_encode_into/into_preallocated/255: Analyzing
+quality_encode_into/into_preallocated/255
+                        time:   [50.444 ns 50.481 ns 50.525 ns]
+                        thrpt:  [4.7004 GiB/s 4.7045 GiB/s 4.7079 GiB/s]
+                 change:
+                        time:   [−67.549% −67.333% −67.204%] (p = 0.00 < 0.05)
+                        thrpt:  [+204.92% +206.12% +208.16%]
+                        Performance has improved.
+Found 7 outliers among 100 measurements (7.00%)
+  5 (5.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_encode_into/allocating/256
+Benchmarking quality_encode_into/allocating/256: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/256: Collecting 100 samples in estimated 5.0003 s (68M iterations)
+Benchmarking quality_encode_into/allocating/256: Analyzing
+quality_encode_into/allocating/256
+                        time:   [73.436 ns 73.492 ns 73.559 ns]
+                        thrpt:  [3.2412 GiB/s 3.2442 GiB/s 3.2466 GiB/s]
+                 change:
+                        time:   [−61.148% −61.079% −61.007%] (p = 0.00 < 0.05)
+                        thrpt:  [+156.46% +156.93% +157.39%]
+                        Performance has improved.
+Found 8 outliers among 100 measurements (8.00%)
+  4 (4.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/256
+Benchmarking quality_encode_into/into_preallocated/256: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/256: Collecting 100 samples in estimated 5.0002 s (114M iterations)
+Benchmarking quality_encode_into/into_preallocated/256: Analyzing
+quality_encode_into/into_preallocated/256
+                        time:   [43.939 ns 43.962 ns 43.987 ns]
+                        thrpt:  [5.4202 GiB/s 5.4233 GiB/s 5.4261 GiB/s]
+                 change:
+                        time:   [−70.366% −70.312% −70.262%] (p = 0.00 < 0.05)
+                        thrpt:  [+236.27% +236.84% +237.46%]
+                        Performance has improved.
+Found 7 outliers among 100 measurements (7.00%)
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_encode_into/allocating/512
+Benchmarking quality_encode_into/allocating/512: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/512: Collecting 100 samples in estimated 5.0004 s (56M iterations)
+Benchmarking quality_encode_into/allocating/512: Analyzing
+quality_encode_into/allocating/512
+                        time:   [89.564 ns 89.652 ns 89.762 ns]
+                        thrpt:  [5.3122 GiB/s 5.3187 GiB/s 5.3240 GiB/s]
+                 change:
+                        time:   [−72.231% −72.171% −72.116%] (p = 0.00 < 0.05)
+                        thrpt:  [+258.62% +259.34% +260.12%]
+                        Performance has improved.
+Found 8 outliers among 100 measurements (8.00%)
+  4 (4.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/512
+Benchmarking quality_encode_into/into_preallocated/512: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/512: Collecting 100 samples in estimated 5.0002 s (84M iterations)
+Benchmarking quality_encode_into/into_preallocated/512: Analyzing
+quality_encode_into/into_preallocated/512
+                        time:   [59.656 ns 60.112 ns 60.810 ns]
+                        thrpt:  [7.8414 GiB/s 7.9325 GiB/s 7.9931 GiB/s]
+                 change:
+                        time:   [−77.644% −77.422% −77.047%] (p = 0.00 < 0.05)
+                        thrpt:  [+335.68% +342.91% +347.31%]
+                        Performance has improved.
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_encode_into/allocating/1023
+Benchmarking quality_encode_into/allocating/1023: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/1023: Collecting 100 samples in estimated 5.0002 s (40M iterations)
+Benchmarking quality_encode_into/allocating/1023: Analyzing
+quality_encode_into/allocating/1023
+                        time:   [123.90 ns 124.00 ns 124.12 ns]
+                        thrpt:  [7.6763 GiB/s 7.6836 GiB/s 7.6899 GiB/s]
+                 change:
+                        time:   [−79.277% −79.242% −79.204%] (p = 0.00 < 0.05)
+                        thrpt:  [+380.87% +381.74% +382.56%]
+                        Performance has improved.
+Found 11 outliers among 100 measurements (11.00%)
+  4 (4.00%) low mild
+  2 (2.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/1023
+Benchmarking quality_encode_into/into_preallocated/1023: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/1023: Collecting 100 samples in estimated 5.0000 s (50M iterations)
+Benchmarking quality_encode_into/into_preallocated/1023: Analyzing
+quality_encode_into/into_preallocated/1023
+                        time:   [98.746 ns 98.869 ns 99.005 ns]
+                        thrpt:  [9.6232 GiB/s 9.6364 GiB/s 9.6484 GiB/s]
+                 change:
+                        time:   [−81.236% −81.104% −81.024%] (p = 0.00 < 0.05)
+                        thrpt:  [+426.97% +429.21% +432.93%]
+                        Performance has improved.
+Found 7 outliers among 100 measurements (7.00%)
+  3 (3.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_encode_into/allocating/1024
+Benchmarking quality_encode_into/allocating/1024: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/1024: Collecting 100 samples in estimated 5.0001 s (42M iterations)
+Benchmarking quality_encode_into/allocating/1024: Analyzing
+quality_encode_into/allocating/1024
+                        time:   [117.50 ns 117.58 ns 117.67 ns]
+                        thrpt:  [8.1046 GiB/s 8.1111 GiB/s 8.1163 GiB/s]
+                 change:
+                        time:   [−80.205% −80.172% −80.142%] (p = 0.00 < 0.05)
+                        thrpt:  [+403.59% +404.35% +405.18%]
+                        Performance has improved.
+Found 12 outliers among 100 measurements (12.00%)
+  3 (3.00%) low mild
+  8 (8.00%) high mild
+  1 (1.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/1024
+Benchmarking quality_encode_into/into_preallocated/1024: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/1024: Collecting 100 samples in estimated 5.0001 s (54M iterations)
+Benchmarking quality_encode_into/into_preallocated/1024: Analyzing
+quality_encode_into/into_preallocated/1024
+                        time:   [92.060 ns 92.189 ns 92.374 ns]
+                        thrpt:  [10.324 GiB/s 10.345 GiB/s 10.359 GiB/s]
+                 change:
+                        time:   [−82.176% −82.124% −82.075%] (p = 0.00 < 0.05)
+                        thrpt:  [+457.89% +459.42% +461.03%]
+                        Performance has improved.
+Found 9 outliers among 100 measurements (9.00%)
+  4 (4.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode_into/allocating/2048
+Benchmarking quality_encode_into/allocating/2048: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/2048: Collecting 100 samples in estimated 5.0004 s (24M iterations)
+Benchmarking quality_encode_into/allocating/2048: Analyzing
+quality_encode_into/allocating/2048
+                        time:   [206.95 ns 207.07 ns 207.21 ns]
+                        thrpt:  [9.2048 GiB/s 9.2109 GiB/s 9.2164 GiB/s]
+                 change:
+                        time:   [−82.214% −82.179% −82.147%] (p = 0.00 < 0.05)
+                        thrpt:  [+460.14% +461.15% +462.22%]
+                        Performance has improved.
+Found 11 outliers among 100 measurements (11.00%)
+  3 (3.00%) low mild
+  5 (5.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/2048
+Benchmarking quality_encode_into/into_preallocated/2048: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/2048: Collecting 100 samples in estimated 5.0008 s (28M iterations)
+Benchmarking quality_encode_into/into_preallocated/2048: Analyzing
+quality_encode_into/into_preallocated/2048
+                        time:   [179.64 ns 179.73 ns 179.83 ns]
+                        thrpt:  [10.606 GiB/s 10.612 GiB/s 10.618 GiB/s]
+                 change:
+                        time:   [−82.546% −82.501% −82.461%] (p = 0.00 < 0.05)
+                        thrpt:  [+470.16% +471.47% +472.92%]
+                        Performance has improved.
+Found 9 outliers among 100 measurements (9.00%)
+  4 (4.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode_into/allocating/4095
+Benchmarking quality_encode_into/allocating/4095: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/4095: Collecting 100 samples in estimated 5.0001 s (14M iterations)
+Benchmarking quality_encode_into/allocating/4095: Analyzing
+quality_encode_into/allocating/4095
+                        time:   [363.29 ns 363.52 ns 363.84 ns]
+                        thrpt:  [10.482 GiB/s 10.491 GiB/s 10.498 GiB/s]
+                 change:
+                        time:   [−83.811% −83.781% −83.753%] (p = 0.00 < 0.05)
+                        thrpt:  [+515.50% +516.58% +517.72%]
+                        Performance has improved.
+Found 8 outliers among 100 measurements (8.00%)
+  5 (5.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/4095
+Benchmarking quality_encode_into/into_preallocated/4095: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/4095: Collecting 100 samples in estimated 5.0007 s (15M iterations)
+Benchmarking quality_encode_into/into_preallocated/4095: Analyzing
+quality_encode_into/into_preallocated/4095
+                        time:   [328.60 ns 332.53 ns 338.28 ns]
+                        thrpt:  [11.274 GiB/s 11.469 GiB/s 11.606 GiB/s]
+                 change:
+                        time:   [−83.658% −83.557% −83.437%] (p = 0.00 < 0.05)
+                        thrpt:  [+503.77% +508.15% +511.92%]
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  5 (5.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_encode_into/allocating/4096
+Benchmarking quality_encode_into/allocating/4096: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/4096: Collecting 100 samples in estimated 5.0002 s (14M iterations)
+Benchmarking quality_encode_into/allocating/4096: Analyzing
+quality_encode_into/allocating/4096
+                        time:   [358.92 ns 359.12 ns 359.36 ns]
+                        thrpt:  [10.615 GiB/s 10.622 GiB/s 10.628 GiB/s]
+                 change:
+                        time:   [−83.969% −83.944% −83.921%] (p = 0.00 < 0.05)
+                        thrpt:  [+521.93% +522.81% +523.79%]
+                        Performance has improved.
+Found 10 outliers among 100 measurements (10.00%)
+  2 (2.00%) low mild
+  4 (4.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/4096
+Benchmarking quality_encode_into/into_preallocated/4096: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/4096: Collecting 100 samples in estimated 5.0003 s (15M iterations)
+Benchmarking quality_encode_into/into_preallocated/4096: Analyzing
+quality_encode_into/into_preallocated/4096
+                        time:   [323.69 ns 323.93 ns 324.24 ns]
+                        thrpt:  [11.765 GiB/s 11.776 GiB/s 11.785 GiB/s]
+                 change:
+                        time:   [−83.827% −83.801% −83.772%] (p = 0.00 < 0.05)
+                        thrpt:  [+516.23% +517.33% +518.32%]
+                        Performance has improved.
+Found 10 outliers among 100 measurements (10.00%)
+  5 (5.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode_into/allocating/8192
+Benchmarking quality_encode_into/allocating/8192: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/8192: Collecting 100 samples in estimated 5.0015 s (7.8M iterations)
+Benchmarking quality_encode_into/allocating/8192: Analyzing
+quality_encode_into/allocating/8192
+                        time:   [636.45 ns 636.72 ns 637.02 ns]
+                        thrpt:  [11.977 GiB/s 11.982 GiB/s 11.987 GiB/s]
+                 change:
+                        time:   [−85.489% −85.466% −85.445%] (p = 0.00 < 0.05)
+                        thrpt:  [+587.04% +588.03% +589.11%]
+                        Performance has improved.
+Found 15 outliers among 100 measurements (15.00%)
+  1 (1.00%) low severe
+  3 (3.00%) low mild
+  3 (3.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/8192
+Benchmarking quality_encode_into/into_preallocated/8192: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/8192: Collecting 100 samples in estimated 5.0010 s (8.2M iterations)
+Benchmarking quality_encode_into/into_preallocated/8192: Analyzing
+quality_encode_into/into_preallocated/8192
+                        time:   [606.12 ns 606.37 ns 606.66 ns]
+                        thrpt:  [12.576 GiB/s 12.582 GiB/s 12.587 GiB/s]
+                 change:
+                        time:   [−84.604% −84.578% −84.551%] (p = 0.00 < 0.05)
+                        thrpt:  [+547.28% +548.44% +549.53%]
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  7 (7.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_encode_into/allocating/9999
+Benchmarking quality_encode_into/allocating/9999: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/9999: Collecting 100 samples in estimated 5.0009 s (6.5M iterations)
+Benchmarking quality_encode_into/allocating/9999: Analyzing
+quality_encode_into/allocating/9999
+                        time:   [765.02 ns 765.46 ns 765.95 ns]
+                        thrpt:  [12.158 GiB/s 12.166 GiB/s 12.173 GiB/s]
+                 change:
+                        time:   [−85.655% −85.630% −85.605%] (p = 0.00 < 0.05)
+                        thrpt:  [+594.68% +595.89% +597.08%]
+                        Performance has improved.
+Found 9 outliers among 100 measurements (9.00%)
+  4 (4.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/9999
+Benchmarking quality_encode_into/into_preallocated/9999: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/9999: Collecting 100 samples in estimated 5.0023 s (6.8M iterations)
+Benchmarking quality_encode_into/into_preallocated/9999: Analyzing
+quality_encode_into/into_preallocated/9999
+                        time:   [731.16 ns 731.78 ns 732.65 ns]
+                        thrpt:  [12.710 GiB/s 12.726 GiB/s 12.736 GiB/s]
+                 change:
+                        time:   [−84.803% −84.722% −84.666%] (p = 0.00 < 0.05)
+                        thrpt:  [+552.13% +554.55% +558.01%]
+                        Performance has improved.
+Found 12 outliers among 100 measurements (12.00%)
+  3 (3.00%) high mild
+  9 (9.00%) high severe
+Benchmarking quality_encode_into/allocating/10000
+Benchmarking quality_encode_into/allocating/10000: Warming up for 3.0000 s
+Benchmarking quality_encode_into/allocating/10000: Collecting 100 samples in estimated 5.0006 s (6.5M iterations)
+Benchmarking quality_encode_into/allocating/10000: Analyzing
+quality_encode_into/allocating/10000
+                        time:   [758.71 ns 759.22 ns 759.90 ns]
+                        thrpt:  [12.256 GiB/s 12.267 GiB/s 12.275 GiB/s]
+                 change:
+                        time:   [−85.780% −85.746% −85.719%] (p = 0.00 < 0.05)
+                        thrpt:  [+600.21% +601.55% +603.22%]
+                        Performance has improved.
+Found 6 outliers among 100 measurements (6.00%)
+  2 (2.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_encode_into/into_preallocated/10000
+Benchmarking quality_encode_into/into_preallocated/10000: Warming up for 3.0000 s
+Benchmarking quality_encode_into/into_preallocated/10000: Collecting 100 samples in estimated 5.0018 s (6.9M iterations)
+Benchmarking quality_encode_into/into_preallocated/10000: Analyzing
+quality_encode_into/into_preallocated/10000
+                        time:   [725.47 ns 725.89 ns 726.39 ns]
+                        thrpt:  [12.821 GiB/s 12.830 GiB/s 12.837 GiB/s]
+                 change:
+                        time:   [−84.998% −84.966% −84.937%] (p = 0.00 < 0.05)
+                        thrpt:  [+563.87% +565.14% +566.58%]
+                        Performance has improved.
+Found 6 outliers among 100 measurements (6.00%)
+  3 (3.00%) high mild
+  3 (3.00%) high severe
+
+Benchmarking quality_decode_into/allocating/15
+Benchmarking quality_decode_into/allocating/15: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/15: Collecting 100 samples in estimated 5.0001 s (154M iterations)
+Benchmarking quality_decode_into/allocating/15: Analyzing
+quality_decode_into/allocating/15
+                        time:   [32.394 ns 32.408 ns 32.425 ns]
+                        thrpt:  [441.17 MiB/s 441.40 MiB/s 441.60 MiB/s]
+Found 5 outliers among 100 measurements (5.00%)
+  5 (5.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/15
+Benchmarking quality_decode_into/into_preallocated/15: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/15: Collecting 100 samples in estimated 5.0000 s (373M iterations)
+Benchmarking quality_decode_into/into_preallocated/15: Analyzing
+quality_decode_into/into_preallocated/15
+                        time:   [13.394 ns 13.401 ns 13.410 ns]
+                        thrpt:  [1.0418 GiB/s 1.0425 GiB/s 1.0430 GiB/s]
+Found 13 outliers among 100 measurements (13.00%)
+  2 (2.00%) low mild
+  5 (5.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_decode_into/allocating/16
+Benchmarking quality_decode_into/allocating/16: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/16: Collecting 100 samples in estimated 5.0000 s (150M iterations)
+Benchmarking quality_decode_into/allocating/16: Analyzing
+quality_decode_into/allocating/16
+                        time:   [33.340 ns 33.589 ns 34.107 ns]
+                        thrpt:  [447.39 MiB/s 454.28 MiB/s 457.67 MiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  3 (3.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/16
+Benchmarking quality_decode_into/into_preallocated/16: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/16: Collecting 100 samples in estimated 5.0000 s (349M iterations)
+Benchmarking quality_decode_into/into_preallocated/16: Analyzing
+quality_decode_into/into_preallocated/16
+                        time:   [14.332 ns 14.466 ns 14.670 ns]
+                        thrpt:  [1.0158 GiB/s 1.0301 GiB/s 1.0397 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  6 (6.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_decode_into/allocating/17
+Benchmarking quality_decode_into/allocating/17: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/17: Collecting 100 samples in estimated 5.0002 s (133M iterations)
+Benchmarking quality_decode_into/allocating/17: Analyzing
+quality_decode_into/allocating/17
+                        time:   [37.726 ns 37.799 ns 37.891 ns]
+                        thrpt:  [427.87 MiB/s 428.91 MiB/s 429.74 MiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  2 (2.00%) high mild
+  9 (9.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/17
+Benchmarking quality_decode_into/into_preallocated/17: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/17: Collecting 100 samples in estimated 5.0000 s (341M iterations)
+Benchmarking quality_decode_into/into_preallocated/17: Analyzing
+quality_decode_into/into_preallocated/17
+                        time:   [14.641 ns 14.651 ns 14.664 ns]
+                        thrpt:  [1.0797 GiB/s 1.0806 GiB/s 1.0814 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  5 (5.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_decode_into/allocating/32
+Benchmarking quality_decode_into/allocating/32: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/32: Collecting 100 samples in estimated 5.0001 s (129M iterations)
+Benchmarking quality_decode_into/allocating/32: Analyzing
+quality_decode_into/allocating/32
+                        time:   [38.624 ns 38.650 ns 38.688 ns]
+                        thrpt:  [788.82 MiB/s 789.58 MiB/s 790.11 MiB/s]
+Found 7 outliers among 100 measurements (7.00%)
+  1 (1.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/32
+Benchmarking quality_decode_into/into_preallocated/32: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/32: Collecting 100 samples in estimated 5.0000 s (321M iterations)
+Benchmarking quality_decode_into/into_preallocated/32: Analyzing
+quality_decode_into/into_preallocated/32
+                        time:   [15.573 ns 15.583 ns 15.597 ns]
+                        thrpt:  [1.9108 GiB/s 1.9125 GiB/s 1.9137 GiB/s]
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_decode_into/allocating/33
+Benchmarking quality_decode_into/allocating/33: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/33: Collecting 100 samples in estimated 5.0001 s (122M iterations)
+Benchmarking quality_decode_into/allocating/33: Analyzing
+quality_decode_into/allocating/33
+                        time:   [40.881 ns 41.205 ns 41.665 ns]
+                        thrpt:  [755.34 MiB/s 763.77 MiB/s 769.83 MiB/s]
+Found 6 outliers among 100 measurements (6.00%)
+  2 (2.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/33
+Benchmarking quality_decode_into/into_preallocated/33: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/33: Collecting 100 samples in estimated 5.0000 s (291M iterations)
+Benchmarking quality_decode_into/into_preallocated/33: Analyzing
+quality_decode_into/into_preallocated/33
+                        time:   [17.469 ns 17.625 ns 17.843 ns]
+                        thrpt:  [1.7224 GiB/s 1.7437 GiB/s 1.7593 GiB/s]
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high severe
+Benchmarking quality_decode_into/allocating/63
+Benchmarking quality_decode_into/allocating/63: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/63: Collecting 100 samples in estimated 5.0000 s (122M iterations)
+Benchmarking quality_decode_into/allocating/63: Analyzing
+quality_decode_into/allocating/63
+                        time:   [40.199 ns 40.240 ns 40.291 ns]
+                        thrpt:  [1.4563 GiB/s 1.4581 GiB/s 1.4596 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  2 (2.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/63
+Benchmarking quality_decode_into/into_preallocated/63: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/63: Collecting 100 samples in estimated 5.0000 s (251M iterations)
+Benchmarking quality_decode_into/into_preallocated/63: Analyzing
+quality_decode_into/into_preallocated/63
+                        time:   [19.972 ns 20.056 ns 20.152 ns]
+                        thrpt:  [2.9115 GiB/s 2.9254 GiB/s 2.9378 GiB/s]
+Found 15 outliers among 100 measurements (15.00%)
+  3 (3.00%) high mild
+  12 (12.00%) high severe
+Benchmarking quality_decode_into/allocating/64
+Benchmarking quality_decode_into/allocating/64: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/64: Collecting 100 samples in estimated 5.0002 s (123M iterations)
+Benchmarking quality_decode_into/allocating/64: Analyzing
+quality_decode_into/allocating/64
+                        time:   [40.502 ns 40.522 ns 40.545 ns]
+                        thrpt:  [1.4701 GiB/s 1.4709 GiB/s 1.4716 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  5 (5.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/64
+Benchmarking quality_decode_into/into_preallocated/64: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/64: Collecting 100 samples in estimated 5.0001 s (247M iterations)
+Benchmarking quality_decode_into/into_preallocated/64: Analyzing
+quality_decode_into/into_preallocated/64
+                        time:   [20.247 ns 20.259 ns 20.274 ns]
+                        thrpt:  [2.9400 GiB/s 2.9421 GiB/s 2.9439 GiB/s]
+Found 5 outliers among 100 measurements (5.00%)
+  3 (3.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_decode_into/allocating/127
+Benchmarking quality_decode_into/allocating/127: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/127: Collecting 100 samples in estimated 5.0001 s (139M iterations)
+Benchmarking quality_decode_into/allocating/127: Analyzing
+quality_decode_into/allocating/127
+                        time:   [35.819 ns 35.960 ns 36.240 ns]
+                        thrpt:  [3.2638 GiB/s 3.2891 GiB/s 3.3021 GiB/s]
+Found 7 outliers among 100 measurements (7.00%)
+  2 (2.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/127
+Benchmarking quality_decode_into/into_preallocated/127: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/127: Collecting 100 samples in estimated 5.0000 s (319M iterations)
+Benchmarking quality_decode_into/into_preallocated/127: Analyzing
+quality_decode_into/into_preallocated/127
+                        time:   [15.573 ns 15.580 ns 15.586 ns]
+                        thrpt:  [7.5886 GiB/s 7.5918 GiB/s 7.5948 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  4 (4.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_decode_into/allocating/128
+Benchmarking quality_decode_into/allocating/128: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/128: Collecting 100 samples in estimated 5.0002 s (139M iterations)
+Benchmarking quality_decode_into/allocating/128: Analyzing
+quality_decode_into/allocating/128
+                        time:   [35.839 ns 35.885 ns 35.946 ns]
+                        thrpt:  [3.3163 GiB/s 3.3220 GiB/s 3.3262 GiB/s]
+Found 19 outliers among 100 measurements (19.00%)
+  1 (1.00%) high mild
+  18 (18.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/128
+Benchmarking quality_decode_into/into_preallocated/128: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/128: Collecting 100 samples in estimated 5.0000 s (321M iterations)
+Benchmarking quality_decode_into/into_preallocated/128: Analyzing
+quality_decode_into/into_preallocated/128
+                        time:   [15.574 ns 15.580 ns 15.586 ns]
+                        thrpt:  [7.6483 GiB/s 7.6515 GiB/s 7.6544 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  4 (4.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_decode_into/allocating/255
+Benchmarking quality_decode_into/allocating/255: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/255: Collecting 100 samples in estimated 5.0001 s (139M iterations)
+Benchmarking quality_decode_into/allocating/255: Analyzing
+quality_decode_into/allocating/255
+                        time:   [35.870 ns 35.929 ns 36.023 ns]
+                        thrpt:  [6.5927 GiB/s 6.6099 GiB/s 6.6208 GiB/s]
+Found 16 outliers among 100 measurements (16.00%)
+  1 (1.00%) high mild
+  15 (15.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/255
+Benchmarking quality_decode_into/into_preallocated/255: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/255: Collecting 100 samples in estimated 5.0000 s (321M iterations)
+Benchmarking quality_decode_into/into_preallocated/255: Analyzing
+quality_decode_into/into_preallocated/255
+                        time:   [15.577 ns 15.586 ns 15.596 ns]
+                        thrpt:  [15.227 GiB/s 15.237 GiB/s 15.246 GiB/s]
+Found 13 outliers among 100 measurements (13.00%)
+  7 (7.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_decode_into/allocating/256
+Benchmarking quality_decode_into/allocating/256: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/256: Collecting 100 samples in estimated 5.0001 s (140M iterations)
+Benchmarking quality_decode_into/allocating/256: Analyzing
+quality_decode_into/allocating/256
+                        time:   [35.574 ns 35.785 ns 36.205 ns]
+                        thrpt:  [6.5852 GiB/s 6.6625 GiB/s 6.7021 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  2 (2.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/256
+Benchmarking quality_decode_into/into_preallocated/256: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/256: Collecting 100 samples in estimated 5.0001 s (327M iterations)
+Benchmarking quality_decode_into/into_preallocated/256: Analyzing
+quality_decode_into/into_preallocated/256
+                        time:   [15.281 ns 15.363 ns 15.486 ns]
+                        thrpt:  [15.396 GiB/s 15.520 GiB/s 15.603 GiB/s]
+Found 14 outliers among 100 measurements (14.00%)
+  5 (5.00%) high mild
+  9 (9.00%) high severe
+Benchmarking quality_decode_into/allocating/512
+Benchmarking quality_decode_into/allocating/512: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/512: Collecting 100 samples in estimated 5.0000 s (111M iterations)
+Benchmarking quality_decode_into/allocating/512: Analyzing
+quality_decode_into/allocating/512
+                        time:   [44.935 ns 44.997 ns 45.078 ns]
+                        thrpt:  [10.578 GiB/s 10.597 GiB/s 10.612 GiB/s]
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/512
+Benchmarking quality_decode_into/into_preallocated/512: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/512: Collecting 100 samples in estimated 5.0001 s (226M iterations)
+Benchmarking quality_decode_into/into_preallocated/512: Analyzing
+quality_decode_into/into_preallocated/512
+                        time:   [22.115 ns 22.127 ns 22.141 ns]
+                        thrpt:  [21.537 GiB/s 21.550 GiB/s 21.562 GiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  4 (4.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_decode_into/allocating/1023
+Benchmarking quality_decode_into/allocating/1023: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/1023: Collecting 100 samples in estimated 5.0002 s (103M iterations)
+Benchmarking quality_decode_into/allocating/1023: Analyzing
+quality_decode_into/allocating/1023
+                        time:   [48.539 ns 48.568 ns 48.602 ns]
+                        thrpt:  [19.603 GiB/s 19.617 GiB/s 19.628 GiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  1 (1.00%) low mild
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/1023
+Benchmarking quality_decode_into/into_preallocated/1023: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/1023: Collecting 100 samples in estimated 5.0001 s (250M iterations)
+Benchmarking quality_decode_into/into_preallocated/1023: Analyzing
+quality_decode_into/into_preallocated/1023
+                        time:   [19.961 ns 19.974 ns 19.991 ns]
+                        thrpt:  [47.660 GiB/s 47.700 GiB/s 47.729 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  5 (5.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_decode_into/allocating/1024
+Benchmarking quality_decode_into/allocating/1024: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/1024: Collecting 100 samples in estimated 5.0001 s (103M iterations)
+Benchmarking quality_decode_into/allocating/1024: Analyzing
+quality_decode_into/allocating/1024
+                        time:   [48.461 ns 48.495 ns 48.540 ns]
+                        thrpt:  [19.647 GiB/s 19.665 GiB/s 19.679 GiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  2 (2.00%) low mild
+  4 (4.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/1024
+Benchmarking quality_decode_into/into_preallocated/1024: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/1024: Collecting 100 samples in estimated 5.0000 s (250M iterations)
+Benchmarking quality_decode_into/into_preallocated/1024: Analyzing
+quality_decode_into/into_preallocated/1024
+                        time:   [19.975 ns 20.154 ns 20.404 ns]
+                        thrpt:  [46.740 GiB/s 47.320 GiB/s 47.744 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  5 (5.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_decode_into/allocating/2048
+Benchmarking quality_decode_into/allocating/2048: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/2048: Collecting 100 samples in estimated 5.0003 s (69M iterations)
+Benchmarking quality_decode_into/allocating/2048: Analyzing
+quality_decode_into/allocating/2048
+                        time:   [72.649 ns 72.740 ns 72.855 ns]
+                        thrpt:  [26.180 GiB/s 26.222 GiB/s 26.254 GiB/s]
+Found 7 outliers among 100 measurements (7.00%)
+  2 (2.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/2048
+Benchmarking quality_decode_into/into_preallocated/2048: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/2048: Collecting 100 samples in estimated 5.0000 s (167M iterations)
+Benchmarking quality_decode_into/into_preallocated/2048: Analyzing
+quality_decode_into/into_preallocated/2048
+                        time:   [29.980 ns 29.999 ns 30.024 ns]
+                        thrpt:  [63.528 GiB/s 63.581 GiB/s 63.620 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  5 (5.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_decode_into/allocating/4095
+Benchmarking quality_decode_into/allocating/4095: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/4095: Collecting 100 samples in estimated 5.0003 s (44M iterations)
+Benchmarking quality_decode_into/allocating/4095: Analyzing
+quality_decode_into/allocating/4095
+                        time:   [113.22 ns 113.40 ns 113.66 ns]
+                        thrpt:  [33.554 GiB/s 33.630 GiB/s 33.686 GiB/s]
+Found 13 outliers among 100 measurements (13.00%)
+  6 (6.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/4095
+Benchmarking quality_decode_into/into_preallocated/4095: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/4095: Collecting 100 samples in estimated 5.0000 s (102M iterations)
+Benchmarking quality_decode_into/into_preallocated/4095: Analyzing
+quality_decode_into/into_preallocated/4095
+                        time:   [48.665 ns 48.866 ns 49.276 ns]
+                        thrpt:  [77.396 GiB/s 78.046 GiB/s 78.368 GiB/s]
+Found 6 outliers among 100 measurements (6.00%)
+  6 (6.00%) high severe
+Benchmarking quality_decode_into/allocating/4096
+Benchmarking quality_decode_into/allocating/4096: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/4096: Collecting 100 samples in estimated 5.0002 s (44M iterations)
+Benchmarking quality_decode_into/allocating/4096: Analyzing
+quality_decode_into/allocating/4096
+                        time:   [113.22 ns 113.33 ns 113.45 ns]
+                        thrpt:  [33.624 GiB/s 33.661 GiB/s 33.692 GiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  3 (3.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/4096
+Benchmarking quality_decode_into/into_preallocated/4096: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/4096: Collecting 100 samples in estimated 5.0002 s (101M iterations)
+Benchmarking quality_decode_into/into_preallocated/4096: Analyzing
+quality_decode_into/into_preallocated/4096
+                        time:   [48.579 ns 48.674 ns 48.844 ns]
+                        thrpt:  [78.100 GiB/s 78.372 GiB/s 78.526 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  3 (3.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_decode_into/allocating/8192
+Benchmarking quality_decode_into/allocating/8192: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/8192: Collecting 100 samples in estimated 5.0008 s (23M iterations)
+Benchmarking quality_decode_into/allocating/8192: Analyzing
+quality_decode_into/allocating/8192
+                        time:   [209.36 ns 210.53 ns 211.88 ns]
+                        thrpt:  [36.008 GiB/s 36.239 GiB/s 36.441 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  4 (4.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/8192
+Benchmarking quality_decode_into/into_preallocated/8192: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/8192: Collecting 100 samples in estimated 5.0000 s (50M iterations)
+Benchmarking quality_decode_into/into_preallocated/8192: Analyzing
+quality_decode_into/into_preallocated/8192
+                        time:   [98.130 ns 98.814 ns 99.694 ns]
+                        thrpt:  [76.528 GiB/s 77.210 GiB/s 77.748 GiB/s]
+Found 14 outliers among 100 measurements (14.00%)
+  5 (5.00%) high mild
+  9 (9.00%) high severe
+Benchmarking quality_decode_into/allocating/9999
+Benchmarking quality_decode_into/allocating/9999: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/9999: Collecting 100 samples in estimated 5.0011 s (19M iterations)
+Benchmarking quality_decode_into/allocating/9999: Analyzing
+quality_decode_into/allocating/9999
+                        time:   [252.17 ns 257.33 ns 264.31 ns]
+                        thrpt:  [35.233 GiB/s 36.188 GiB/s 36.928 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  6 (6.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/9999
+Benchmarking quality_decode_into/into_preallocated/9999: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/9999: Collecting 100 samples in estimated 5.0003 s (42M iterations)
+Benchmarking quality_decode_into/into_preallocated/9999: Analyzing
+quality_decode_into/into_preallocated/9999
+                        time:   [116.85 ns 118.26 ns 120.00 ns]
+                        thrpt:  [77.605 GiB/s 78.746 GiB/s 79.692 GiB/s]
+Found 18 outliers among 100 measurements (18.00%)
+  6 (6.00%) high mild
+  12 (12.00%) high severe
+Benchmarking quality_decode_into/allocating/10000
+Benchmarking quality_decode_into/allocating/10000: Warming up for 3.0000 s
+Benchmarking quality_decode_into/allocating/10000: Collecting 100 samples in estimated 5.0009 s (20M iterations)
+Benchmarking quality_decode_into/allocating/10000: Analyzing
+quality_decode_into/allocating/10000
+                        time:   [250.36 ns 254.33 ns 259.81 ns]
+                        thrpt:  [35.846 GiB/s 36.619 GiB/s 37.200 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  8 (8.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_decode_into/into_preallocated/10000
+Benchmarking quality_decode_into/into_preallocated/10000: Warming up for 3.0000 s
+Benchmarking quality_decode_into/into_preallocated/10000: Collecting 100 samples in estimated 5.0004 s (42M iterations)
+Benchmarking quality_decode_into/into_preallocated/10000: Analyzing
+quality_decode_into/into_preallocated/10000
+                        time:   [118.15 ns 120.82 ns 123.90 ns]
+                        thrpt:  [75.167 GiB/s 77.082 GiB/s 78.822 GiB/s]
+Found 13 outliers among 100 measurements (13.00%)
+  5 (5.00%) high mild
+  8 (8.00%) high severe
+
+Benchmarking quality_stats/compute/15
+Benchmarking quality_stats/compute/15: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/15: Collecting 100 samples in estimated 5.0001 s (163M iterations)
+Benchmarking quality_stats/compute/15: Analyzing
+quality_stats/compute/15
+                        time:   [30.658 ns 30.896 ns 31.256 ns]
+                        thrpt:  [457.68 MiB/s 463.00 MiB/s 466.61 MiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  2 (2.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_stats/compute/16
+Benchmarking quality_stats/compute/16: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/16: Collecting 100 samples in estimated 5.0001 s (153M iterations)
+Benchmarking quality_stats/compute/16: Analyzing
+quality_stats/compute/16
+                        time:   [32.721 ns 32.762 ns 32.813 ns]
+                        thrpt:  [465.03 MiB/s 465.75 MiB/s 466.33 MiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  5 (5.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_stats/compute/17
+Benchmarking quality_stats/compute/17: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/17: Collecting 100 samples in estimated 5.0001 s (144M iterations)
+Benchmarking quality_stats/compute/17: Analyzing
+quality_stats/compute/17
+                        time:   [34.714 ns 34.736 ns 34.766 ns]
+                        thrpt:  [466.33 MiB/s 466.74 MiB/s 467.03 MiB/s]
+Found 7 outliers among 100 measurements (7.00%)
+  1 (1.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_stats/compute/32
+Benchmarking quality_stats/compute/32: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/32: Collecting 100 samples in estimated 5.0001 s (77M iterations)
+Benchmarking quality_stats/compute/32: Analyzing
+quality_stats/compute/32
+                        time:   [65.268 ns 65.304 ns 65.350 ns]
+                        thrpt:  [466.99 MiB/s 467.31 MiB/s 467.58 MiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  4 (4.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_stats/compute/33
+Benchmarking quality_stats/compute/33: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/33: Collecting 100 samples in estimated 5.0001 s (74M iterations)
+Benchmarking quality_stats/compute/33: Analyzing
+quality_stats/compute/33
+                        time:   [67.317 ns 67.357 ns 67.404 ns]
+                        thrpt:  [466.90 MiB/s 467.23 MiB/s 467.51 MiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  5 (5.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_stats/compute/63
+Benchmarking quality_stats/compute/63: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/63: Collecting 100 samples in estimated 5.0001 s (39M iterations)
+Benchmarking quality_stats/compute/63: Analyzing
+quality_stats/compute/63
+                        time:   [128.45 ns 128.54 ns 128.66 ns]
+                        thrpt:  [466.96 MiB/s 467.40 MiB/s 467.73 MiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  6 (6.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_stats/compute/64
+Benchmarking quality_stats/compute/64: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/64: Collecting 100 samples in estimated 5.0006 s (38M iterations)
+Benchmarking quality_stats/compute/64: Analyzing
+quality_stats/compute/64
+                        time:   [130.49 ns 131.73 ns 133.57 ns]
+                        thrpt:  [456.94 MiB/s 463.34 MiB/s 467.72 MiB/s]
+Found 16 outliers among 100 measurements (16.00%)
+  3 (3.00%) low mild
+  7 (7.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_stats/compute/127
+Benchmarking quality_stats/compute/127: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/127: Collecting 100 samples in estimated 5.0011 s (21M iterations)
+Benchmarking quality_stats/compute/127: Analyzing
+quality_stats/compute/127
+                        time:   [240.17 ns 240.45 ns 240.88 ns]
+                        thrpt:  [502.81 MiB/s 503.71 MiB/s 504.30 MiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  3 (3.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_stats/compute/128
+Benchmarking quality_stats/compute/128: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/128: Collecting 100 samples in estimated 5.0003 s (20M iterations)
+Benchmarking quality_stats/compute/128: Analyzing
+quality_stats/compute/128
+                        time:   [243.94 ns 244.07 ns 244.23 ns]
+                        thrpt:  [499.83 MiB/s 500.15 MiB/s 500.41 MiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  4 (4.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_stats/compute/255
+Benchmarking quality_stats/compute/255: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/255: Collecting 100 samples in estimated 5.0002 s (10.0M iterations)
+Benchmarking quality_stats/compute/255: Analyzing
+quality_stats/compute/255
+                        time:   [501.16 ns 502.05 ns 503.26 ns]
+                        thrpt:  [483.22 MiB/s 484.39 MiB/s 485.25 MiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  2 (2.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_stats/compute/256
+Benchmarking quality_stats/compute/256: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/256: Collecting 100 samples in estimated 5.0011 s (9.9M iterations)
+Benchmarking quality_stats/compute/256: Analyzing
+quality_stats/compute/256
+                        time:   [505.01 ns 505.31 ns 505.72 ns]
+                        thrpt:  [482.76 MiB/s 483.15 MiB/s 483.43 MiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  6 (6.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_stats/compute/512
+Benchmarking quality_stats/compute/512: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/512: Collecting 100 samples in estimated 5.0000 s (4.8M iterations)
+Benchmarking quality_stats/compute/512: Analyzing
+quality_stats/compute/512
+                        time:   [1.0494 µs 1.0500 µs 1.0508 µs]
+                        thrpt:  [464.68 MiB/s 465.03 MiB/s 465.30 MiB/s]
+Found 14 outliers among 100 measurements (14.00%)
+  5 (5.00%) high mild
+  9 (9.00%) high severe
+Benchmarking quality_stats/compute/1023
+Benchmarking quality_stats/compute/1023: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/1023: Collecting 100 samples in estimated 5.0029 s (2.4M iterations)
+Benchmarking quality_stats/compute/1023: Analyzing
+quality_stats/compute/1023
+                        time:   [2.0914 µs 2.0926 µs 2.0938 µs]
+                        thrpt:  [465.96 MiB/s 466.23 MiB/s 466.48 MiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  9 (9.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_stats/compute/1024
+Benchmarking quality_stats/compute/1024: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/1024: Collecting 100 samples in estimated 5.0011 s (2.4M iterations)
+Benchmarking quality_stats/compute/1024: Analyzing
+quality_stats/compute/1024
+                        time:   [2.0927 µs 2.0941 µs 2.0961 µs]
+                        thrpt:  [465.90 MiB/s 466.34 MiB/s 466.65 MiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  6 (6.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_stats/compute/2048
+Benchmarking quality_stats/compute/2048: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/2048: Collecting 100 samples in estimated 5.0125 s (1.2M iterations)
+Benchmarking quality_stats/compute/2048: Analyzing
+quality_stats/compute/2048
+                        time:   [4.1801 µs 4.1828 µs 4.1863 µs]
+                        thrpt:  [466.56 MiB/s 466.94 MiB/s 467.24 MiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  7 (7.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_stats/compute/4095
+Benchmarking quality_stats/compute/4095: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/4095: Collecting 100 samples in estimated 5.0244 s (601k iterations)
+Benchmarking quality_stats/compute/4095: Analyzing
+quality_stats/compute/4095
+                        time:   [8.3538 µs 8.3610 µs 8.3696 µs]
+                        thrpt:  [466.60 MiB/s 467.09 MiB/s 467.49 MiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  3 (3.00%) high mild
+  8 (8.00%) high severe
+Benchmarking quality_stats/compute/4096
+Benchmarking quality_stats/compute/4096: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/4096: Collecting 100 samples in estimated 5.0294 s (601k iterations)
+Benchmarking quality_stats/compute/4096: Analyzing
+quality_stats/compute/4096
+                        time:   [8.3548 µs 8.3591 µs 8.3645 µs]
+                        thrpt:  [467.00 MiB/s 467.31 MiB/s 467.55 MiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  5 (5.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_stats/compute/8192
+Benchmarking quality_stats/compute/8192: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/8192: Collecting 100 samples in estimated 5.0683 s (303k iterations)
+Benchmarking quality_stats/compute/8192: Analyzing
+quality_stats/compute/8192
+                        time:   [16.740 µs 16.780 µs 16.820 µs]
+                        thrpt:  [464.47 MiB/s 465.59 MiB/s 466.70 MiB/s]
+Found 14 outliers among 100 measurements (14.00%)
+  7 (7.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_stats/compute/9999
+Benchmarking quality_stats/compute/9999: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/9999: Collecting 100 samples in estimated 5.0441 s (242k iterations)
+Benchmarking quality_stats/compute/9999: Analyzing
+quality_stats/compute/9999
+                        time:   [20.671 µs 20.712 µs 20.747 µs]
+                        thrpt:  [459.63 MiB/s 460.39 MiB/s 461.31 MiB/s]
+Benchmarking quality_stats/compute/10000
+Benchmarking quality_stats/compute/10000: Warming up for 3.0000 s
+Benchmarking quality_stats/compute/10000: Collecting 100 samples in estimated 5.1041 s (247k iterations)
+Benchmarking quality_stats/compute/10000: Analyzing
+quality_stats/compute/10000
+                        time:   [20.386 µs 20.401 µs 20.419 µs]
+                        thrpt:  [467.05 MiB/s 467.47 MiB/s 467.80 MiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  4 (4.00%) high mild
+  7 (7.00%) high severe
+
+Benchmarking quality_compression/realistic/150
+Benchmarking quality_compression/realistic/150: Warming up for 3.0000 s
+Benchmarking quality_compression/realistic/150: Collecting 100 samples in estimated 5.0002 s (74M iterations)
+Benchmarking quality_compression/realistic/150: Analyzing
+quality_compression/realistic/150
+                        time:   [67.189 ns 67.223 ns 67.265 ns]
+                        thrpt:  [2.0768 GiB/s 2.0781 GiB/s 2.0792 GiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  5 (5.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_compression/uniform_high/150
+Benchmarking quality_compression/uniform_high/150: Warming up for 3.0000 s
+Benchmarking quality_compression/uniform_high/150: Collecting 100 samples in estimated 5.0000 s (88M iterations)
+Benchmarking quality_compression/uniform_high/150: Analyzing
+quality_compression/uniform_high/150
+                        time:   [57.002 ns 57.037 ns 57.081 ns]
+                        thrpt:  [2.4474 GiB/s 2.4492 GiB/s 2.4507 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  4 (4.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_compression/realistic/250
+Benchmarking quality_compression/realistic/250: Warming up for 3.0000 s
+Benchmarking quality_compression/realistic/250: Collecting 100 samples in estimated 5.0002 s (69M iterations)
+Benchmarking quality_compression/realistic/250: Analyzing
+quality_compression/realistic/250
+                        time:   [72.741 ns 72.808 ns 72.887 ns]
+                        thrpt:  [3.1944 GiB/s 3.1978 GiB/s 3.2008 GiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  1 (1.00%) low mild
+  4 (4.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_compression/uniform_high/250
+Benchmarking quality_compression/uniform_high/250: Warming up for 3.0000 s
+Benchmarking quality_compression/uniform_high/250: Collecting 100 samples in estimated 5.0001 s (73M iterations)
+Benchmarking quality_compression/uniform_high/250: Analyzing
+quality_compression/uniform_high/250
+                        time:   [68.761 ns 68.830 ns 68.911 ns]
+                        thrpt:  [3.3787 GiB/s 3.3827 GiB/s 3.3861 GiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  6 (6.00%) high mild
+  2 (2.00%) high severe
+Benchmarking quality_compression/realistic/500
+Benchmarking quality_compression/realistic/500: Warming up for 3.0000 s
+Benchmarking quality_compression/realistic/500: Collecting 100 samples in estimated 5.0002 s (57M iterations)
+Benchmarking quality_compression/realistic/500: Analyzing
+quality_compression/realistic/500
+                        time:   [87.311 ns 87.367 ns 87.429 ns]
+                        thrpt:  [5.3261 GiB/s 5.3300 GiB/s 5.3334 GiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  1 (1.00%) low mild
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+Benchmarking quality_compression/uniform_high/500
+Benchmarking quality_compression/uniform_high/500: Warming up for 3.0000 s
+Benchmarking quality_compression/uniform_high/500: Collecting 100 samples in estimated 5.0001 s (59M iterations)
+Benchmarking quality_compression/uniform_high/500: Analyzing
+quality_compression/uniform_high/500
+                        time:   [83.992 ns 84.890 ns 86.247 ns]
+                        thrpt:  [5.3992 GiB/s 5.4855 GiB/s 5.5441 GiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  1 (1.00%) high mild
+  7 (7.00%) high severe
+Benchmarking quality_compression/realistic/1000
+Benchmarking quality_compression/realistic/1000: Warming up for 3.0000 s
+Benchmarking quality_compression/realistic/1000: Collecting 100 samples in estimated 5.0005 s (40M iterations)
+Benchmarking quality_compression/realistic/1000: Analyzing
+quality_compression/realistic/1000
+                        time:   [125.16 ns 125.24 ns 125.33 ns]
+                        thrpt:  [7.4312 GiB/s 7.4365 GiB/s 7.4409 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  1 (1.00%) low mild
+  4 (4.00%) high mild
+  5 (5.00%) high severe
+Benchmarking quality_compression/uniform_high/1000
+Benchmarking quality_compression/uniform_high/1000: Warming up for 3.0000 s
+Benchmarking quality_compression/uniform_high/1000: Collecting 100 samples in estimated 5.0005 s (41M iterations)
+Benchmarking quality_compression/uniform_high/1000: Analyzing
+quality_compression/uniform_high/1000
+                        time:   [120.39 ns 120.45 ns 120.52 ns]
+                        thrpt:  [7.7278 GiB/s 7.7321 GiB/s 7.7357 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  6 (6.00%) high mild
+  4 (4.00%) high severe
+Benchmarking quality_compression/realistic/10000
+Benchmarking quality_compression/realistic/10000: Warming up for 3.0000 s
+Benchmarking quality_compression/realistic/10000: Collecting 100 samples in estimated 5.0022 s (6.6M iterations)
+Benchmarking quality_compression/realistic/10000: Analyzing
+quality_compression/realistic/10000
+                        time:   [756.07 ns 756.54 ns 757.18 ns]
+                        thrpt:  [12.300 GiB/s 12.310 GiB/s 12.318 GiB/s]
+Found 9 outliers among 100 measurements (9.00%)
+  3 (3.00%) high mild
+  6 (6.00%) high severe
+Benchmarking quality_compression/uniform_high/10000
+Benchmarking quality_compression/uniform_high/10000: Warming up for 3.0000 s
+Benchmarking quality_compression/uniform_high/10000: Collecting 100 samples in estimated 5.0034 s (6.7M iterations)
+Benchmarking quality_compression/uniform_high/10000: Analyzing
+quality_compression/uniform_high/10000
+                        time:   [744.81 ns 745.12 ns 745.47 ns]
+                        thrpt:  [12.493 GiB/s 12.499 GiB/s 12.504 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  2 (2.00%) high mild
+  8 (8.00%) high severe
+
