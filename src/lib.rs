@@ -91,8 +91,9 @@
 //! cargo run --example examples
 //! ```
 //!
-//! See the [`dna_simd_encoder`], [`hybrid_encoder`], and [`quality_encoder`] modules for the complete API.
+//! See the [`dna_simd_encoder`], [`hybrid_encoder`], [`tetra_scanner`], and [`quality_encoder`] modules for the complete API.
 
 pub mod dna_simd_encoder;
 pub mod hybrid_encoder;
 pub mod quality_encoder;
+pub mod tetra_scanner;
