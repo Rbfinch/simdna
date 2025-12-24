@@ -294,6 +294,8 @@ pub enum HybridEncoderError {
     InvalidEncodingType(i32),
     /// Encoded data is corrupted or invalid.
     InvalidEncodedData(String),
+    /// Invalid base character for 2-bit encoding (not A, C, G, or T).
+    InvalidBase(char),
 }
 
 impl fmt::Display for HybridEncoderError {
@@ -307,6 +309,13 @@ impl fmt::Display for HybridEncoderError {
             }
             HybridEncoderError::InvalidEncodedData(msg) => {
                 write!(f, "invalid encoded data: {}", msg)
+            }
+            HybridEncoderError::InvalidBase(c) => {
+                write!(
+                    f,
+                    "invalid base '{}' for 2-bit encoding (expected A, C, G, or T)",
+                    c
+                )
             }
         }
     }
@@ -517,6 +526,543 @@ pub mod encoding_2bit {
 }
 
 // ============================================================================
+// 2-bit Encoder (Clean Sequences Only)
+// ============================================================================
+
+/// Lookup table for ASCII to 2-bit encoding.
+///
+/// Valid entries: A/a=0, C/c=1, G/g=2, T/t=3
+/// Invalid entries: 0xFF (sentinel for validation)
+///
+/// This table is indexed by ASCII character value for O(1) lookup.
+static ASCII_TO_2BIT: [u8; 256] = {
+    let mut table = [0xFFu8; 256];
+    table[b'A' as usize] = encoding_2bit::A;
+    table[b'a' as usize] = encoding_2bit::A;
+    table[b'C' as usize] = encoding_2bit::C;
+    table[b'c' as usize] = encoding_2bit::C;
+    table[b'G' as usize] = encoding_2bit::G;
+    table[b'g' as usize] = encoding_2bit::G;
+    table[b'T' as usize] = encoding_2bit::T;
+    table[b't' as usize] = encoding_2bit::T;
+    table
+};
+
+/// Encodes a clean DNA sequence (ACGT only) to 2-bit packed format.
+///
+/// This is the allocating version that returns a new `Vec<u8>`.
+/// For zero-allocation encoding, use [`encode_2bit_into`].
+///
+/// # Arguments
+///
+/// * `sequence` - ASCII DNA sequence containing only A, C, G, T (case-insensitive)
+///
+/// # Returns
+///
+/// * `Ok(Vec<u8>)` - Packed 2-bit encoded data
+/// * `Err(HybridEncoderError::InvalidBase)` - If sequence contains non-ACGT characters
+///
+/// # Encoding Format
+///
+/// Four nucleotides are packed into each byte:
+/// - Bits 7-6: First nucleotide
+/// - Bits 5-4: Second nucleotide
+/// - Bits 3-2: Third nucleotide
+/// - Bits 1-0: Fourth nucleotide
+///
+/// ```text
+/// Byte layout: [B0:7-6][B1:5-4][B2:3-2][B3:1-0]
+/// ```
+///
+/// # Performance
+///
+/// This function automatically uses NEON SIMD instructions on ARM64
+/// for processing 16 nucleotides at a time. Falls back to scalar
+/// implementation on other architectures.
+///
+/// # Examples
+///
+/// ```rust
+/// use simdna::hybrid_encoder::encode_2bit;
+///
+/// // "ACGT" encodes to 0b00_01_10_11 = 0x1B
+/// let encoded = encode_2bit(b"ACGT").unwrap();
+/// assert_eq!(encoded, vec![0x1B]);
+///
+/// // Case insensitive
+/// let encoded_lower = encode_2bit(b"acgt").unwrap();
+/// assert_eq!(encoded_lower, vec![0x1B]);
+/// ```
+pub fn encode_2bit(sequence: &[u8]) -> Result<Vec<u8>, HybridEncoderError> {
+    if sequence.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let output_len = required_2bit_len(sequence.len());
+    let mut output = vec![0u8; output_len];
+
+    encode_2bit_into(sequence, &mut output)?;
+
+    Ok(output)
+}
+
+/// Encodes a clean DNA sequence to 2-bit packed format (zero-allocation).
+///
+/// Writes the encoded data directly into a caller-provided buffer.
+///
+/// # Arguments
+///
+/// * `sequence` - ASCII DNA sequence containing only A, C, G, T (case-insensitive)
+/// * `output` - Pre-allocated output buffer. Must be at least [`required_2bit_len(sequence.len())`] bytes.
+///
+/// # Returns
+///
+/// * `Ok(bytes_written)` - Number of bytes written to output
+/// * `Err(HybridEncoderError::BufferTooSmall)` - If output buffer is too small
+/// * `Err(HybridEncoderError::InvalidBase)` - If sequence contains non-ACGT characters
+///
+/// # Example
+///
+/// ```rust
+/// use simdna::hybrid_encoder::{encode_2bit_into, required_2bit_len};
+///
+/// let sequence = b"ACGTACGT";
+/// let mut buffer = vec![0u8; required_2bit_len(sequence.len())];
+/// let bytes_written = encode_2bit_into(sequence, &mut buffer).unwrap();
+/// assert_eq!(bytes_written, 2);
+/// ```
+#[inline]
+pub fn encode_2bit_into(sequence: &[u8], output: &mut [u8]) -> Result<usize, HybridEncoderError> {
+    let required = required_2bit_len(sequence.len());
+    if output.len() < required {
+        return Err(HybridEncoderError::BufferTooSmall {
+            needed: required,
+            actual: output.len(),
+        });
+    }
+
+    if sequence.is_empty() {
+        return Ok(0);
+    }
+
+    // Use SIMD on ARM64, scalar fallback on other architectures
+    #[cfg(target_arch = "aarch64")]
+    {
+        // Safety: NEON is always available on aarch64
+        unsafe { encode_2bit_neon(sequence, output) }
+    }
+
+    #[cfg(not(target_arch = "aarch64"))]
+    {
+        encode_2bit_scalar(sequence, output)
+    }
+}
+
+/// Scalar implementation of 2-bit encoding.
+///
+/// Processes 4 nucleotides at a time for complete bytes,
+/// then handles any remainder.
+#[inline]
+#[allow(clippy::needless_range_loop)]
+fn encode_2bit_scalar(sequence: &[u8], output: &mut [u8]) -> Result<usize, HybridEncoderError> {
+    let len = sequence.len();
+    let complete_bytes = len / 4;
+    let remainder = len % 4;
+
+    // Process complete 4-base groups
+    for i in 0..complete_bytes {
+        let base_idx = i * 4;
+        let b0 = ascii_to_2bit(sequence[base_idx])?;
+        let b1 = ascii_to_2bit(sequence[base_idx + 1])?;
+        let b2 = ascii_to_2bit(sequence[base_idx + 2])?;
+        let b3 = ascii_to_2bit(sequence[base_idx + 3])?;
+
+        output[i] = (b0 << 6) | (b1 << 4) | (b2 << 2) | b3;
+    }
+
+    // Handle remainder (1-3 bases)
+    if remainder > 0 {
+        let base_idx = complete_bytes * 4;
+        let mut packed: u8 = 0;
+
+        for j in 0..remainder {
+            let b = ascii_to_2bit(sequence[base_idx + j])?;
+            packed |= b << (6 - j * 2);
+        }
+
+        output[complete_bytes] = packed;
+    }
+
+    Ok(required_2bit_len(len))
+}
+
+/// Converts an ASCII nucleotide to its 2-bit encoding.
+///
+/// # Returns
+///
+/// * `Ok(encoding)` - 2-bit value (0-3)
+/// * `Err(InvalidBase)` - If the character is not A, C, G, or T
+#[inline]
+fn ascii_to_2bit(byte: u8) -> Result<u8, HybridEncoderError> {
+    let encoded = ASCII_TO_2BIT[byte as usize];
+    if encoded == 0xFF {
+        return Err(HybridEncoderError::InvalidBase(byte as char));
+    }
+    Ok(encoded)
+}
+
+/// NEON-accelerated 2-bit encoding for ARM64.
+///
+/// Processes 16 nucleotides at a time using NEON vector instructions:
+/// 1. Loads 16 bytes of ASCII nucleotides
+/// 2. Converts each byte to 2-bit encoding using table lookup
+/// 3. Validates all bytes are valid ACGT characters
+/// 4. Packs 16 2-bit values into 4 output bytes
+///
+/// # Safety
+///
+/// This function requires NEON support (always available on ARM64).
+#[cfg(target_arch = "aarch64")]
+#[target_feature(enable = "neon")]
+unsafe fn encode_2bit_neon(
+    sequence: &[u8],
+    output: &mut [u8],
+) -> Result<usize, HybridEncoderError> {
+    use core::arch::aarch64::*;
+
+    let len = sequence.len();
+    let simd_len = (len / 16) * 16;
+    let mut out_idx = 0;
+    let mut in_idx = 0;
+
+    // Process 16 nucleotides at a time
+    while in_idx < simd_len {
+        // Load 16 bytes
+        let chunk = unsafe { vld1q_u8(sequence.as_ptr().add(in_idx)) };
+
+        // Extract bytes, encode each using LUT, and validate
+        let mut bytes = [0u8; 16];
+        unsafe { vst1q_u8(bytes.as_mut_ptr(), chunk) };
+
+        let mut encoded_bytes = [0u8; 16];
+        for i in 0..16 {
+            let b = bytes[i];
+            let encoded = ASCII_TO_2BIT[b as usize];
+            if encoded == 0xFF {
+                return Err(HybridEncoderError::InvalidBase(b as char));
+            }
+            encoded_bytes[i] = encoded;
+        }
+
+        // Pack 16 2-bit values into 4 bytes
+        for i in 0..4 {
+            let base = i * 4;
+            output[out_idx + i] = (encoded_bytes[base] << 6)
+                | (encoded_bytes[base + 1] << 4)
+                | (encoded_bytes[base + 2] << 2)
+                | encoded_bytes[base + 3];
+        }
+
+        in_idx += 16;
+        out_idx += 4;
+    }
+
+    // Handle remainder with scalar code
+    if in_idx < len {
+        let scalar_result = encode_2bit_scalar(&sequence[in_idx..], &mut output[out_idx..])?;
+        out_idx += scalar_result;
+    }
+
+    Ok(out_idx)
+}
+
+/// Packs 16 2-bit values into 4 bytes using NEON.
+///
+/// Decodes 2-bit packed data back to ASCII nucleotides.
+///
+/// This is the allocating version that returns a new `Vec<u8>`.
+/// For zero-allocation decoding, use [`decode_2bit_into`].
+///
+/// # Arguments
+///
+/// * `encoded` - 2-bit packed encoded data
+/// * `original_len` - The original sequence length (number of nucleotides)
+///
+/// # Returns
+///
+/// ASCII DNA sequence with uppercase A, C, G, T.
+///
+/// # Examples
+///
+/// ```rust
+/// use simdna::hybrid_encoder::{encode_2bit, decode_2bit};
+///
+/// let original = b"ACGTACGT";
+/// let encoded = encode_2bit(original).unwrap();
+/// let decoded = decode_2bit(&encoded, original.len());
+/// assert_eq!(decoded, original);
+/// ```
+pub fn decode_2bit(encoded: &[u8], original_len: usize) -> Vec<u8> {
+    if original_len == 0 {
+        return Vec::new();
+    }
+
+    let mut output = vec![0u8; original_len];
+    decode_2bit_into(encoded, original_len, &mut output).expect("output buffer sized correctly");
+
+    output
+}
+
+/// Decodes 2-bit packed data to ASCII nucleotides (zero-allocation).
+///
+/// Writes the decoded sequence directly into a caller-provided buffer.
+///
+/// # Arguments
+///
+/// * `encoded` - 2-bit packed encoded data
+/// * `original_len` - The original sequence length (number of nucleotides)
+/// * `output` - Pre-allocated output buffer. Must be at least `original_len` bytes.
+///
+/// # Returns
+///
+/// * `Ok(bytes_written)` - Number of bytes written to output
+/// * `Err(BufferTooSmall)` - If output buffer is too small
+///
+/// # Example
+///
+/// ```rust
+/// use simdna::hybrid_encoder::{encode_2bit, decode_2bit_into};
+///
+/// let original = b"ACGTACGT";
+/// let encoded = encode_2bit(original).unwrap();
+/// let mut buffer = vec![0u8; 64];
+/// let bytes_written = decode_2bit_into(&encoded, original.len(), &mut buffer).unwrap();
+/// assert_eq!(&buffer[..bytes_written], original.as_slice());
+/// ```
+#[inline]
+#[allow(clippy::needless_return)]
+pub fn decode_2bit_into(
+    encoded: &[u8],
+    original_len: usize,
+    output: &mut [u8],
+) -> Result<usize, HybridEncoderError> {
+    if output.len() < original_len {
+        return Err(HybridEncoderError::BufferTooSmall {
+            needed: original_len,
+            actual: output.len(),
+        });
+    }
+
+    if original_len == 0 {
+        return Ok(0);
+    }
+
+    // Use SIMD on ARM64, scalar fallback on other architectures
+    #[cfg(target_arch = "aarch64")]
+    {
+        // Safety: NEON is always available on aarch64
+        unsafe { decode_2bit_neon(encoded, original_len, output) };
+        return Ok(original_len);
+    }
+
+    #[cfg(not(target_arch = "aarch64"))]
+    {
+        decode_2bit_scalar(encoded, original_len, output);
+        Ok(original_len)
+    }
+}
+
+/// Lookup table for 2-bit to ASCII decoding.
+static DECODE_2BIT_LUT: [u8; 4] = [b'A', b'C', b'G', b'T'];
+
+/// Scalar implementation of 2-bit decoding.
+#[inline]
+#[allow(clippy::needless_range_loop)]
+fn decode_2bit_scalar(encoded: &[u8], original_len: usize, output: &mut [u8]) {
+    let complete_bytes = original_len / 4;
+    let remainder = original_len % 4;
+
+    // Process complete 4-base groups
+    for i in 0..complete_bytes {
+        let byte = encoded[i];
+        let base_idx = i * 4;
+
+        output[base_idx] = DECODE_2BIT_LUT[((byte >> 6) & 0x03) as usize];
+        output[base_idx + 1] = DECODE_2BIT_LUT[((byte >> 4) & 0x03) as usize];
+        output[base_idx + 2] = DECODE_2BIT_LUT[((byte >> 2) & 0x03) as usize];
+        output[base_idx + 3] = DECODE_2BIT_LUT[(byte & 0x03) as usize];
+    }
+
+    // Handle remainder
+    if remainder > 0 {
+        let byte = encoded[complete_bytes];
+        let base_idx = complete_bytes * 4;
+
+        for j in 0..remainder {
+            let shift = 6 - j * 2;
+            output[base_idx + j] = DECODE_2BIT_LUT[((byte >> shift) & 0x03) as usize];
+        }
+    }
+}
+
+/// NEON-accelerated 2-bit decoding for ARM64.
+///
+/// Unpacks 4 bytes (16 nucleotides) at a time using NEON.
+///
+/// # Safety
+///
+/// Requires NEON support (always available on ARM64).
+#[cfg(target_arch = "aarch64")]
+#[target_feature(enable = "neon")]
+#[allow(unsafe_op_in_unsafe_fn)]
+unsafe fn decode_2bit_neon(encoded: &[u8], original_len: usize, output: &mut [u8]) {
+    use core::arch::aarch64::*;
+
+    // Lookup table for 2-bit -> ASCII
+    let lut = vld1_u8([b'A', b'C', b'G', b'T', b'A', b'C', b'G', b'T'].as_ptr());
+
+    let complete_chunks = original_len / 16;
+    let mut out_idx = 0;
+    let mut enc_idx = 0;
+
+    // Process 4 encoded bytes (16 nucleotides) at a time
+    for _ in 0..complete_chunks {
+        // Unpack 4 bytes to 16 2-bit values
+        let mut unpacked = [0u8; 16];
+        for i in 0..4 {
+            let byte = encoded[enc_idx + i];
+            let base = i * 4;
+            unpacked[base] = (byte >> 6) & 0x03;
+            unpacked[base + 1] = (byte >> 4) & 0x03;
+            unpacked[base + 2] = (byte >> 2) & 0x03;
+            unpacked[base + 3] = byte & 0x03;
+        }
+
+        // Load unpacked indices
+        let indices = vld1q_u8(unpacked.as_ptr());
+
+        // Use table lookup for conversion (vqtbl1_u8 with indices 0-3)
+        let decoded = vqtbl1q_u8(vcombine_u8(lut, lut), indices);
+
+        // Store result
+        vst1q_u8(output.as_mut_ptr().add(out_idx), decoded);
+
+        enc_idx += 4;
+        out_idx += 16;
+    }
+
+    // Handle remainder with scalar code
+    if out_idx < original_len {
+        decode_2bit_scalar(
+            &encoded[enc_idx..],
+            original_len - out_idx,
+            &mut output[out_idx..],
+        );
+    }
+}
+
+/// Checks if a sequence contains only valid 2-bit encodable characters (ACGT).
+///
+/// This is useful for determining whether a sequence can use the more
+/// efficient 2-bit encoding or requires 4-bit IUPAC encoding.
+///
+/// # Arguments
+///
+/// * `sequence` - ASCII DNA sequence to validate
+///
+/// # Returns
+///
+/// `true` if all characters are A, C, G, or T (case-insensitive)
+///
+/// # Performance
+///
+/// Uses NEON SIMD on ARM64 for fast validation of 16 bytes at a time.
+///
+/// # Examples
+///
+/// ```rust
+/// use simdna::hybrid_encoder::is_clean_sequence;
+///
+/// assert!(is_clean_sequence(b"ACGT"));
+/// assert!(is_clean_sequence(b"acgtACGT"));
+/// assert!(!is_clean_sequence(b"ACGTN")); // N is not valid
+/// assert!(!is_clean_sequence(b"ACGR"));  // R is ambiguous
+/// ```
+pub fn is_clean_sequence(sequence: &[u8]) -> bool {
+    if sequence.is_empty() {
+        return true;
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    {
+        // Safety: NEON is always available on aarch64
+        unsafe { is_clean_sequence_neon(sequence) }
+    }
+
+    #[cfg(not(target_arch = "aarch64"))]
+    {
+        is_clean_sequence_scalar(sequence)
+    }
+}
+
+/// Scalar implementation of clean sequence check.
+#[inline]
+fn is_clean_sequence_scalar(sequence: &[u8]) -> bool {
+    sequence.iter().all(|&b| ASCII_TO_2BIT[b as usize] != 0xFF)
+}
+
+/// NEON-accelerated clean sequence check for ARM64.
+///
+/// Validates 16 bytes at a time using SIMD comparison operations.
+///
+/// # Safety
+///
+/// Requires NEON support.
+#[cfg(target_arch = "aarch64")]
+#[target_feature(enable = "neon")]
+#[allow(unsafe_op_in_unsafe_fn)]
+unsafe fn is_clean_sequence_neon(sequence: &[u8]) -> bool {
+    use core::arch::aarch64::*;
+
+    let len = sequence.len();
+    let simd_len = (len / 16) * 16;
+
+    // Constants for comparison
+    let mask_case = vdupq_n_u8(0xDF);
+    let val_a = vdupq_n_u8(b'A');
+    let val_c = vdupq_n_u8(b'C');
+    let val_g = vdupq_n_u8(b'G');
+    let val_t = vdupq_n_u8(b'T');
+
+    let mut idx = 0;
+
+    // Process 16 bytes at a time
+    while idx < simd_len {
+        let chunk = vld1q_u8(sequence.as_ptr().add(idx));
+        let upper = vandq_u8(chunk, mask_case);
+
+        // Check if each byte matches one of ACGT
+        let is_a = vceqq_u8(upper, val_a);
+        let is_c = vceqq_u8(upper, val_c);
+        let is_g = vceqq_u8(upper, val_g);
+        let is_t = vceqq_u8(upper, val_t);
+
+        let valid = vorrq_u8(vorrq_u8(is_a, is_c), vorrq_u8(is_g, is_t));
+
+        // Check if all bytes are valid (all bits set in valid lanes)
+        let all_valid = vminvq_u8(valid);
+        if all_valid == 0 {
+            return false;
+        }
+
+        idx += 16;
+    }
+
+    // Check remainder with scalar
+    is_clean_sequence_scalar(&sequence[idx..])
+}
+
+// ============================================================================
 // Unit Tests
 // ============================================================================
 
@@ -686,5 +1232,226 @@ mod tests {
         assert_eq!(encoding_2bit::G, 0b10);
         assert_eq!(encoding_2bit::T, 0b11);
         assert_eq!(encoding_2bit::MASK, 0b11);
+    }
+
+    // ========================================================================
+    // 2-bit Encoder Tests
+    // ========================================================================
+
+    #[test]
+    fn test_encode_2bit_empty() {
+        let result = encode_2bit(b"").unwrap();
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_encode_2bit_single_base() {
+        // Single base encodes to 1 byte, top 2 bits used
+        assert_eq!(encode_2bit(b"A").unwrap(), vec![0b00_00_00_00]);
+        assert_eq!(encode_2bit(b"C").unwrap(), vec![0b01_00_00_00]);
+        assert_eq!(encode_2bit(b"G").unwrap(), vec![0b10_00_00_00]);
+        assert_eq!(encode_2bit(b"T").unwrap(), vec![0b11_00_00_00]);
+    }
+
+    #[test]
+    fn test_encode_2bit_acgt_quartet() {
+        // ACGT = 00_01_10_11 = 0x1B
+        let result = encode_2bit(b"ACGT").unwrap();
+        assert_eq!(result, vec![0x1B]);
+    }
+
+    #[test]
+    fn test_encode_2bit_case_insensitive() {
+        let upper = encode_2bit(b"ACGT").unwrap();
+        let lower = encode_2bit(b"acgt").unwrap();
+        let mixed = encode_2bit(b"AcGt").unwrap();
+
+        assert_eq!(upper, lower);
+        assert_eq!(upper, mixed);
+    }
+
+    #[test]
+    fn test_encode_2bit_remainder_handling() {
+        // 5 bases = 2 bytes (4 + 1 remainder)
+        let result = encode_2bit(b"ACGTA").unwrap();
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0], 0x1B); // ACGT
+        assert_eq!(result[1], 0b00_00_00_00); // A with padding
+
+        // 6 bases = 2 bytes (4 + 2 remainder)
+        let result = encode_2bit(b"ACGTAC").unwrap();
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0], 0x1B);
+        assert_eq!(result[1], 0b00_01_00_00); // AC with padding
+
+        // 7 bases = 2 bytes (4 + 3 remainder)
+        let result = encode_2bit(b"ACGTACG").unwrap();
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0], 0x1B);
+        assert_eq!(result[1], 0b00_01_10_00); // ACG with padding
+    }
+
+    #[test]
+    fn test_encode_2bit_invalid_base() {
+        // N is not valid for 2-bit encoding
+        let result = encode_2bit(b"ACGTN");
+        assert!(result.is_err());
+        match result {
+            Err(HybridEncoderError::InvalidBase('N')) => {}
+            _ => panic!("Expected InvalidBase('N')"),
+        }
+
+        // R (purine) is not valid
+        let result = encode_2bit(b"ACGR");
+        assert!(result.is_err());
+
+        // Space is not valid
+        let result = encode_2bit(b"AC GT");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_encode_2bit_roundtrip() {
+        let test_cases = [
+            b"ACGT".as_slice(),
+            b"AAAA",
+            b"CCCC",
+            b"GGGG",
+            b"TTTT",
+            b"ACGTACGTACGTACGT",  // 16 bases (SIMD boundary)
+            b"ACGTACGTACGTACGTA", // 17 bases (SIMD + remainder)
+            b"A",
+            b"AC",
+            b"ACG",
+        ];
+
+        for original in test_cases {
+            let encoded = encode_2bit(original).unwrap();
+            let decoded = decode_2bit(&encoded, original.len());
+            assert_eq!(
+                decoded,
+                original.to_ascii_uppercase(),
+                "Roundtrip failed for {:?}",
+                std::str::from_utf8(original)
+            );
+        }
+    }
+
+    #[test]
+    fn test_encode_2bit_into_buffer_too_small() {
+        let mut buffer = [0u8; 1];
+        let result = encode_2bit_into(b"ACGTACGT", &mut buffer); // Needs 2 bytes
+        assert!(matches!(
+            result,
+            Err(HybridEncoderError::BufferTooSmall { .. })
+        ));
+    }
+
+    #[test]
+    fn test_encode_2bit_into_exact_buffer() {
+        let mut buffer = [0u8; 2];
+        let bytes_written = encode_2bit_into(b"ACGTACGT", &mut buffer).unwrap();
+        assert_eq!(bytes_written, 2);
+        assert_eq!(buffer[0], 0x1B);
+        assert_eq!(buffer[1], 0x1B);
+    }
+
+    #[test]
+    fn test_decode_2bit_empty() {
+        let result = decode_2bit(&[], 0);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_decode_2bit_single_base() {
+        assert_eq!(decode_2bit(&[0b00_00_00_00], 1), b"A");
+        assert_eq!(decode_2bit(&[0b01_00_00_00], 1), b"C");
+        assert_eq!(decode_2bit(&[0b10_00_00_00], 1), b"G");
+        assert_eq!(decode_2bit(&[0b11_00_00_00], 1), b"T");
+    }
+
+    #[test]
+    fn test_decode_2bit_quartet() {
+        let decoded = decode_2bit(&[0x1B], 4);
+        assert_eq!(decoded, b"ACGT");
+    }
+
+    #[test]
+    fn test_decode_2bit_into_buffer_too_small() {
+        let mut buffer = [0u8; 2];
+        let result = decode_2bit_into(&[0x1B], 4, &mut buffer); // Needs 4 bytes
+        assert!(matches!(
+            result,
+            Err(HybridEncoderError::BufferTooSmall { .. })
+        ));
+    }
+
+    #[test]
+    fn test_is_clean_sequence() {
+        // Clean sequences
+        assert!(is_clean_sequence(b""));
+        assert!(is_clean_sequence(b"A"));
+        assert!(is_clean_sequence(b"ACGT"));
+        assert!(is_clean_sequence(b"acgt"));
+        assert!(is_clean_sequence(b"AcGtAcGtAcGtAcGt"));
+
+        // Dirty sequences (contain non-ACGT)
+        assert!(!is_clean_sequence(b"N"));
+        assert!(!is_clean_sequence(b"ACGTN"));
+        assert!(!is_clean_sequence(b"ACGR")); // R = purine
+        assert!(!is_clean_sequence(b"ACG-")); // Gap
+        assert!(!is_clean_sequence(b" "));
+        assert!(!is_clean_sequence(b"ACGT ACGT")); // Space
+    }
+
+    #[test]
+    fn test_is_clean_sequence_long() {
+        // Test with sequences longer than 16 (SIMD boundary)
+        let clean_32 = b"ACGTACGTACGTACGTACGTACGTACGTACGT";
+        assert!(is_clean_sequence(clean_32));
+
+        let mut dirty_at_17 = *b"ACGTACGTACGTACGTN";
+        assert!(!is_clean_sequence(&dirty_at_17));
+
+        dirty_at_17[16] = b'A'; // Fix it
+        assert!(is_clean_sequence(&dirty_at_17));
+    }
+
+    #[test]
+    fn test_encode_2bit_large_sequence() {
+        // Test with a larger sequence to exercise SIMD paths
+        let sequence: Vec<u8> = (0..1000)
+            .map(|i| match i % 4 {
+                0 => b'A',
+                1 => b'C',
+                2 => b'G',
+                _ => b'T',
+            })
+            .collect();
+
+        let encoded = encode_2bit(&sequence).unwrap();
+        assert_eq!(encoded.len(), 250); // 1000 / 4
+
+        let decoded = decode_2bit(&encoded, sequence.len());
+        assert_eq!(decoded, sequence);
+    }
+
+    #[test]
+    fn test_encode_2bit_all_same_base() {
+        // All A's = 0b00_00_00_00 = 0x00
+        let encoded = encode_2bit(b"AAAA").unwrap();
+        assert_eq!(encoded, vec![0x00]);
+
+        // All C's = 0b01_01_01_01 = 0x55
+        let encoded = encode_2bit(b"CCCC").unwrap();
+        assert_eq!(encoded, vec![0x55]);
+
+        // All G's = 0b10_10_10_10 = 0xAA
+        let encoded = encode_2bit(b"GGGG").unwrap();
+        assert_eq!(encoded, vec![0xAA]);
+
+        // All T's = 0b11_11_11_11 = 0xFF
+        let encoded = encode_2bit(b"TTTT").unwrap();
+        assert_eq!(encoded, vec![0xFF]);
     }
 }
