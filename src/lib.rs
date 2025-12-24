@@ -8,12 +8,32 @@
 //!
 //! ## Features
 //!
-//! - **4-bit encoding** supporting all IUPAC nucleotide codes (16 standard + U for RNA)
+//! - **Hybrid 2-bit/4-bit encoding** with automatic bifurcation based on sequence content
+//! - **2-bit encoding** for clean ACGT sequences (4x compression, 4 bases per byte)
+//! - **4-bit encoding** supporting all IUPAC nucleotide codes (2x compression)
 //! - **Bit-rotation-compatible encoding** enabling efficient complement calculation
 //! - **SIMD acceleration** on x86_64 (SSSE3) and ARM64 (NEON)
 //! - **Zero-allocation API** via `_into` variants for high-throughput pipelines
-//! - **2:1 compression** ratio compared to ASCII representation
 //! - **FASTQ quality score encoding** with binning and run-length encoding
+//!
+//! ## Hybrid Encoding (Bifurcated Storage)
+//!
+//! For optimal storage efficiency, use the hybrid encoder that automatically
+//! selects 2-bit or 4-bit encoding based on sequence content:
+//!
+//! ```rust,ignore
+//! use simdna::hybrid_encoder::{encode_bifurcated, EncodingType};
+//!
+//! // Clean sequences use 2-bit encoding (4x compression)
+//! let clean = b"ACGTACGT";
+//! let result = encode_bifurcated(clean);
+//! assert_eq!(result.encoding, EncodingType::Clean2Bit);
+//!
+//! // Sequences with ambiguous bases use 4-bit encoding (2x compression)
+//! let dirty = b"ACNGTACGT";
+//! let result = encode_bifurcated(dirty);
+//! assert_eq!(result.encoding, EncodingType::Dirty4Bit);
+//! ```
 //!
 //! ## Quick Start
 //!
@@ -71,7 +91,8 @@
 //! cargo run --example examples
 //! ```
 //!
-//! See the [`dna_simd_encoder`] and [`quality_encoder`] modules for the complete API.
+//! See the [`dna_simd_encoder`], [`hybrid_encoder`], and [`quality_encoder`] modules for the complete API.
 
 pub mod dna_simd_encoder;
+pub mod hybrid_encoder;
 pub mod quality_encoder;
