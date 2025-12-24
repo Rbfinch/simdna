@@ -2139,3 +2139,124 @@ mod tests {
         assert_eq!(decoded, original);
     }
 }
+
+// ============================================================================
+// Property-Based Tests (using proptest)
+// ============================================================================
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use proptest::prelude::*;
+
+    /// Strategy that generates valid clean DNA sequences (ACGT only)
+    fn clean_dna_strategy() -> impl Strategy<Value = Vec<u8>> {
+        prop::collection::vec(
+            prop_oneof![Just(b'A'), Just(b'C'), Just(b'G'), Just(b'T')],
+            0..1000,
+        )
+    }
+
+    /// Strategy that generates valid IUPAC DNA sequences (all codes)
+    fn iupac_dna_strategy() -> impl Strategy<Value = Vec<u8>> {
+        prop::collection::vec(
+            prop_oneof![
+                Just(b'A'),
+                Just(b'C'),
+                Just(b'G'),
+                Just(b'T'),
+                Just(b'N'),
+                Just(b'R'),
+                Just(b'Y'),
+                Just(b'S'),
+                Just(b'W'),
+                Just(b'K'),
+                Just(b'M'),
+                Just(b'B'),
+                Just(b'D'),
+                Just(b'H'),
+                Just(b'V'),
+                Just(b'-'),
+            ],
+            0..1000,
+        )
+    }
+
+    proptest! {
+        /// Property: 2-bit encoding roundtrip preserves clean sequences
+        #[test]
+        fn prop_2bit_roundtrip(seq in clean_dna_strategy()) {
+            let encoded = encode_2bit(&seq).unwrap();
+            let decoded = decode_2bit(&encoded, seq.len());
+            prop_assert_eq!(decoded, seq);
+        }
+
+        /// Property: 2-bit encoding produces correct output length
+        #[test]
+        fn prop_2bit_encoded_length(seq in clean_dna_strategy()) {
+            let encoded = encode_2bit(&seq).unwrap();
+            let expected_len = required_2bit_len(seq.len());
+            prop_assert_eq!(encoded.len(), expected_len);
+        }
+
+        /// Property: bifurcated encoding roundtrip preserves all sequences
+        #[test]
+        fn prop_bifurcated_roundtrip_clean(seq in clean_dna_strategy()) {
+            let encoded = encode_bifurcated(&seq);
+            prop_assert_eq!(encoded.encoding, EncodingType::Clean2Bit);
+            let decoded = decode_bifurcated(&encoded);
+            prop_assert_eq!(decoded, seq);
+        }
+
+        /// Property: bifurcated encoding roundtrip preserves IUPAC sequences
+        #[test]
+        fn prop_bifurcated_roundtrip_iupac(seq in iupac_dna_strategy()) {
+            let encoded = encode_bifurcated(&seq);
+            let decoded = decode_bifurcated(&encoded);
+            // Compare uppercase versions since decoder may normalize
+            let seq_upper: Vec<u8> = seq.iter().map(|c| c.to_ascii_uppercase()).collect();
+            let decoded_upper: Vec<u8> = decoded.iter().map(|c| c.to_ascii_uppercase()).collect();
+            prop_assert_eq!(decoded_upper, seq_upper);
+        }
+
+        /// Property: is_clean_sequence correctly identifies clean sequences
+        #[test]
+        fn prop_is_clean_identifies_clean(seq in clean_dna_strategy()) {
+            prop_assert!(is_clean_sequence(&seq));
+        }
+
+        /// Property: classify_sequence returns Clean2Bit for clean sequences
+        #[test]
+        fn prop_classify_clean(seq in clean_dna_strategy()) {
+            prop_assert_eq!(classify_sequence(&seq), EncodingType::Clean2Bit);
+        }
+
+        /// Property: encoded length never exceeds original length
+        #[test]
+        fn prop_compression_achieved(seq in clean_dna_strategy()) {
+            if !seq.is_empty() {
+                let encoded = encode_bifurcated(&seq);
+                prop_assert!(encoded.data.len() <= seq.len());
+            }
+        }
+
+        /// Property: encode_2bit_into and encode_2bit produce identical results
+        #[test]
+        fn prop_encode_2bit_into_matches(seq in clean_dna_strategy()) {
+            let allocated = encode_2bit(&seq).unwrap();
+            let mut buffer = vec![0u8; required_2bit_len(seq.len()) + 16];
+            let written = encode_2bit_into(&seq, &mut buffer).unwrap();
+            prop_assert_eq!(&buffer[..written], &allocated[..]);
+        }
+
+        /// Property: decode_2bit_into and decode_2bit produce identical results
+        #[test]
+        fn prop_decode_2bit_into_matches(seq in clean_dna_strategy()) {
+            let encoded = encode_2bit(&seq).unwrap();
+            let allocated = decode_2bit(&encoded, seq.len());
+            let mut buffer = vec![0u8; seq.len() + 16];
+            let written = decode_2bit_into(&encoded, seq.len(), &mut buffer).unwrap();
+            prop_assert_eq!(&buffer[..written], &allocated[..]);
+        }
+    }
+}

@@ -20,6 +20,7 @@ path = "src/lib.rs"
 criterion = { version = "0.8.1", features = ["html_reports"] }
 chrono = "0.4"
 seq_io = "0.3"
+proptest = "1.5"
 
 [[bench]]
 name = "benchmark"

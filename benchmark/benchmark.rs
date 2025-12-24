@@ -17,6 +17,18 @@ use simdna::quality_encoder::{
     encode_quality_scores, encode_quality_scores_into, quality_stats,
 };
 
+// Import hybrid encoder functions for Phase 1 benchmarks
+use simdna::hybrid_encoder::{
+    classify_sequence, decode_2bit, decode_bifurcated, encode_2bit, encode_bifurcated,
+    is_clean_sequence,
+};
+
+// Import serialization functions
+use simdna::serialization::{crc32, from_blob, from_bytes, to_blob, to_bytes};
+
+// Import tetra scanner for pattern matching benchmarks
+use simdna::tetra_scanner::{BitapMasks, SearchPattern, TetraLUT};
+
 /// Package version from Cargo.toml
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -912,6 +924,271 @@ fn bench_quality_compression_ratio(c: &mut Criterion) {
     group.finish();
 }
 
+// ============================================================================
+// Phase 1 Milestone Benchmarks: Hybrid Encoder, Tetra Scanner, Serialization
+// ============================================================================
+
+/// Generate a clean DNA sequence (ACGT only) for 2-bit encoding benchmarks
+fn generate_clean_dna(len: usize) -> Vec<u8> {
+    (0..len).map(|i| b"ACGT"[i % 4]).collect()
+}
+
+/// Generate a dirty DNA sequence with IUPAC codes
+fn generate_dirty_dna(len: usize) -> Vec<u8> {
+    (0..len).map(|i| b"ACGTNRYSW"[i % 9]).collect()
+}
+
+fn bench_hybrid_encoder(c: &mut Criterion) {
+    let mut group = c.benchmark_group("hybrid_encoder");
+
+    for size in [64, 128, 256, 512, 1024, 2048, 4096, 8192, 10000] {
+        let clean_seq = generate_clean_dna(size);
+        let dirty_seq = generate_dirty_dna(size);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        // 2-bit encoding (clean sequences)
+        group.bench_with_input(
+            BenchmarkId::new("encode_2bit", size),
+            &clean_seq,
+            |b, seq| {
+                b.iter(|| encode_2bit(black_box(seq)));
+            },
+        );
+
+        // 2-bit decoding
+        let encoded_2bit = encode_2bit(&clean_seq).unwrap();
+        group.bench_with_input(
+            BenchmarkId::new("decode_2bit", size),
+            &(encoded_2bit.clone(), size),
+            |b, (enc, len)| {
+                b.iter(|| decode_2bit(black_box(enc), *len));
+            },
+        );
+
+        // Bifurcated encoding (clean path)
+        group.bench_with_input(
+            BenchmarkId::new("bifurcated_clean", size),
+            &clean_seq,
+            |b, seq| {
+                b.iter(|| encode_bifurcated(black_box(seq)));
+            },
+        );
+
+        // Bifurcated encoding (dirty path)
+        group.bench_with_input(
+            BenchmarkId::new("bifurcated_dirty", size),
+            &dirty_seq,
+            |b, seq| {
+                b.iter(|| encode_bifurcated(black_box(seq)));
+            },
+        );
+
+        // Bifurcated decoding (clean)
+        let encoded_clean = encode_bifurcated(&clean_seq);
+        group.bench_with_input(
+            BenchmarkId::new("decode_bifurcated_clean", size),
+            &encoded_clean,
+            |b, enc| {
+                b.iter(|| decode_bifurcated(black_box(enc)));
+            },
+        );
+
+        // Sequence classification (purity check)
+        group.bench_with_input(
+            BenchmarkId::new("is_clean_sequence", size),
+            &clean_seq,
+            |b, seq| {
+                b.iter(|| is_clean_sequence(black_box(seq)));
+            },
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_tetra_scanner(c: &mut Criterion) {
+    let mut group = c.benchmark_group("tetra_scanner");
+
+    for size in [64, 256, 1024, 4096, 10000] {
+        let clean_seq = generate_clean_dna(size);
+        let encoded = encode_2bit(&clean_seq).unwrap();
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        // TetraLUT creation (literal pattern)
+        group.bench_function(BenchmarkId::new("tetra_lut_create", size), |b| {
+            b.iter(|| TetraLUT::from_literal(black_box(b"ACGT")));
+        });
+
+        // TetraLUT creation with IUPAC pattern
+        group.bench_function(BenchmarkId::new("tetra_lut_iupac", size), |b| {
+            b.iter(|| TetraLUT::from_iupac(black_box("ACGN")));
+        });
+
+        // TetraLUT scanning
+        let lut = TetraLUT::from_literal(b"ACGT").unwrap();
+        group.bench_with_input(
+            BenchmarkId::new("tetra_scan", size),
+            &(encoded.clone(), size),
+            |b, (enc, len)| {
+                b.iter(|| lut.scan_2bit(black_box(enc), *len));
+            },
+        );
+
+        // TetraLUT contains_match (early exit)
+        group.bench_with_input(
+            BenchmarkId::new("tetra_contains", size),
+            &(encoded.clone(), size),
+            |b, (enc, len)| {
+                b.iter(|| lut.contains_match(black_box(enc), *len));
+            },
+        );
+
+        // BitapMasks creation
+        group.bench_function(BenchmarkId::new("bitap_create", size), |b| {
+            b.iter(|| BitapMasks::from_pattern(black_box(b"ACGTACGT")));
+        });
+
+        // BitapMasks search
+        let masks = BitapMasks::from_pattern(b"ACGTACGT").unwrap();
+        group.bench_with_input(
+            BenchmarkId::new("bitap_search", size),
+            &clean_seq,
+            |b, seq| {
+                b.iter(|| masks.search(black_box(seq)));
+            },
+        );
+
+        // SearchPattern unified interface (searches raw sequence)
+        let pattern = SearchPattern::from_literal(b"ACGTACGT").unwrap();
+        group.bench_with_input(
+            BenchmarkId::new("search_pattern", size),
+            &clean_seq,
+            |b, seq| {
+                // SearchPattern delegates to the appropriate algorithm internally
+                b.iter(|| match &pattern {
+                    SearchPattern::Tetra(lut) => lut.scan_2bit(black_box(&encoded), size),
+                    SearchPattern::Bitap(masks) => masks.search(black_box(seq)),
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_serialization(c: &mut Criterion) {
+    let mut group = c.benchmark_group("serialization");
+
+    for size in [64, 256, 1024, 4096, 10000] {
+        let clean_seq = generate_clean_dna(size);
+        let encoded = encode_bifurcated(&clean_seq);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        // to_bytes (no checksum)
+        group.bench_with_input(BenchmarkId::new("to_bytes", size), &encoded, |b, enc| {
+            b.iter(|| to_bytes(black_box(enc)));
+        });
+
+        // from_bytes
+        let bytes = to_bytes(&encoded);
+        group.bench_with_input(BenchmarkId::new("from_bytes", size), &bytes, |b, data| {
+            b.iter(|| from_bytes(black_box(data)));
+        });
+
+        // to_blob with checksum
+        group.bench_with_input(
+            BenchmarkId::new("to_blob_checksum", size),
+            &encoded,
+            |b, enc| {
+                b.iter(|| to_blob(black_box(enc), true));
+            },
+        );
+
+        // to_blob without checksum
+        group.bench_with_input(
+            BenchmarkId::new("to_blob_no_checksum", size),
+            &encoded,
+            |b, enc| {
+                b.iter(|| to_blob(black_box(enc), false));
+            },
+        );
+
+        // from_blob with checksum verification
+        let blob = to_blob(&encoded, true);
+        group.bench_with_input(
+            BenchmarkId::new("from_blob_checksum", size),
+            &blob,
+            |b, data| {
+                b.iter(|| from_blob(black_box(data)));
+            },
+        );
+
+        // CRC32 computation
+        group.bench_with_input(BenchmarkId::new("crc32", size), &bytes, |b, data| {
+            b.iter(|| crc32(black_box(data)));
+        });
+
+        // Full roundtrip (encode + serialize + deserialize + decode)
+        group.bench_with_input(
+            BenchmarkId::new("full_roundtrip", size),
+            &clean_seq,
+            |b, seq| {
+                b.iter(|| {
+                    let enc = encode_bifurcated(black_box(seq));
+                    let blob = to_blob(&enc, true);
+                    let dec = from_blob(&blob).unwrap();
+                    decode_bifurcated(&dec)
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_bifurcation_overhead(c: &mut Criterion) {
+    let mut group = c.benchmark_group("bifurcation_overhead");
+
+    // Compare is_clean_sequence check overhead
+    for size in [64, 256, 1024, 4096] {
+        let clean_seq = generate_clean_dna(size);
+
+        group.throughput(Throughput::Bytes(size as u64));
+
+        // Just the classification check
+        group.bench_with_input(
+            BenchmarkId::new("classify_only", size),
+            &clean_seq,
+            |b, seq| {
+                b.iter(|| classify_sequence(black_box(seq)));
+            },
+        );
+
+        // Classification + encoding
+        group.bench_with_input(
+            BenchmarkId::new("classify_and_encode", size),
+            &clean_seq,
+            |b, seq| {
+                b.iter(|| encode_bifurcated(black_box(seq)));
+            },
+        );
+
+        // Direct 2-bit encoding (no classification)
+        group.bench_with_input(
+            BenchmarkId::new("direct_2bit", size),
+            &clean_seq,
+            |b, seq| {
+                b.iter(|| encode_2bit(black_box(seq)));
+            },
+        );
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_encode,
@@ -929,6 +1206,11 @@ criterion_group!(
     bench_quality_encode_into,
     bench_quality_decode_into,
     bench_quality_stats,
-    bench_quality_compression_ratio
+    bench_quality_compression_ratio,
+    // Phase 1 Milestone benchmarks
+    bench_hybrid_encoder,
+    bench_tetra_scanner,
+    bench_serialization,
+    bench_bifurcation_overhead
 );
 criterion_main!(benches);

@@ -1455,3 +1455,196 @@ mod tests {
         assert!(msg.contains("checksum"));
     }
 }
+
+// ============================================================================
+// Property-Based Tests (using proptest)
+// ============================================================================
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use crate::hybrid_encoder::encode_bifurcated;
+    use proptest::prelude::*;
+
+    /// Strategy that generates valid clean DNA sequences (ACGT only)
+    fn clean_dna_strategy() -> impl Strategy<Value = Vec<u8>> {
+        prop::collection::vec(
+            prop_oneof![Just(b'A'), Just(b'C'), Just(b'G'), Just(b'T')],
+            0..500,
+        )
+    }
+
+    /// Strategy that generates valid IUPAC DNA sequences (all codes)
+    fn iupac_dna_strategy() -> impl Strategy<Value = Vec<u8>> {
+        prop::collection::vec(
+            prop_oneof![
+                Just(b'A'),
+                Just(b'C'),
+                Just(b'G'),
+                Just(b'T'),
+                Just(b'N'),
+                Just(b'R'),
+                Just(b'Y'),
+                Just(b'S'),
+                Just(b'W'),
+                Just(b'K'),
+                Just(b'M'),
+            ],
+            0..500,
+        )
+    }
+
+    proptest! {
+        /// Property: to_bytes/from_bytes roundtrip preserves clean sequences
+        #[test]
+        fn prop_bytes_roundtrip_clean(seq in clean_dna_strategy()) {
+            let encoded = encode_bifurcated(&seq);
+            let bytes = to_bytes(&encoded);
+            let decoded = from_bytes(&bytes).unwrap();
+            prop_assert_eq!(decoded.encoding, encoded.encoding);
+            prop_assert_eq!(decoded.original_len, encoded.original_len);
+            prop_assert_eq!(decoded.data, encoded.data);
+        }
+
+        /// Property: to_blob/from_blob roundtrip preserves sequences with checksum
+        #[test]
+        fn prop_blob_roundtrip_with_checksum(seq in clean_dna_strategy()) {
+            let encoded = encode_bifurcated(&seq);
+            let blob = to_blob(&encoded, true);
+            let decoded = from_blob(&blob).unwrap();
+            prop_assert_eq!(decoded.encoding, encoded.encoding);
+            prop_assert_eq!(decoded.original_len, encoded.original_len);
+            prop_assert_eq!(decoded.data, encoded.data);
+        }
+
+        /// Property: to_blob/from_blob roundtrip preserves sequences without checksum
+        #[test]
+        fn prop_blob_roundtrip_without_checksum(seq in clean_dna_strategy()) {
+            let encoded = encode_bifurcated(&seq);
+            let blob = to_blob(&encoded, false);
+            let decoded = from_blob(&blob).unwrap();
+            prop_assert_eq!(decoded.encoding, encoded.encoding);
+            prop_assert_eq!(decoded.original_len, encoded.original_len);
+            prop_assert_eq!(decoded.data, encoded.data);
+        }
+
+        /// Property: IUPAC sequences serialize and deserialize correctly
+        #[test]
+        fn prop_bytes_roundtrip_iupac(seq in iupac_dna_strategy()) {
+            let encoded = encode_bifurcated(&seq);
+            let bytes = to_bytes(&encoded);
+            let decoded = from_bytes(&bytes).unwrap();
+            prop_assert_eq!(decoded.encoding, encoded.encoding);
+            prop_assert_eq!(decoded.original_len, encoded.original_len);
+            prop_assert_eq!(decoded.data, encoded.data);
+        }
+
+        /// Property: serialized size matches required_serialized_len
+        #[test]
+        fn prop_serialized_size_matches(seq in clean_dna_strategy()) {
+            let encoded = encode_bifurcated(&seq);
+
+            let bytes = to_bytes(&encoded);
+            prop_assert_eq!(bytes.len(), required_serialized_len(&encoded, false));
+
+            let blob = to_blob(&encoded, true);
+            prop_assert_eq!(blob.len(), required_serialized_len(&encoded, true));
+        }
+
+        /// Property: parse_header extracts correct metadata
+        #[test]
+        fn prop_header_correct(seq in clean_dna_strategy()) {
+            let encoded = encode_bifurcated(&seq);
+            let blob = to_blob(&encoded, true);
+            let header = parse_header(&blob).unwrap();
+
+            prop_assert_eq!(header.encoding, encoded.encoding);
+            prop_assert_eq!(header.original_len as usize, encoded.original_len);
+            prop_assert_eq!(header.data_len as usize, encoded.data.len());
+            prop_assert!(header.has_checksum);
+        }
+
+        /// Property: validate_blob succeeds for valid blobs
+        #[test]
+        fn prop_validate_blob_succeeds(seq in clean_dna_strategy()) {
+            let encoded = encode_bifurcated(&seq);
+            let blob = to_blob(&encoded, true);
+            let result = validate_blob(&blob);
+            prop_assert!(result.is_ok());
+        }
+
+        /// Property: corrupted data fails checksum validation
+        #[test]
+        fn prop_corruption_detected(seq in clean_dna_strategy().prop_filter("need data", |s| s.len() > 4)) {
+            let encoded = encode_bifurcated(&seq);
+            let mut blob = to_blob(&encoded, true);
+
+            // Corrupt a data byte
+            let data_idx = HEADER_SIZE + (encoded.data.len() / 2);
+            if data_idx < blob.len() - CHECKSUM_SIZE {
+                blob[data_idx] ^= 0xFF;
+                let result = from_blob(&blob);
+                let is_checksum_error = matches!(result, Err(SerializationError::ChecksumMismatch { .. }));
+                prop_assert!(is_checksum_error, "Expected ChecksumMismatch error, got {:?}", result);
+            }
+        }
+
+        /// Property: batch serialization produces correct total size
+        #[test]
+        fn prop_batch_size_correct(
+            seq1 in clean_dna_strategy(),
+            seq2 in clean_dna_strategy(),
+            seq3 in clean_dna_strategy()
+        ) {
+            let enc1 = encode_bifurcated(&seq1);
+            let enc2 = encode_bifurcated(&seq2);
+            let enc3 = encode_bifurcated(&seq3);
+            let sequences = vec![enc1, enc2, enc3];
+
+            let estimated = estimate_batch_size(sequences.iter(), false);
+            let (buffer, _) = serialize_batch(&sequences, false);
+            prop_assert_eq!(estimated, buffer.len());
+        }
+
+        /// Property: batch deserialization recovers all sequences
+        #[test]
+        fn prop_batch_roundtrip(
+            seq1 in clean_dna_strategy(),
+            seq2 in clean_dna_strategy()
+        ) {
+            let enc1 = encode_bifurcated(&seq1);
+            let enc2 = encode_bifurcated(&seq2);
+            let sequences = vec![enc1.clone(), enc2.clone()];
+
+            let (buffer, offsets) = serialize_batch(&sequences, true);
+            let recovered = deserialize_batch(&buffer, &offsets).unwrap();
+
+            prop_assert_eq!(recovered.len(), 2);
+            prop_assert_eq!(&recovered[0].data, &enc1.data);
+            prop_assert_eq!(&recovered[1].data, &enc2.data);
+        }
+
+        /// Property: CRC32 is deterministic
+        #[test]
+        fn prop_crc32_deterministic(data in prop::collection::vec(any::<u8>(), 0..1000)) {
+            let crc1 = crc32(&data);
+            let crc2 = crc32(&data);
+            prop_assert_eq!(crc1, crc2);
+        }
+
+        /// Property: incremental CRC32 matches full computation
+        #[test]
+        fn prop_crc32_incremental(data in prop::collection::vec(any::<u8>(), 0..1000)) {
+            if data.len() >= 2 {
+                let mid = data.len() / 2;
+                let full_crc = crc32(&data);
+
+                let state = crc32_update(0xFFFFFFFF, &data[..mid]);
+                let state = crc32_update(state, &data[mid..]);
+                let incremental_crc = crc32_finalize(state);
+
+                prop_assert_eq!(full_crc, incremental_crc);
+            }
+        }
+    }
+}
