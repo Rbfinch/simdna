@@ -28,13 +28,13 @@ The main entry point that exports the public API and provides crate-level docume
 
 #### Exported Modules
 
-| Module | Purpose |
-|--------|---------|
-| `dna_simd_encoder` | Core 4-bit encoding/decoding with SIMD acceleration |
-| `hybrid_encoder` | Bifurcated 2-bit/4-bit encoding based on sequence content |
-| `tetra_scanner` | TetraLUT and Shift-And pattern matching algorithms |
-| `quality_encoder` | FASTQ quality score compression with binning and RLE |
-| `serialization` | Binary serialization for SQLite BLOB storage |
+| Module             | Purpose                                                   |
+|--------------------|-----------------------------------------------------------|
+| `dna_simd_encoder` | Core 4-bit encoding/decoding with SIMD acceleration       |
+| `hybrid_encoder`   | Bifurcated 2-bit/4-bit encoding based on sequence content |
+| `tetra_scanner`    | TetraLUT and Shift-And pattern matching algorithms        |
+| `quality_encoder`  | FASTQ quality score compression with binning and RLE      |
+| `serialization`    | Binary serialization for SQLite BLOB storage              |
 
 ---
 
@@ -52,71 +52,71 @@ complement = ((bits << 2) | (bits >> 2)) & 0xF
 
 **Standard Nucleotides:**
 
-| Code | Meaning | Binary | Complement |
-|------|---------|--------|------------|
-| A | Adenine | 0x1 | T (0x4) |
-| C | Cytosine | 0x2 | G (0x8) |
-| T | Thymine | 0x4 | A (0x1) |
-| G | Guanine | 0x8 | C (0x2) |
-| U | Uracil (RNA) | 0x4 | A (0x1) |
+| Code | Meaning      | Binary | Complement |
+|------|--------------|--------|------------|
+| A    | Adenine      | 0x1    | T (0x4)    |
+| C    | Cytosine     | 0x2    | G (0x8)    |
+| T    | Thymine      | 0x4    | A (0x1)    |
+| G    | Guanine      | 0x8    | C (0x2)    |
+| U    | Uracil (RNA) | 0x4    | A (0x1)    |
 
 **Two-Base Ambiguity Codes:**
 
-| Code | Meaning | Binary | Complement |
-|------|---------|--------|------------|
-| R | A or G (purine) | 0x9 | Y (0x6) |
-| Y | C or T (pyrimidine) | 0x6 | R (0x9) |
-| S | G or C (strong) | 0xA | S (0xA) |
-| W | A or T (weak) | 0x5 | W (0x5) |
-| K | G or T (keto) | 0xC | M (0x3) |
-| M | A or C (amino) | 0x3 | K (0xC) |
+| Code | Meaning             | Binary | Complement |
+|------|---------------------|--------|------------|
+| R    | A or G (purine)     | 0x9    | Y (0x6)    |
+| Y    | C or T (pyrimidine) | 0x6    | R (0x9)    |
+| S    | G or C (strong)     | 0xA    | S (0xA)    |
+| W    | A or T (weak)       | 0x5    | W (0x5)    |
+| K    | G or T (keto)       | 0xC    | M (0x3)    |
+| M    | A or C (amino)      | 0x3    | K (0xC)    |
 
 **Three-Base Ambiguity Codes:**
 
-| Code | Meaning | Binary | Complement |
-|------|---------|--------|------------|
-| B | C, G, or T (not A) | 0xE | V (0xB) |
-| D | A, G, or T (not C) | 0xD | H (0x7) |
-| H | A, C, or T (not G) | 0x7 | D (0xD) |
-| V | A, C, or G (not T) | 0xB | B (0xE) |
+| Code | Meaning            | Binary | Complement |
+|------|--------------------|--------|------------|
+| B    | C, G, or T (not A) | 0xE    | V (0xB)    |
+| D    | A, G, or T (not C) | 0xD    | H (0x7)    |
+| H    | A, C, or T (not G) | 0x7    | D (0xD)    |
+| V    | A, C, or G (not T) | 0xB    | B (0xE)    |
 
 **Wildcards and Gaps:**
 
-| Code | Meaning | Binary | Complement |
-|------|---------|--------|------------|
-| N | Any base | 0xF | N (0xF) |
-| - | Gap / deletion | 0x0 | - (0x0) |
+| Code | Meaning        | Binary | Complement |
+|------|----------------|--------|------------|
+| N    | Any base       | 0xF    | N (0xF)    |
+| -    | Gap / deletion | 0x0    | - (0x0)    |
 
 #### Key Functions
 
-| Function | Description |
-|----------|-------------|
-| `encode_dna_prefer_simd(sequence)` | Encodes DNA to 4-bit packed format |
-| `decode_dna_prefer_simd(encoded, len)` | Decodes 4-bit packed to ASCII |
-| `encode_dna_into(sequence, buffer)` | Zero-allocation encoding into buffer |
+| Function                                | Description                          |
+|-----------------------------------------|--------------------------------------|
+| `encode_dna_prefer_simd(sequence)`      | Encodes DNA to 4-bit packed format   |
+| `decode_dna_prefer_simd(encoded, len)`  | Decodes 4-bit packed to ASCII        |
+| `encode_dna_into(sequence, buffer)`     | Zero-allocation encoding into buffer |
 | `decode_dna_into(encoded, len, buffer)` | Zero-allocation decoding into buffer |
-| `reverse_complement(sequence)` | Computes reverse complement (SIMD) |
-| `reverse_complement_into(seq, buffer)` | Zero-allocation reverse complement |
-| `required_encoded_len(len)` | Returns bytes needed for encoding |
-| `required_decoded_len(len)` | Returns bytes needed for decoding |
+| `reverse_complement(sequence)`          | Computes reverse complement (SIMD)   |
+| `reverse_complement_into(seq, buffer)`  | Zero-allocation reverse complement   |
+| `required_encoded_len(len)`             | Returns bytes needed for encoding    |
+| `required_decoded_len(len)`             | Returns bytes needed for decoding    |
 
 #### Lookup Tables
 
-| Table | Size | Alignment | Purpose |
-|-------|------|-----------|---------|
-| `ENCODE_LUT` | 256 bytes | 64 bytes | ASCII → 4-bit encoding |
-| `DECODE_LUT` | 16 bytes | 16 bytes | 4-bit → ASCII decoding |
+| Table        | Size      | Alignment | Purpose                |
+|--------------|-----------|-----------|------------------------|
+| `ENCODE_LUT` | 256 bytes | 64 bytes  | ASCII → 4-bit encoding |
+| `DECODE_LUT` | 16 bytes  | 16 bytes  | 4-bit → ASCII decoding |
 
 #### Performance Optimizations
 
-| Technique | Description |
-|-----------|-------------|
-| Static LUTs | Pre-computed tables eliminate branch mispredictions |
-| SIMD Processing | 32 nucleotides per iteration |
-| Prefetch Hints | 128 bytes (2 cache lines) ahead |
-| Direct Case Handling | LUT handles case-insensitivity |
-| 4-at-a-time Scalar | Optimized remainder processing |
-| 64-byte Alignment | Optimal cache line access |
+| Technique            | Description                                         |
+|----------------------|-----------------------------------------------------|
+| Static LUTs          | Pre-computed tables eliminate branch mispredictions |
+| SIMD Processing      | 32 nucleotides per iteration                        |
+| Prefetch Hints       | 128 bytes (2 cache lines) ahead                     |
+| Direct Case Handling | LUT handles case-insensitivity                      |
+| 4-at-a-time Scalar   | Optimized remainder processing                      |
+| 64-byte Alignment    | Optimal cache line access                           |
 
 ---
 
@@ -142,22 +142,22 @@ pub enum EncodingType {
 }
 ```
 
-| Method | Description |
-|--------|-------------|
+| Method                | Description                        |
+|-----------------------|------------------------------------|
 | `compression_ratio()` | Returns 4.0 (2-bit) or 2.0 (4-bit) |
-| `bases_per_byte()` | Returns 4 (2-bit) or 2 (4-bit) |
-| `bits_per_base()` | Returns 2 or 4 |
-| `from_u8(value)` | Converts from integer |
-| `from_i32(value)` | Converts from database column |
+| `bases_per_byte()`    | Returns 4 (2-bit) or 2 (4-bit)     |
+| `bits_per_base()`     | Returns 2 or 4                     |
+| `from_u8(value)`      | Converts from integer              |
+| `from_i32(value)`     | Converts from database column      |
 
 #### 2-bit Encoding Scheme
 
 | Base | Binary | Decimal |
 |------|--------|---------|
-| A | 00 | 0 |
-| C | 01 | 1 |
-| G | 10 | 2 |
-| T | 11 | 3 |
+| A    | 00     | 0       |
+| C    | 01     | 1       |
+| G    | 10     | 2       |
+| T    | 11     | 3       |
 
 Packing: `(B0 << 6) | (B1 << 4) | (B2 << 2) | B3`
 
@@ -171,23 +171,23 @@ pub struct EncodedSequence {
 }
 ```
 
-| Method | Description |
-|--------|-------------|
-| `new(encoding, data, len)` | Creates a new encoded sequence |
-| `encoded_len()` | Returns compressed data length |
-| `compression_ratio()` | Returns actual compression achieved |
+| Method                     | Description                         |
+|----------------------------|-------------------------------------|
+| `new(encoding, data, len)` | Creates a new encoded sequence      |
+| `encoded_len()`            | Returns compressed data length      |
+| `compression_ratio()`      | Returns actual compression achieved |
 
 #### Key Functions
 
-| Function | Description |
-|----------|-------------|
-| `encode_bifurcated(sequence)` | Auto-selects optimal encoding |
-| `decode_bifurcated(encoded)` | Decodes any encoding type |
-| `is_clean_sequence(sequence)` | Checks if ACGT-only (SIMD) |
-| `encode_2bit(sequence)` | Forces 2-bit encoding |
-| `decode_2bit(encoded, len)` | Decodes 2-bit data |
-| `encoding_2bit(base)` | Encodes single base to 2-bit |
-| `required_2bit_len(len)` | Bytes needed for 2-bit encoding |
+| Function                      | Description                     |
+|-------------------------------|---------------------------------|
+| `encode_bifurcated(sequence)` | Auto-selects optimal encoding   |
+| `decode_bifurcated(encoded)`  | Decodes any encoding type       |
+| `is_clean_sequence(sequence)` | Checks if ACGT-only (SIMD)      |
+| `encode_2bit(sequence)`       | Forces 2-bit encoding           |
+| `decode_2bit(encoded, len)`   | Decodes 2-bit data              |
+| `encoding_2bit(base)`         | Encodes single base to 2-bit    |
+| `required_2bit_len(len)`      | Bytes needed for 2-bit encoding |
 
 ---
 
@@ -214,48 +214,48 @@ pub struct TetraLUT {
 }
 ```
 
-| Method | Description |
-|--------|-------------|
-| `from_literal(pattern)` | Creates LUT for exact 4-mer (ACGT only) |
-| `from_iupac(pattern)` | Creates LUT with IUPAC expansion |
-| `matches_index(index)` | Checks if index matches pattern |
-| `match_count()` | Returns number of matching 4-mers |
-| `lut()` | Returns reference to internal table |
-| `scan_2bit(encoded, len)` | Scans for matches (returns positions) |
-| `contains_match(encoded, len)` | Early-exit existence check |
+| Method                         | Description                             |
+|--------------------------------|-----------------------------------------|
+| `from_literal(pattern)`        | Creates LUT for exact 4-mer (ACGT only) |
+| `from_iupac(pattern)`          | Creates LUT with IUPAC expansion        |
+| `matches_index(index)`         | Checks if index matches pattern         |
+| `match_count()`                | Returns number of matching 4-mers       |
+| `lut()`                        | Returns reference to internal table     |
+| `scan_2bit(encoded, len)`      | Scans for matches (returns positions)   |
+| `contains_match(encoded, len)` | Early-exit existence check              |
 
 #### IUPAC Expansion
 
 | Code | Expands To | Count |
 |------|------------|-------|
-| N | ACGT | 4 |
-| R | AG | 2 |
-| Y | CT | 2 |
-| S | GC | 2 |
-| W | AT | 2 |
-| K | GT | 2 |
-| M | AC | 2 |
-| B | CGT | 3 |
-| D | AGT | 3 |
-| H | ACT | 3 |
-| V | ACG | 3 |
+| N    | ACGT       | 4     |
+| R    | AG         | 2     |
+| Y    | CT         | 2     |
+| S    | GC         | 2     |
+| W    | AT         | 2     |
+| K    | GT         | 2     |
+| M    | AC         | 2     |
+| B    | CGT        | 3     |
+| D    | AGT        | 3     |
+| H    | ACT        | 3     |
+| V    | ACG        | 3     |
 
 #### Shift-And (Bitap) Algorithm
 
 For patterns longer than 4 bases (up to 64 bases):
 
-| Type | Description |
-|------|-------------|
+| Type              | Description                   |
+|-------------------|-------------------------------|
 | `ShiftAndMatcher` | Bit-parallel pattern matching |
-| `ShiftAndPattern` | Pre-compiled pattern masks |
+| `ShiftAndPattern` | Pre-compiled pattern masks    |
 
-| Method | Description |
-|--------|-------------|
-| `ShiftAndMatcher::new(pattern)` | Compiles pattern for matching |
-| `ShiftAndMatcher::scan_2bit(encoded, len)` | Scans 2-bit encoded data |
-| `ShiftAndMatcher::scan_4bit(encoded, len)` | Scans 4-bit encoded data |
-| `ShiftAndPattern::from_literal(pattern)` | Compiles exact pattern |
-| `ShiftAndPattern::from_iupac(pattern)` | Compiles with IUPAC support |
+| Method                                     | Description                   |
+|--------------------------------------------|-------------------------------|
+| `ShiftAndMatcher::new(pattern)`            | Compiles pattern for matching |
+| `ShiftAndMatcher::scan_2bit(encoded, len)` | Scans 2-bit encoded data      |
+| `ShiftAndMatcher::scan_4bit(encoded, len)` | Scans 4-bit encoded data      |
+| `ShiftAndPattern::from_literal(pattern)`   | Compiles exact pattern        |
+| `ShiftAndPattern::from_iupac(pattern)`     | Compiles with IUPAC support   |
 
 ---
 
@@ -271,44 +271,44 @@ ASCII Quality → Phred Conversion → Binning (4 levels) → RLE → Compressed
 
 #### Binning Scheme
 
-| Phred Range | Bin | Representative Q | Meaning |
-|-------------|-----|------------------|---------|
-| Q0-9 | 0 | Q6 | Very low quality |
-| Q10-19 | 1 | Q15 | Low quality |
-| Q20-29 | 2 | Q25 | Medium quality |
-| Q30+ | 3 | Q37 | High quality |
+| Phred Range | Bin | Representative Q | Meaning          |
+|-------------|-----|------------------|------------------|
+| Q0-9        | 0   | Q6               | Very low quality |
+| Q10-19      | 1   | Q15              | Low quality      |
+| Q20-29      | 2   | Q25              | Medium quality   |
+| Q30+        | 3   | Q37              | High quality     |
 
 #### Phred Encoding Support
 
-| Format | ASCII Offset | Phred Range | Common Usage |
-|--------|--------------|-------------|--------------|
-| Phred+33 | 33 | 0-41 | Illumina 1.8+, Sanger |
-| Phred+64 | 64 | 0-40 | Illumina 1.3-1.7 |
+| Format   | ASCII Offset | Phred Range | Common Usage          |
+|----------|--------------|-------------|-----------------------|
+| Phred+33 | 33           | 0-41        | Illumina 1.8+, Sanger |
+| Phred+64 | 64           | 0-40        | Illumina 1.3-1.7      |
 
 #### RLE Packing Format
 
-| Run Length | Format | Size |
-|------------|--------|------|
-| ≤63 | `[bin:2][length:6]` | 1 byte |
-| >63 | `0xFF` + `[bin:8]` + `[length:16]` | 4 bytes |
+| Run Length | Format                             | Size    |
+|------------|------------------------------------|---------|
+| ≤63        | `[bin:2][length:6]`                | 1 byte  |
+| >63        | `0xFF` + `[bin:8]` + `[length:16]` | 4 bytes |
 
 #### Key Functions
 
-| Function | Description |
-|----------|-------------|
-| `encode_quality_scores(quality, encoding)` | Compresses quality string |
-| `decode_quality_scores(encoded, encoding)` | Decompresses to ASCII |
-| `encode_quality_into(quality, encoding, buffer)` | Zero-allocation encoding |
-| `decode_quality_into(encoded, encoding, buffer)` | Zero-allocation decoding |
-| `PhredEncoding::detect(quality)` | Auto-detects Phred encoding |
+| Function                                         | Description                 |
+|--------------------------------------------------|-----------------------------|
+| `encode_quality_scores(quality, encoding)`       | Compresses quality string   |
+| `decode_quality_scores(encoded, encoding)`       | Decompresses to ASCII       |
+| `encode_quality_into(quality, encoding, buffer)` | Zero-allocation encoding    |
+| `decode_quality_into(encoded, encoding, buffer)` | Zero-allocation decoding    |
+| `PhredEncoding::detect(quality)`                 | Auto-detects Phred encoding |
 
 #### Compression Ratios
 
-| Read Type | Compression |
-|-----------|-------------|
-| High-quality reads | 85-95% |
-| Mixed quality | 70-85% |
-| Low-quality reads | 60-75% |
+| Read Type          | Compression |
+|--------------------|-------------|
+| High-quality reads | 85-95%      |
+| Mixed quality      | 70-85%      |
+| Low-quality reads  | 60-75%      |
 
 ---
 
@@ -334,24 +334,24 @@ Efficient binary serialization for database BLOB storage in SQLite.
 
 #### Constants
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `MAGIC_BYTES` | `[0x44, 0x4E]` | "DN" identifier |
-| `FORMAT_VERSION` | `1` | Current format version |
-| `HEADER_SIZE` | `14` | Bytes before data |
-| `FLAG_HAS_CHECKSUM` | `0x01` | Checksum present flag |
-| `CHECKSUM_SIZE` | `4` | CRC32 size in bytes |
+| Constant            | Value          | Description            |
+|---------------------|----------------|------------------------|
+| `MAGIC_BYTES`       | `[0x44, 0x4E]` | "DN" identifier        |
+| `FORMAT_VERSION`    | `1`            | Current format version |
+| `HEADER_SIZE`       | `14`           | Bytes before data      |
+| `FLAG_HAS_CHECKSUM` | `0x01`         | Checksum present flag  |
+| `CHECKSUM_SIZE`     | `4`            | CRC32 size in bytes    |
 
 #### Key Functions
 
-| Function | Description |
-|----------|-------------|
-| `to_bytes(encoded)` | Serializes to bytes (no checksum) |
-| `from_bytes(bytes)` | Deserializes from bytes |
-| `to_blob(encoded, with_checksum)` | Serializes for database storage |
-| `from_blob(blob)` | Deserializes with optional checksum verification |
-| `crc32(data)` | Computes CRC32 checksum (IEEE polynomial) |
-| `crc32_update(current, data)` | Incremental CRC32 |
+| Function                          | Description                                      |
+|-----------------------------------|--------------------------------------------------|
+| `to_bytes(encoded)`               | Serializes to bytes (no checksum)                |
+| `from_bytes(bytes)`               | Deserializes from bytes                          |
+| `to_blob(encoded, with_checksum)` | Serializes for database storage                  |
+| `from_blob(blob)`                 | Deserializes with optional checksum verification |
+| `crc32(data)`                     | Computes CRC32 checksum (IEEE polynomial)        |
+| `crc32_update(current, data)`     | Incremental CRC32                                |
 
 ---
 
@@ -487,22 +487,22 @@ Long run (64+ bases):
 
 ### SIMD Capabilities
 
-| Platform | Instruction Set | Detection | Usage |
-|----------|----------------|-----------|-------|
-| aarch64 (Apple Silicon) | NEON | Compile-time | All operations |
-| x86_64 | SSSE3 | Runtime | Encoding/decoding |
-| x86_64 | SSE2/SSE4.1 | Runtime | Quality encoding |
-| Other | Scalar | Default | Fallback |
+| Platform                | Instruction Set | Detection    | Usage             |
+|-------------------------|-----------------|--------------|-------------------|
+| aarch64 (Apple Silicon) | NEON            | Compile-time | All operations    |
+| x86_64                  | SSSE3           | Runtime      | Encoding/decoding |
+| x86_64                  | SSE2/SSE4.1     | Runtime      | Quality encoding  |
+| Other                   | Scalar          | Default      | Fallback          |
 
 ### SIMD Processing Widths
 
-| Operation | aarch64 (NEON) | x86_64 (SSE) |
-|-----------|---------------|--------------|
-| 4-bit encode | 32 nucleotides/iter | 32 nucleotides/iter |
-| 4-bit decode | 32 nucleotides/iter | 32 nucleotides/iter |
-| 2-bit scan | 16 positions/iter | Scalar |
-| Reverse complement | 16 bytes/iter | 16 bytes/iter |
-| Quality binning | 16 scores/iter | 16 scores/iter |
+| Operation          | aarch64 (NEON)      | x86_64 (SSE)        |
+|--------------------|---------------------|---------------------|
+| 4-bit encode       | 32 nucleotides/iter | 32 nucleotides/iter |
+| 4-bit decode       | 32 nucleotides/iter | 32 nucleotides/iter |
+| 2-bit scan         | 16 positions/iter   | Scalar              |
+| Reverse complement | 16 bytes/iter       | 16 bytes/iter       |
+| Quality binning    | 16 scores/iter      | 16 scores/iter      |
 
 ---
 
@@ -540,13 +540,13 @@ Suitable for use with `rayon`, `std::thread`, or any multi-threading framework.
 
 ## Dependencies
 
-| Crate | Category | Purpose |
-|-------|----------|---------|
-| (none) | Runtime | Zero runtime dependencies |
-| `criterion` | Dev | Benchmarking |
-| `proptest` | Dev | Property-based testing |
-| `chrono` | Dev | Timestamp formatting |
-| `seq_io` | Dev | FASTQ parsing in examples |
+| Crate       | Category | Purpose                   |
+|-------------|----------|---------------------------|
+| (none)      | Runtime  | Zero runtime dependencies |
+| `criterion` | Dev      | Benchmarking              |
+| `proptest`  | Dev      | Property-based testing    |
+| `chrono`    | Dev      | Timestamp formatting      |
+| `seq_io`    | Dev      | FASTQ parsing in examples |
 
 ---
 
