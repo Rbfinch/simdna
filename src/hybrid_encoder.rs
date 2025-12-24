@@ -1063,6 +1063,286 @@ unsafe fn is_clean_sequence_neon(sequence: &[u8]) -> bool {
 }
 
 // ============================================================================
+// Sequence Classification
+// ============================================================================
+
+/// Classifies a DNA sequence and returns the optimal encoding type.
+///
+/// This function analyzes the sequence content to determine whether it can
+/// use the more efficient 2-bit encoding (ACGT only) or requires the full
+/// 4-bit IUPAC encoding.
+///
+/// # Arguments
+///
+/// * `sequence` - ASCII DNA sequence to classify
+///
+/// # Returns
+///
+/// * [`EncodingType::Clean2Bit`] if the sequence contains only A, C, G, T (case-insensitive)
+/// * [`EncodingType::Dirty4Bit`] if the sequence contains any other characters
+///
+/// # Performance
+///
+/// Uses NEON SIMD on ARM64 for fast classification of 16 bytes at a time.
+/// For most genomic data (99%+ clean sequences), this enables the 4x compression
+/// advantage of 2-bit encoding.
+///
+/// # Examples
+///
+/// ```rust
+/// use simdna::hybrid_encoder::{classify_sequence, EncodingType};
+///
+/// // Clean sequences use 2-bit encoding
+/// assert_eq!(classify_sequence(b"ACGT"), EncodingType::Clean2Bit);
+/// assert_eq!(classify_sequence(b"acgtACGT"), EncodingType::Clean2Bit);
+///
+/// // Sequences with ambiguous bases use 4-bit encoding
+/// assert_eq!(classify_sequence(b"ACGTN"), EncodingType::Dirty4Bit);
+/// assert_eq!(classify_sequence(b"ACGR"), EncodingType::Dirty4Bit);
+///
+/// // Empty sequences are considered clean
+/// assert_eq!(classify_sequence(b""), EncodingType::Clean2Bit);
+/// ```
+#[inline]
+pub fn classify_sequence(sequence: &[u8]) -> EncodingType {
+    if is_clean_sequence(sequence) {
+        EncodingType::Clean2Bit
+    } else {
+        EncodingType::Dirty4Bit
+    }
+}
+
+// ============================================================================
+// Bifurcated Encoder/Decoder API
+// ============================================================================
+
+/// Encodes a DNA sequence using the optimal encoding based on content.
+///
+/// This is the main entry point for bifurcated encoding. It automatically:
+/// 1. Analyzes the sequence to classify it as clean (ACGT only) or dirty (IUPAC)
+/// 2. Applies 2-bit encoding for clean sequences (4x compression)
+/// 3. Applies 4-bit encoding for dirty sequences (2x compression)
+/// 4. Returns an [`EncodedSequence`] containing the data and metadata
+///
+/// # Arguments
+///
+/// * `sequence` - ASCII DNA sequence (case-insensitive)
+///
+/// # Returns
+///
+/// An [`EncodedSequence`] containing:
+/// * `encoding` - The encoding type used ([`EncodingType::Clean2Bit`] or [`EncodingType::Dirty4Bit`])
+/// * `data` - The packed binary data
+/// * `original_len` - The original sequence length for decoding
+///
+/// # Performance
+///
+/// This function uses SIMD-accelerated implementations on ARM64 (NEON) and x86_64 (SSSE3).
+/// The bifurcation decision is made in a single pass using SIMD validation.
+///
+/// # Thread Safety
+///
+/// This function is thread-safe and can be called concurrently from multiple threads.
+///
+/// # Examples
+///
+/// ```rust
+/// use simdna::hybrid_encoder::{encode_bifurcated, EncodingType};
+///
+/// // Clean sequence → 2-bit encoding (4x compression)
+/// let clean = b"ACGTACGT";
+/// let result = encode_bifurcated(clean);
+/// assert_eq!(result.encoding, EncodingType::Clean2Bit);
+/// assert_eq!(result.data.len(), 2); // 8 bases → 2 bytes
+/// assert_eq!(result.original_len, 8);
+///
+/// // Dirty sequence → 4-bit encoding (2x compression)
+/// let dirty = b"ACNGTACGT";
+/// let result = encode_bifurcated(dirty);
+/// assert_eq!(result.encoding, EncodingType::Dirty4Bit);
+/// assert_eq!(result.data.len(), 5); // 9 bases → 5 bytes (ceil(9/2))
+/// ```
+pub fn encode_bifurcated(sequence: &[u8]) -> EncodedSequence {
+    if sequence.is_empty() {
+        return EncodedSequence::default();
+    }
+
+    let encoding = classify_sequence(sequence);
+
+    match encoding {
+        EncodingType::Clean2Bit => {
+            // Safe to unwrap because we verified it's a clean sequence
+            let data = encode_2bit(sequence).expect("clean sequence should encode without error");
+            EncodedSequence::new(EncodingType::Clean2Bit, data, sequence.len())
+        }
+        EncodingType::Dirty4Bit => {
+            // Use the existing 4-bit encoder from dna_simd_encoder
+            let data = crate::dna_simd_encoder::encode_dna_prefer_simd(sequence);
+            EncodedSequence::new(EncodingType::Dirty4Bit, data, sequence.len())
+        }
+    }
+}
+
+/// Encodes a DNA sequence using the optimal encoding into a pre-allocated buffer.
+///
+/// This is the zero-allocation variant of [`encode_bifurcated`]. It writes the
+/// encoded data directly into the provided buffer and returns an [`EncodedSequence`]
+/// that borrows from that buffer (via the returned metadata).
+///
+/// # Arguments
+///
+/// * `sequence` - ASCII DNA sequence (case-insensitive)
+/// * `output` - Pre-allocated output buffer. Must be large enough to hold the worst-case
+///   encoding (4-bit), which is `ceil(sequence.len() / 2)` bytes.
+///
+/// # Returns
+///
+/// * `Ok((encoding_type, bytes_written))` - The encoding type used and bytes written
+/// * `Err(HybridEncoderError::BufferTooSmall)` - If the buffer is too small
+///
+/// # Examples
+///
+/// ```rust
+/// use simdna::hybrid_encoder::{encode_bifurcated_into, EncodingType, required_4bit_len};
+///
+/// let sequence = b"ACGTACGT";
+/// let mut buffer = vec![0u8; required_4bit_len(sequence.len())];
+///
+/// let (encoding, bytes_written) = encode_bifurcated_into(sequence, &mut buffer).unwrap();
+/// assert_eq!(encoding, EncodingType::Clean2Bit);
+/// assert_eq!(bytes_written, 2);
+/// ```
+pub fn encode_bifurcated_into(
+    sequence: &[u8],
+    output: &mut [u8],
+) -> Result<(EncodingType, usize), HybridEncoderError> {
+    if sequence.is_empty() {
+        return Ok((EncodingType::Clean2Bit, 0));
+    }
+
+    let encoding = classify_sequence(sequence);
+
+    match encoding {
+        EncodingType::Clean2Bit => {
+            let bytes_written = encode_2bit_into(sequence, output)?;
+            Ok((EncodingType::Clean2Bit, bytes_written))
+        }
+        EncodingType::Dirty4Bit => {
+            let required = required_4bit_len(sequence.len());
+            if output.len() < required {
+                return Err(HybridEncoderError::BufferTooSmall {
+                    needed: required,
+                    actual: output.len(),
+                });
+            }
+            let bytes_written = crate::dna_simd_encoder::encode_dna_into(sequence, output)
+                .map_err(
+                    |crate::dna_simd_encoder::BufferError::BufferTooSmall { needed, actual }| {
+                        HybridEncoderError::BufferTooSmall { needed, actual }
+                    },
+                )?;
+            Ok((EncodingType::Dirty4Bit, bytes_written))
+        }
+    }
+}
+
+/// Decodes a bifurcated-encoded sequence back to ASCII nucleotides.
+///
+/// This function uses the encoding type metadata from [`EncodedSequence`] to
+/// select the correct decoder (2-bit or 4-bit).
+///
+/// # Arguments
+///
+/// * `encoded` - An [`EncodedSequence`] as produced by [`encode_bifurcated`]
+///
+/// # Returns
+///
+/// The decoded ASCII DNA sequence with uppercase nucleotides.
+///
+/// # Examples
+///
+/// ```rust
+/// use simdna::hybrid_encoder::{encode_bifurcated, decode_bifurcated};
+///
+/// let original = b"ACGTACGT";
+/// let encoded = encode_bifurcated(original);
+/// let decoded = decode_bifurcated(&encoded);
+/// assert_eq!(decoded, original.to_vec());
+///
+/// // Works with dirty sequences too
+/// let dirty = b"ACNGTACGT";
+/// let encoded = encode_bifurcated(dirty);
+/// let decoded = decode_bifurcated(&encoded);
+/// assert_eq!(decoded, dirty.to_ascii_uppercase());
+/// ```
+pub fn decode_bifurcated(encoded: &EncodedSequence) -> Vec<u8> {
+    if encoded.original_len == 0 {
+        return Vec::new();
+    }
+
+    match encoded.encoding {
+        EncodingType::Clean2Bit => decode_2bit(&encoded.data, encoded.original_len),
+        EncodingType::Dirty4Bit => {
+            crate::dna_simd_encoder::decode_dna_prefer_simd(&encoded.data, encoded.original_len)
+        }
+    }
+}
+
+/// Decodes a bifurcated-encoded sequence into a pre-allocated buffer.
+///
+/// This is the zero-allocation variant of [`decode_bifurcated`].
+///
+/// # Arguments
+///
+/// * `encoded` - An [`EncodedSequence`] as produced by [`encode_bifurcated`]
+/// * `output` - Pre-allocated output buffer. Must be at least `encoded.original_len` bytes.
+///
+/// # Returns
+///
+/// * `Ok(bytes_written)` - Number of bytes written to output
+/// * `Err(HybridEncoderError::BufferTooSmall)` - If the buffer is too small
+///
+/// # Examples
+///
+/// ```rust
+/// use simdna::hybrid_encoder::{encode_bifurcated, decode_bifurcated_into};
+///
+/// let original = b"ACGTACGT";
+/// let encoded = encode_bifurcated(original);
+/// let mut buffer = vec![0u8; 64];
+///
+/// let bytes_written = decode_bifurcated_into(&encoded, &mut buffer).unwrap();
+/// assert_eq!(&buffer[..bytes_written], original.as_slice());
+/// ```
+pub fn decode_bifurcated_into(
+    encoded: &EncodedSequence,
+    output: &mut [u8],
+) -> Result<usize, HybridEncoderError> {
+    if encoded.original_len == 0 {
+        return Ok(0);
+    }
+
+    if output.len() < encoded.original_len {
+        return Err(HybridEncoderError::BufferTooSmall {
+            needed: encoded.original_len,
+            actual: output.len(),
+        });
+    }
+
+    match encoded.encoding {
+        EncodingType::Clean2Bit => decode_2bit_into(&encoded.data, encoded.original_len, output),
+        EncodingType::Dirty4Bit => {
+            crate::dna_simd_encoder::decode_dna_into(&encoded.data, encoded.original_len, output)
+                .map_err(
+                    |crate::dna_simd_encoder::BufferError::BufferTooSmall { needed, actual }| {
+                        HybridEncoderError::BufferTooSmall { needed, actual }
+                    },
+                )
+        }
+    }
+}
+
+// ============================================================================
 // Unit Tests
 // ============================================================================
 
@@ -1453,5 +1733,409 @@ mod tests {
         // All T's = 0b11_11_11_11 = 0xFF
         let encoded = encode_2bit(b"TTTT").unwrap();
         assert_eq!(encoded, vec![0xFF]);
+    }
+
+    // ========================================================================
+    // 2-bit Decoder Additional Tests (Step 1.1.3)
+    // ========================================================================
+
+    #[test]
+    fn test_decode_2bit_remainder_handling() {
+        // Test decoding with various remainder lengths
+        let encoded = encode_2bit(b"ACGTA").unwrap();
+        let decoded = decode_2bit(&encoded, 5);
+        assert_eq!(decoded, b"ACGTA");
+
+        let encoded = encode_2bit(b"ACGTAC").unwrap();
+        let decoded = decode_2bit(&encoded, 6);
+        assert_eq!(decoded, b"ACGTAC");
+
+        let encoded = encode_2bit(b"ACGTACG").unwrap();
+        let decoded = decode_2bit(&encoded, 7);
+        assert_eq!(decoded, b"ACGTACG");
+    }
+
+    #[test]
+    fn test_decode_2bit_multiple_bytes() {
+        // Test with multiple complete bytes
+        let original = b"ACGTACGTACGTACGT"; // 16 bases = 4 bytes
+        let encoded = encode_2bit(original).unwrap();
+        assert_eq!(encoded.len(), 4);
+        let decoded = decode_2bit(&encoded, original.len());
+        assert_eq!(decoded, original.as_slice());
+    }
+
+    #[test]
+    fn test_decode_2bit_into_exact_buffer() {
+        let encoded = encode_2bit(b"ACGT").unwrap();
+        let mut buffer = [0u8; 4];
+        let bytes_written = decode_2bit_into(&encoded, 4, &mut buffer).unwrap();
+        assert_eq!(bytes_written, 4);
+        assert_eq!(&buffer, b"ACGT");
+    }
+
+    #[test]
+    fn test_decode_2bit_into_oversized_buffer() {
+        let encoded = encode_2bit(b"ACGT").unwrap();
+        let mut buffer = [0u8; 100];
+        let bytes_written = decode_2bit_into(&encoded, 4, &mut buffer).unwrap();
+        assert_eq!(bytes_written, 4);
+        assert_eq!(&buffer[..4], b"ACGT");
+    }
+
+    #[test]
+    fn test_decode_2bit_all_patterns() {
+        // Test all 256 possible byte values
+        for byte_val in 0u8..=255 {
+            let encoded = vec![byte_val];
+            let decoded = decode_2bit(&encoded, 4);
+            assert_eq!(decoded.len(), 4);
+            // Verify each decoded base is valid
+            for b in &decoded {
+                assert!(matches!(b, b'A' | b'C' | b'G' | b'T'));
+            }
+        }
+    }
+
+    #[test]
+    fn test_decode_2bit_simd_boundary() {
+        // Test at SIMD boundary (16 nucleotides = 4 encoded bytes → decoded to 16)
+        let original: Vec<u8> = (0..64)
+            .map(|i| match i % 4 {
+                0 => b'A',
+                1 => b'C',
+                2 => b'G',
+                _ => b'T',
+            })
+            .collect();
+        let encoded = encode_2bit(&original).unwrap();
+        let decoded = decode_2bit(&encoded, original.len());
+        assert_eq!(decoded, original);
+    }
+
+    // ========================================================================
+    // Sequence Classification Tests (Step 1.1.4)
+    // ========================================================================
+
+    #[test]
+    fn test_classify_sequence_empty() {
+        assert_eq!(classify_sequence(b""), EncodingType::Clean2Bit);
+    }
+
+    #[test]
+    fn test_classify_sequence_clean() {
+        assert_eq!(classify_sequence(b"A"), EncodingType::Clean2Bit);
+        assert_eq!(classify_sequence(b"ACGT"), EncodingType::Clean2Bit);
+        assert_eq!(classify_sequence(b"acgt"), EncodingType::Clean2Bit);
+        assert_eq!(classify_sequence(b"AcGtAcGt"), EncodingType::Clean2Bit);
+        assert_eq!(
+            classify_sequence(b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
+            EncodingType::Clean2Bit
+        );
+    }
+
+    #[test]
+    fn test_classify_sequence_dirty() {
+        // N (any base)
+        assert_eq!(classify_sequence(b"N"), EncodingType::Dirty4Bit);
+        assert_eq!(classify_sequence(b"ACGTN"), EncodingType::Dirty4Bit);
+
+        // IUPAC ambiguity codes
+        assert_eq!(classify_sequence(b"R"), EncodingType::Dirty4Bit); // Purine (A/G)
+        assert_eq!(classify_sequence(b"Y"), EncodingType::Dirty4Bit); // Pyrimidine (C/T)
+        assert_eq!(classify_sequence(b"S"), EncodingType::Dirty4Bit); // Strong (G/C)
+        assert_eq!(classify_sequence(b"W"), EncodingType::Dirty4Bit); // Weak (A/T)
+        assert_eq!(classify_sequence(b"K"), EncodingType::Dirty4Bit); // Keto (G/T)
+        assert_eq!(classify_sequence(b"M"), EncodingType::Dirty4Bit); // Amino (A/C)
+        assert_eq!(classify_sequence(b"B"), EncodingType::Dirty4Bit); // Not A
+        assert_eq!(classify_sequence(b"D"), EncodingType::Dirty4Bit); // Not C
+        assert_eq!(classify_sequence(b"H"), EncodingType::Dirty4Bit); // Not G
+        assert_eq!(classify_sequence(b"V"), EncodingType::Dirty4Bit); // Not T
+
+        // Gap character
+        assert_eq!(classify_sequence(b"-"), EncodingType::Dirty4Bit);
+
+        // Invalid characters
+        assert_eq!(classify_sequence(b" "), EncodingType::Dirty4Bit);
+        assert_eq!(classify_sequence(b"0"), EncodingType::Dirty4Bit);
+    }
+
+    #[test]
+    fn test_classify_sequence_dirty_at_boundaries() {
+        // Dirty at start
+        assert_eq!(classify_sequence(b"NACGT"), EncodingType::Dirty4Bit);
+
+        // Dirty at end
+        assert_eq!(classify_sequence(b"ACGTN"), EncodingType::Dirty4Bit);
+
+        // Dirty in middle
+        assert_eq!(classify_sequence(b"ACNGT"), EncodingType::Dirty4Bit);
+
+        // Dirty at SIMD boundary (position 16)
+        let mut seq = *b"ACGTACGTACGTACGTN";
+        assert_eq!(classify_sequence(&seq), EncodingType::Dirty4Bit);
+        seq[16] = b'A';
+        assert_eq!(classify_sequence(&seq), EncodingType::Clean2Bit);
+    }
+
+    // ========================================================================
+    // Bifurcated Encoder Tests (Step 1.1.5)
+    // ========================================================================
+
+    #[test]
+    fn test_encode_bifurcated_empty() {
+        let result = encode_bifurcated(b"");
+        assert_eq!(result.encoding, EncodingType::Clean2Bit);
+        assert!(result.data.is_empty());
+        assert_eq!(result.original_len, 0);
+    }
+
+    #[test]
+    fn test_encode_bifurcated_clean_sequence() {
+        let result = encode_bifurcated(b"ACGT");
+        assert_eq!(result.encoding, EncodingType::Clean2Bit);
+        assert_eq!(result.data, vec![0x1B]); // 2-bit encoding
+        assert_eq!(result.original_len, 4);
+        assert_eq!(result.encoded_len(), 1);
+        assert!(result.is_clean());
+        assert!(!result.is_dirty());
+    }
+
+    #[test]
+    fn test_encode_bifurcated_dirty_sequence() {
+        let result = encode_bifurcated(b"ACNT");
+        assert_eq!(result.encoding, EncodingType::Dirty4Bit);
+        assert_eq!(result.original_len, 4);
+        assert_eq!(result.encoded_len(), 2); // 4-bit: 4 bases = 2 bytes
+        assert!(!result.is_clean());
+        assert!(result.is_dirty());
+    }
+
+    #[test]
+    fn test_encode_bifurcated_case_insensitive() {
+        let upper = encode_bifurcated(b"ACGT");
+        let lower = encode_bifurcated(b"acgt");
+        let mixed = encode_bifurcated(b"AcGt");
+
+        assert_eq!(upper.encoding, lower.encoding);
+        assert_eq!(upper.data, lower.data);
+        assert_eq!(upper.data, mixed.data);
+    }
+
+    #[test]
+    fn test_encode_bifurcated_compression_ratios() {
+        // Clean: 4x compression
+        let clean = encode_bifurcated(b"ACGTACGT");
+        assert_eq!(clean.actual_compression_ratio(), 4.0);
+
+        // Dirty: 2x compression
+        let dirty = encode_bifurcated(b"ACGTACGN");
+        assert_eq!(dirty.actual_compression_ratio(), 2.0);
+    }
+
+    #[test]
+    fn test_encode_bifurcated_into_clean() {
+        let sequence = b"ACGTACGT";
+        let mut buffer = vec![0u8; 10];
+
+        let (encoding, bytes_written) = encode_bifurcated_into(sequence, &mut buffer).unwrap();
+        assert_eq!(encoding, EncodingType::Clean2Bit);
+        assert_eq!(bytes_written, 2);
+        assert_eq!(&buffer[..2], &[0x1B, 0x1B]);
+    }
+
+    #[test]
+    fn test_encode_bifurcated_into_dirty() {
+        let sequence = b"ACNTACGT";
+        let mut buffer = vec![0u8; 10];
+
+        let (encoding, bytes_written) = encode_bifurcated_into(sequence, &mut buffer).unwrap();
+        assert_eq!(encoding, EncodingType::Dirty4Bit);
+        assert_eq!(bytes_written, 4); // 8 bases = 4 bytes in 4-bit
+    }
+
+    #[test]
+    fn test_encode_bifurcated_into_buffer_too_small() {
+        let sequence = b"ACGTACGT";
+        let mut buffer = [0u8; 1]; // Too small for either encoding
+
+        let result = encode_bifurcated_into(sequence, &mut buffer);
+        assert!(matches!(
+            result,
+            Err(HybridEncoderError::BufferTooSmall { .. })
+        ));
+    }
+
+    // ========================================================================
+    // Bifurcated Decoder Tests (Step 1.1.5)
+    // ========================================================================
+
+    #[test]
+    fn test_decode_bifurcated_empty() {
+        let encoded = EncodedSequence::default();
+        let decoded = decode_bifurcated(&encoded);
+        assert!(decoded.is_empty());
+    }
+
+    #[test]
+    fn test_decode_bifurcated_clean_roundtrip() {
+        let original = b"ACGTACGT";
+        let encoded = encode_bifurcated(original);
+        let decoded = decode_bifurcated(&encoded);
+        assert_eq!(decoded, original.to_vec());
+    }
+
+    #[test]
+    fn test_decode_bifurcated_dirty_roundtrip() {
+        let original = b"ACNGTACGT";
+        let encoded = encode_bifurcated(original);
+        let decoded = decode_bifurcated(&encoded);
+        // 4-bit encoder uppercases
+        assert_eq!(decoded, original.to_ascii_uppercase());
+    }
+
+    #[test]
+    fn test_decode_bifurcated_into_clean() {
+        let original = b"ACGTACGT";
+        let encoded = encode_bifurcated(original);
+        let mut buffer = [0u8; 64];
+
+        let bytes_written = decode_bifurcated_into(&encoded, &mut buffer).unwrap();
+        assert_eq!(bytes_written, 8);
+        assert_eq!(&buffer[..8], original.as_slice());
+    }
+
+    #[test]
+    fn test_decode_bifurcated_into_dirty() {
+        let original = b"ACNGTACGT";
+        let encoded = encode_bifurcated(original);
+        let mut buffer = [0u8; 64];
+
+        let bytes_written = decode_bifurcated_into(&encoded, &mut buffer).unwrap();
+        assert_eq!(bytes_written, 9);
+        assert_eq!(&buffer[..9], original.to_ascii_uppercase().as_slice());
+    }
+
+    #[test]
+    fn test_decode_bifurcated_into_buffer_too_small() {
+        let encoded = encode_bifurcated(b"ACGTACGT");
+        let mut buffer = [0u8; 4]; // Need 8
+
+        let result = decode_bifurcated_into(&encoded, &mut buffer);
+        assert!(matches!(
+            result,
+            Err(HybridEncoderError::BufferTooSmall { .. })
+        ));
+    }
+
+    // ========================================================================
+    // End-to-End Integration Tests
+    // ========================================================================
+
+    #[test]
+    fn test_bifurcated_roundtrip_all_clean_lengths() {
+        // Test roundtrip for various lengths (covering SIMD boundaries)
+        for len in 0..=100 {
+            let original: Vec<u8> = (0..len)
+                .map(|i| match i % 4 {
+                    0 => b'A',
+                    1 => b'C',
+                    2 => b'G',
+                    _ => b'T',
+                })
+                .collect();
+
+            let encoded = encode_bifurcated(&original);
+            assert_eq!(encoded.encoding, EncodingType::Clean2Bit);
+            assert_eq!(encoded.original_len, len);
+
+            let decoded = decode_bifurcated(&encoded);
+            assert_eq!(decoded, original, "Roundtrip failed for length {}", len);
+        }
+    }
+
+    #[test]
+    fn test_bifurcated_roundtrip_dirty_at_various_positions() {
+        // Test dirty base at various positions
+        for pos in 0..20 {
+            let mut sequence: Vec<u8> = (0..20)
+                .map(|i| match i % 4 {
+                    0 => b'A',
+                    1 => b'C',
+                    2 => b'G',
+                    _ => b'T',
+                })
+                .collect();
+            sequence[pos] = b'N';
+
+            let encoded = encode_bifurcated(&sequence);
+            assert_eq!(
+                encoded.encoding,
+                EncodingType::Dirty4Bit,
+                "Should be dirty with N at position {}",
+                pos
+            );
+
+            let decoded = decode_bifurcated(&encoded);
+            assert_eq!(
+                decoded,
+                sequence.to_ascii_uppercase(),
+                "Roundtrip failed with N at position {}",
+                pos
+            );
+        }
+    }
+
+    #[test]
+    fn test_bifurcated_all_iupac_codes() {
+        // Test all IUPAC codes are handled correctly
+        let iupac_sequence = b"ACGTRYSWKMBDHVN-";
+        let encoded = encode_bifurcated(iupac_sequence);
+        assert_eq!(encoded.encoding, EncodingType::Dirty4Bit);
+        assert_eq!(encoded.original_len, 16);
+
+        let decoded = decode_bifurcated(&encoded);
+        assert_eq!(decoded, iupac_sequence.to_ascii_uppercase());
+    }
+
+    #[test]
+    fn test_bifurcated_large_clean_sequence() {
+        // Test with a large clean sequence
+        let original: Vec<u8> = (0..10000)
+            .map(|i| match i % 4 {
+                0 => b'A',
+                1 => b'C',
+                2 => b'G',
+                _ => b'T',
+            })
+            .collect();
+
+        let encoded = encode_bifurcated(&original);
+        assert_eq!(encoded.encoding, EncodingType::Clean2Bit);
+        assert_eq!(encoded.data.len(), 2500); // 10000 / 4
+
+        let decoded = decode_bifurcated(&encoded);
+        assert_eq!(decoded, original);
+    }
+
+    #[test]
+    fn test_bifurcated_large_dirty_sequence() {
+        // Test with a large dirty sequence
+        let mut original: Vec<u8> = (0..10000)
+            .map(|i| match i % 4 {
+                0 => b'A',
+                1 => b'C',
+                2 => b'G',
+                _ => b'T',
+            })
+            .collect();
+        original[5000] = b'N'; // Add one dirty base
+
+        let encoded = encode_bifurcated(&original);
+        assert_eq!(encoded.encoding, EncodingType::Dirty4Bit);
+        assert_eq!(encoded.data.len(), 5000); // 10000 / 2
+
+        let decoded = decode_bifurcated(&encoded);
+        assert_eq!(decoded, original);
     }
 }
