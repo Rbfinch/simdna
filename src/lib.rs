@@ -83,6 +83,23 @@
 //! assert_eq!(decoded.len(), quality.len());
 //! ```
 //!
+//! ## Serialization for Database Storage
+//!
+//! Efficient binary serialization for SQLite BLOB storage:
+//!
+//! ```rust
+//! use simdna::hybrid_encoder::encode_bifurcated;
+//! use simdna::serialization::{to_blob, from_blob};
+//!
+//! let sequence = b"ACGTACGT";
+//! let encoded = encode_bifurcated(sequence);
+//!
+//! // Serialize with checksum for database storage
+//! let blob = to_blob(&encoded, true);
+//! let decoded = from_blob(&blob).unwrap();
+//! assert_eq!(decoded.original_len, 8);
+//! ```
+//!
 //! ## Examples
 //!
 //! Run the comprehensive examples demonstrating all library functions:
@@ -91,9 +108,10 @@
 //! cargo run --example examples
 //! ```
 //!
-//! See the [`dna_simd_encoder`], [`hybrid_encoder`], [`tetra_scanner`], and [`quality_encoder`] modules for the complete API.
+//! See the [`dna_simd_encoder`], [`hybrid_encoder`], [`tetra_scanner`], [`serialization`], and [`quality_encoder`] modules for the complete API.
 
 pub mod dna_simd_encoder;
 pub mod hybrid_encoder;
 pub mod quality_encoder;
+pub mod serialization;
 pub mod tetra_scanner;
