@@ -20,12 +20,21 @@
   - [Wildcards and Gaps](#wildcards-and-gaps)
   - [Bit Rotation Property](#bit-rotation-property)
 - [Usage](#usage)
+- [Hybrid Encoding](#hybrid-encoding)
+  - [Bifurcated Storage](#bifurcated-storage)
+  - [2-bit Encoding](#2-bit-encoding)
 - [Reverse Complement](#reverse-complement)
   - [IUPAC Ambiguity Code Complements](#iupac-ambiguity-code-complements)
 - [Quality Score Encoding](#quality-score-encoding)
   - [Phred Encoding Support](#phred-encoding-support)
   - [Binning Scheme](#binning-scheme)
   - [Compression Ratios](#compression-ratios)
+- [Serialization](#serialization)
+  - [Binary Format](#binary-format)
+  - [Database Storage](#database-storage)
+- [Tetranucleotide Pattern Matching](#tetranucleotide-pattern-matching)
+  - [TetraLUT Scanner](#tetralut-scanner)
+  - [Shift-And Algorithm](#shift-and-algorithm)
 - [Zero-Allocation API](#zero-allocation-api)
 - [Input Handling](#input-handling)
 - [Integration](#integration)
@@ -46,6 +55,8 @@
 
 ## Features
 
+- **Hybrid 2-bit/4-bit encoding** with automatic bifurcation based on sequence content
+- **2-bit encoding** for clean ACGT sequences (4x compression, 4 bases per byte)
 - **4-bit encoding** supporting all IUPAC nucleotide codes (16 standard + U for RNA)
 - **Bit-rotation-compatible encoding** enabling efficient complement calculation
 - **SIMD-accelerated reverse complement** operations
@@ -55,10 +66,12 @@
 - **Automatic fallback** to optimized scalar implementation
 - **Thread-safe** pure functions with no global state
 - **Zero-allocation API** via `_into` variants for high-throughput pipelines
-- **2:1 compression** ratio compared to ASCII representation
+- **2:1 to 4:1 compression** ratio compared to ASCII representation
 - **RNA support** via U (Uracil) mapping to T
 - **FASTQ quality score encoding** with 4-level binning and run-length encoding
 - **Phred+33/Phred+64 support** with automatic detection
+- **Binary serialization** for database BLOB storage with optional CRC32 checksums
+- **Tetranucleotide pattern matching** with TetraLUT and Shift-And algorithms
 
 ## Installation
 
@@ -148,6 +161,60 @@ let rna = b"ACGU";
 let encoded_rna = encode_dna_prefer_simd(rna);
 let decoded_rna = decode_dna_prefer_simd(&encoded_rna, rna.len());
 assert_eq!(decoded_rna, b"ACGT"); // U decodes as T
+```
+
+## Hybrid Encoding
+
+For optimal storage efficiency, simdna provides hybrid encoding that automatically selects the best encoding scheme based on sequence content. In typical genomic datasets, 99%+ of sequences contain only standard ACGT bases.
+
+### Bifurcated Storage
+
+```rust
+use simdna::hybrid_encoder::{encode_bifurcated, decode_bifurcated, EncodingType};
+
+// Clean sequences use 2-bit encoding (4x compression)
+let clean = b"ACGTACGT";
+let result = encode_bifurcated(clean);
+assert_eq!(result.encoding, EncodingType::Clean2Bit);
+assert_eq!(result.data.len(), 2); // 8 bases → 2 bytes
+
+// Sequences with ambiguous bases use 4-bit encoding (2x compression)
+let dirty = b"ACNGTACGT";
+let result = encode_bifurcated(dirty);
+assert_eq!(result.encoding, EncodingType::Dirty4Bit);
+
+// Decode back to original
+let decoded = decode_bifurcated(&result);
+assert_eq!(decoded, dirty);
+```
+
+### 2-bit Encoding
+
+For sequences known to contain only A, C, G, T:
+
+| Base | Binary | Decimal |
+|------|--------|---------|
+| A    | 00     | 0       |
+| C    | 01     | 1       |
+| G    | 10     | 2       |
+| T    | 11     | 3       |
+
+Four bases are packed per byte: `(B0 << 6) | (B1 << 4) | (B2 << 2) | B3`
+
+```rust
+use simdna::hybrid_encoder::{encode_2bit, decode_2bit, is_clean_sequence};
+
+// Check if a sequence is clean (ACGT only)
+let sequence = b"ACGTACGTACGT";
+assert!(is_clean_sequence(sequence));
+
+// Encode clean sequence with 4x compression
+let encoded = encode_2bit(sequence).unwrap();
+assert_eq!(encoded.len(), 3); // 12 bases → 3 bytes
+
+// Decode back
+let decoded = decode_2bit(&encoded, sequence.len());
+assert_eq!(decoded, sequence);
 ```
 
 ## Reverse Complement
@@ -252,6 +319,90 @@ Typical compression ratios for Illumina quality strings:
 | Alternating (worst)    | 0%          | Every score different (pathological) |
 
 For a typical 150bp Illumina read with good quality, expect **10-20 bytes** of compressed output vs **150 bytes** of raw ASCII quality scores.
+
+## Serialization
+
+simdna provides efficient binary serialization for encoded DNA sequences, optimized for database BLOB storage in SQLite and other databases.
+
+### Binary Format
+
+The serialization format is designed for minimal overhead (14 bytes header) and self-describing metadata:
+
+```text
+┌────────────────────────────────────────────────────────────────┐
+│ Bytes 0-1: Magic bytes ("DN" = 0x44, 0x4E)                     │
+│ Byte 2: Format version (currently 0x01)                        │
+│ Byte 3: Encoding type (0x00 = Clean2Bit, 0x01 = Dirty4Bit)    │
+│ Byte 4: Flags (bit 0 = has_checksum)                          │
+│ Byte 5: Reserved                                               │
+│ Bytes 6-9: Original sequence length (little-endian u32)       │
+│ Bytes 10-13: Encoded data length (little-endian u32)          │
+│ Bytes 14+: Encoded sequence data                               │
+│ [Optional] Last 4 bytes: CRC32 checksum                       │
+└────────────────────────────────────────────────────────────────┘
+```
+
+### Database Storage
+
+```rust
+use simdna::hybrid_encoder::encode_bifurcated;
+use simdna::serialization::{to_blob, from_blob, validate_blob};
+
+// Encode a DNA sequence
+let sequence = b"ACGTACGTACGTACGT";
+let encoded = encode_bifurcated(sequence);
+
+// Serialize to BLOB with CRC32 checksum for database storage
+let blob = to_blob(&encoded, true);
+
+// Validate BLOB integrity before use
+let header = validate_blob(&blob).expect("BLOB corrupted");
+println!("Original length: {} bases", header.original_len);
+
+// Deserialize back from BLOB
+let recovered = from_blob(&blob).unwrap();
+assert_eq!(recovered.data, encoded.data);
+```
+
+The serialization module also provides:
+
+- `to_bytes` / `from_bytes` - Serialize without checksum
+- `to_bytes_into` / `to_blob_into` - Zero-allocation variants
+- `parse_header` - Parse header without full deserialization
+
+## Tetranucleotide Pattern Matching
+
+simdna provides high-performance pattern matching for DNA sequences using tetranucleotide (4-mer) lookup tables and SIMD acceleration.
+
+### TetraLUT Scanner
+
+Tetranucleotides are the natural unit for pattern matching in 2-bit encoded DNA because 4 bases × 2 bits = 8 bits = 1 byte exactly:
+
+```rust
+use simdna::tetra_scanner::TetraLUT;
+
+// Create a lookup table for exact pattern "ACGT"
+let lut = TetraLUT::from_literal(b"ACGT").unwrap();
+assert_eq!(lut.match_count(), 1);
+
+// Create a lookup table for IUPAC pattern with ambiguity
+// "ACGN" matches ACGA, ACGC, ACGG, ACGT
+let lut = TetraLUT::from_iupac("ACGN").unwrap();
+assert_eq!(lut.match_count(), 4);
+
+// "NNNN" matches all 256 possible tetranucleotides
+let lut = TetraLUT::from_iupac("NNNN").unwrap();
+assert_eq!(lut.match_count(), 256);
+```
+
+### Shift-And Algorithm
+
+For patterns longer than 4 bases, simdna uses the bit-parallel Shift-And (Bitap) algorithm with NEON acceleration, supporting patterns up to 64 bases with IUPAC ambiguity codes:
+
+| Algorithm      | Pattern Length | Throughput   |
+|----------------|----------------|--------------|
+| Tetra-LUT      | 4 bases        | ~15+ GB/s    |
+| Shift-And      | 5-64 bases     | ~8+ GB/s     |
 
 ## Zero-Allocation API
 

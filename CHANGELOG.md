@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2024-12-24
+
+### Added
+
+- **Hybrid 2-bit/4-bit encoder** (`hybrid_encoder` module):
+  - Automatic bifurcation based on sequence content (clean ACGT vs IUPAC ambiguous)
+  - 2-bit encoding for clean sequences: 4x compression (4 bases per byte)
+  - 4-bit encoding for dirty sequences: 2x compression (2 bases per byte)
+  - SIMD-accelerated purity check (~15+ GB/s throughput)
+  - Zero-allocation `_into` variants for high-throughput pipelines
+- **Binary serialization** (`serialization` module):
+  - Efficient BLOB format for database storage (SQLite, etc.)
+  - 14-byte self-describing header with magic bytes and version
+  - Optional CRC32 checksum for data integrity
+  - `to_blob` / `from_blob` functions for database integration
+  - `validate_blob` for integrity checking without full deserialization
+- **Tetranucleotide pattern matching** (`tetra_scanner` module):
+  - `TetraLUT`: 256-entry lookup table for 4-mer pattern matching
+  - Support for exact patterns and IUPAC ambiguity codes
+  - Shift-And (Bitap) algorithm for patterns up to 64 bases
+  - SIMD-accelerated scanning (~15+ GB/s for TetraLUT, ~8+ GB/s for Shift-And)
+
+### Changed
+
+- Updated documentation to cover all modules
+- Improved README with comprehensive usage examples
+
 ## [1.0.2] - 2024-12-19
 
 ### Changed
@@ -51,4 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fuzz testing targets for robustness verification
 - CI/CD workflows for multi-platform testing (Linux x86_64, Linux ARM64, macOS ARM64)
 
+[1.0.3]: https://github.com/Rbfinch/simdna/compare/v1.0.2...v1.0.3
+[1.0.2]: https://github.com/Rbfinch/simdna/compare/v1.0.1...v1.0.2
+[1.0.1]: https://github.com/Rbfinch/simdna/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Rbfinch/simdna/releases/tag/v1.0.0

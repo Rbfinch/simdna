@@ -15,6 +15,8 @@
 //! - **SIMD acceleration** on x86_64 (SSSE3) and ARM64 (NEON)
 //! - **Zero-allocation API** via `_into` variants for high-throughput pipelines
 //! - **FASTQ quality score encoding** with binning and run-length encoding
+//! - **Binary serialization** for database BLOB storage with optional CRC32 checksums
+//! - **Tetranucleotide pattern matching** with TetraLUT and Shift-And algorithms
 //!
 //! ## Hybrid Encoding (Bifurcated Storage)
 //!

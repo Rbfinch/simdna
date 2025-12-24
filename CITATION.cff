@@ -12,7 +12,8 @@ url: https://github.com/Rbfinch/simdna
 abstract: >-
   High-performance SIMD-accelerated DNA/RNA sequence encoding
   and decoding supporting all IUPAC nucleotide codes. Features
-  4-bit encoding with automatic fallback to scalar implementations
+  hybrid 2-bit/4-bit encoding, binary serialization, tetranucleotide
+  pattern matching, and automatic fallback to scalar implementations
   on unsupported platforms.
 keywords:
   - dna
@@ -23,5 +24,5 @@ keywords:
   - iupac
   - nucleotide
 license: MIT
-version: 1.0.0
+version: 1.0.3
 date-released: 2024-12-17
